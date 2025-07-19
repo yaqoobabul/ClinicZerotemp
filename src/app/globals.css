@@ -74,16 +74,17 @@ body {
 
 @media print {
   body {
-    background-color: #fff;
+    background: #fff;
+    color: #000;
   }
   .no-print {
     display: none !important;
   }
   #printable-prescription {
-    display: block;
+    display: block !important;
     position: absolute;
-    top: 0;
     left: 0;
+    top: 0;
     width: 100%;
   }
 }

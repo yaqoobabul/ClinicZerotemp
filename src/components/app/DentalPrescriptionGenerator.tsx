@@ -498,7 +498,7 @@ export function DentalPrescriptionGenerator() {
                               </FormItem>
                           )} />
                         </div>
-                        <div className="flex-shrink-0 mt-[29px]">
+                        <div className="flex flex-col flex-shrink-0 mt-[29px]">
                             <Button type="button" variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive" onClick={() => removeMedicine(index)}>
                                 <Trash2 className="h-4 w-4" />
                             </Button>
@@ -532,7 +532,7 @@ export function DentalPrescriptionGenerator() {
       </Form>
 
       {isLoading && (
-         <div className="flex items-center justify-center rounded-lg border border-dashed p-8">
+         <div className="flex items-center justify-center rounded-lg border border-dashed p-8 no-print">
             <div className="text-center">
                 <Loader2 className="mx-auto h-12 w-12 animate-spin text-primary" />
                 <p className="mt-4 text-muted-foreground">Generating summary...</p>
@@ -541,8 +541,8 @@ export function DentalPrescriptionGenerator() {
       )}
 
       {opdSummary && (
-        <div id="printable-prescription" className="hidden print:block">
-        <Card className="mt-6 printable-area">
+        <div id="printable-prescription">
+        <Card className="mt-6">
           <CardHeader>
             <div className="flex items-center justify-between no-print">
                 <CardTitle>Generated OPD Summary</CardTitle>
