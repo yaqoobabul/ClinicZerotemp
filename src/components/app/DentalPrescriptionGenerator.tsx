@@ -14,6 +14,7 @@ import { Separator } from '../ui/separator';
 import { Textarea } from '../ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ToothChart } from './ToothChart';
+import { Card, CardHeader, CardContent, CardTitle, CardDescription } from '../ui/card';
 
 type GeneratedSummary = {
   patientDetails: {
@@ -40,11 +41,9 @@ const medicineSchema = z.object({
   durationUnit: z.string(),
   instructions: z.string().optional(),
 }).partial().refine(data => {
-    // If the entire object is empty, it's valid.
-    if (!Object.values(data).some(val => val !== undefined && val !== '')) {
-      return true;
-    }
-    // If some fields are filled, name is required.
+    // If some fields are filled, name is required. But if all are empty, it's fine.
+    const hasValue = Object.values(data).some(val => val !== undefined && val !== '');
+    if (!hasValue) return true;
     return !!data.name && data.name.trim() !== '';
 }, { message: "Drug name is required if other fields are filled.", path: ['name']});
 
@@ -59,7 +58,7 @@ const radiographSchema = z.object({
   toothNumber: z.string().optional(),
 });
 
-const testAdvisedSchema = z.object({ 
+const testAdvisedSchema = z.object({
   value: z.string().optional()
 });
 
@@ -128,6 +127,9 @@ export function DentalPrescriptionGenerator() {
     try {
         const filteredMedicines = values.medicines
             ?.filter(m => m.name && m.name.trim() !== '') || [];
+        
+        const filteredRadiographs = values.radiographsAdvised?.filter(r => r.type && r.type.trim() !== '');
+        const filteredTests = values.testsAdvised?.filter(t => t.value && t.value.trim() !== '');
 
         const prescriptionTable = filteredMedicines.length > 0 ? [
             '| Medicine | Dosage | Frequency | Duration | Instructions |',
@@ -140,14 +142,12 @@ export function DentalPrescriptionGenerator() {
             })
         ].join('\n') : undefined;
 
-        const radiographs = values.radiographsAdvised
-            ?.filter(r => r.type && r.type.trim() !== '')
-            .map(r => r.toothNumber ? `${r.type} (w.r.t #${r.toothNumber})` : r.type)
+        const radiographs = filteredRadiographs
+            ?.map(r => r.toothNumber ? `${r.type} (w.r.t #${r.toothNumber})` : r.type)
             .join(', ') || undefined;
 
-        const otherTests = values.testsAdvised
-            ?.filter(t => t.value && t.value.trim() !== '')
-            .map(t => t.value)
+        const otherTests = filteredTests
+            ?.map(t => t.value)
             .join(', ') || undefined;
 
         const summary: GeneratedSummary = {
@@ -343,7 +343,7 @@ export function DentalPrescriptionGenerator() {
               <CardContent className="space-y-4">
                 {medicineFields.map((field, index) => (
                   <div key={field.id} className="p-4 border rounded-lg bg-muted/20 space-y-4">
-                    <div className="flex flex-col md:flex-row md:items-end md:gap-4">
+                    <div className="flex flex-col md:flex-row md:items-start md:gap-4">
                         <div className="flex-grow space-y-4">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <FormField control={form.control} name={`medicines.${index}.name`} render={({ field }) => (
@@ -414,7 +414,7 @@ export function DentalPrescriptionGenerator() {
                                 </FormItem>
                             </div>
                         </div>
-                        <div className="flex items-end h-full">
+                        <div className="flex items-end h-full mt-4 md:mt-0">
                             <Button type="button" variant="ghost" size="icon" className="shrink-0 text-muted-foreground hover:text-destructive" onClick={() => removeMedicine(index)}>
                                 <Trash2 className="h-4 w-4" />
                             </Button>
@@ -469,13 +469,13 @@ export function DentalPrescriptionGenerator() {
                     </div>
                     <div className="text-right flex-shrink-0">
                         <p><strong>Date:</strong> {new Date().toLocaleDateString('en-IN')}</p>
-                        <div className="flex gap-2 justify-end mt-1 no-print">
-                            <Button variant="outline" size="icon" onClick={handlePrint}><Printer className="h-4 w-4" /></Button>
-                        </div>
                     </div>
                 </div>
+                <div className="flex justify-end mt-1 no-print">
+                    <Button variant="outline" size="icon" onClick={handlePrint}><Printer className="h-4 w-4" /></Button>
+                </div>
                 <Separator className="my-1 bg-black"/>
-                <div className="px-1">
+                <div className="px-1 space-y-1">
                     <div className="mb-1">
                         <h3 className="font-bold text-xs">Patient Details</h3>
                         <div className="grid grid-cols-3 gap-x-4">
@@ -485,71 +485,69 @@ export function DentalPrescriptionGenerator() {
                         </div>
                     </div>
 
-                    <div className="space-y-1">
-                        {opdSummary.toothChartNotes && (
-                        <div className='mb-1'>
-                            <h3 className="font-bold text-xs">Dental Notes</h3>
-                            <p>{opdSummary.toothChartNotes}</p>
-                        </div>
-                        )}
-                        
-                        <div className='mb-1'>
-                            <h3 className="font-bold text-xs">Provisional Diagnosis</h3>
-                            <p>{opdSummary.provisionalDiagnosis}</p>
-                        </div>
-                        
-                        {(opdSummary.radiographsAdvised || opdSummary.testsAdvised) && (
-                        <div className='mb-1'>
-                            <h3 className="font-bold text-xs">Investigations Advised</h3>
-                            {opdSummary.radiographsAdvised && <p><strong>Radiographs:</strong> {opdSummary.radiographsAdvised}</p>}
-                            {opdSummary.testsAdvised && <p><strong>Tests:</strong> {opdSummary.testsAdvised}</p>}
-                        </div>
-                        )}
-
-                        {prescriptionTableRows.length > 0 && (
-                        <div className="mb-1">
-                            <h3 className="font-bold text-xs">Prescription (Rx)</h3>
-                            <table className="w-full border-collapse">
-                                <thead>
-                                    <tr className="border-b">
-                                        <th className="text-left font-semibold py-0 pr-2">Medicine</th>
-                                        <th className="text-left font-semibold py-0 px-2">Dosage</th>
-                                        <th className="text-left font-semibold py-0 px-2">Frequency</th>
-                                        <th className="text-left font-semibold py-0 px-2">Duration</th>
-                                        <th className="text-left font-semibold py-0 pl-2">Instructions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {prescriptionTableRows.map((row, i) => (
-                                        <tr key={i} className="border-b">
-                                            {row.map((cell, j) => (
-                                                <td key={j} className={`py-0.5 ${j === 0 ? 'pr-2' : 'px-2'}`}>{cell}</td>
-                                            ))}
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                        )}
-
-                        {opdSummary.additionalNotes && (
-                        <div className="mb-1">
-                            <h3 className="font-bold text-xs">Additional Notes</h3>
-                            <p>{opdSummary.additionalNotes}</p>
-                        </div>
-                        )}
+                    {opdSummary.toothChartNotes && (
+                    <div className='mb-1'>
+                        <h3 className="font-bold text-xs">Dental Notes</h3>
+                        <p>{opdSummary.toothChartNotes}</p>
                     </div>
+                    )}
+                    
+                    <div className='mb-1'>
+                        <h3 className="font-bold text-xs">Provisional Diagnosis</h3>
+                        <p>{opdSummary.provisionalDiagnosis}</p>
+                    </div>
+                    
+                    {(opdSummary.radiographsAdvised || opdSummary.testsAdvised) && (
+                    <div className='mb-1'>
+                        <h3 className="font-bold text-xs">Investigations Advised</h3>
+                        {opdSummary.radiographsAdvised && <p><strong>Radiographs:</strong> {opdSummary.radiographsAdvised}</p>}
+                        {opdSummary.testsAdvised && <p><strong>Tests:</strong> {opdSummary.testsAdvised}</p>}
+                    </div>
+                    )}
 
-                    <div className="flex justify-between items-end pt-1">
-                        <div>
-                          {opdSummary.followUpDate && (
-                            <p><strong>Follow-up:</strong> {opdSummary.followUpDate}</p>
-                          )}
-                        </div>
-                        <div className="text-center">
-                            <div className="h-8"></div>
-                            <p className="border-t-2 border-black pt-1">Doctor's Signature</p>
-                        </div>
+                    {prescriptionTableRows.length > 0 && (
+                    <div className="mb-1">
+                        <h3 className="font-bold text-xs">Prescription (Rx)</h3>
+                        <table className="w-full border-collapse">
+                            <thead>
+                                <tr className="border-b">
+                                    <th className="text-left font-semibold py-0 pr-2">Medicine</th>
+                                    <th className="text-left font-semibold py-0 px-2">Dosage</th>
+                                    <th className="text-left font-semibold py-0 px-2">Frequency</th>
+                                    <th className="text-left font-semibold py-0 px-2">Duration</th>
+                                    <th className="text-left font-semibold py-0 pl-2">Instructions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {prescriptionTableRows.map((row, i) => (
+                                    <tr key={i} className="border-b">
+                                        {row.map((cell, j) => (
+                                            <td key={j} className={`py-0.5 ${j === 0 ? 'pr-2' : 'px-2'}`}>{cell}</td>
+                                        ))}
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                    )}
+
+                    {opdSummary.additionalNotes && (
+                    <div className="mb-1">
+                        <h3 className="font-bold text-xs">Additional Notes</h3>
+                        <p>{opdSummary.additionalNotes}</p>
+                    </div>
+                    )}
+                </div>
+
+                <div className="flex justify-between items-end pt-1">
+                    <div>
+                      {opdSummary.followUpDate && (
+                        <p><strong>Follow-up:</strong> {opdSummary.followUpDate}</p>
+                      )}
+                    </div>
+                    <div className="text-center">
+                        <div className="h-8"></div>
+                        <p className="border-t-2 border-black pt-1">Doctor's Signature</p>
                     </div>
                 </div>
             </div>
