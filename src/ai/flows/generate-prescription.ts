@@ -1,34 +1,52 @@
-// 'use server';
+'use server';
 
 /**
- * @fileOverview Prescription generation flow.
+ * @fileOverview OPD summary generation flow.
  *
- * - generatePrescription - A function that generates a structured prescription from free text.
+ * - generatePrescription - A function that generates a structured OPD summary.
  * - GeneratePrescriptionInput - The input type for the generatePrescription function.
  * - GeneratePrescriptionOutput - The return type for the generatePrescription function.
  */
-
-'use server';
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const GeneratePrescriptionInputSchema = z.object({
-  drugName: z.string().describe('The name of the drug.'),
-  dosage: z.string().describe('The dosage of the drug (e.g., 500mg).'),
-  frequency: z.string().describe('How often to take the drug (e.g., Twice a day).'),
-  duration: z.string().describe('How long to take the drug for (e.g., 5 days).'),
-  instructions: z.string().optional().describe('Additional instructions (e.g., After food).'),
+  patientName: z.string().describe("The patient's full name."),
+  patientAge: z.string().describe("The patient's age."),
+  patientGender: z.string().describe("The patient's gender."),
+  provisionalDiagnosis: z.string().describe('The provisional diagnosis for the patient.'),
+  medicines: z.array(z.object({
+      name: z.string().describe('The name of the drug.'),
+      dosage: z.string().describe('The dosage of the drug (e.g., 500mg).'),
+      frequency: z.string().describe('How often to take the drug (e.g., Twice a day).'),
+      duration: z.string().describe('How long to take the drug for (e.g., 5 days).'),
+      instructions: z.string().optional().describe('Additional instructions (e.g., After food).'),
+  })),
+  testsAdvised: z.string().optional().describe('Any diagnostic tests that are advised.'),
+  additionalNotes: z.string().optional().describe('Any additional notes for the patient.'),
+  followUpDate: z.string().optional().describe('The recommended follow-up date.'),
 });
 
 export type GeneratePrescriptionInput = z.infer<typeof GeneratePrescriptionInputSchema>;
 
 const GeneratePrescriptionOutputSchema = z.object({
-  prescriptionTable: z
-    .string()
-    .describe(
-      'A structured table (using markdown) representing the prescription, with columns for Medicine, Dosage, Frequency, Duration, and Instructions.'
-    ),
+  opdSummary: z.object({
+    patientDetails: z.object({
+      name: z.string(),
+      age: z.string(),
+      gender: z.string(),
+    }),
+    provisionalDiagnosis: z.string(),
+    prescriptionTable: z
+      .string()
+      .describe(
+        'A structured table (using markdown) representing the prescription, with columns for Medicine, Dosage, Frequency, Duration, and Instructions.'
+      ),
+    testsAdvised: z.string().optional(),
+    additionalNotes: z.string().optional(),
+    followUpDate: z.string().optional(),
+  })
 });
 
 export type GeneratePrescriptionOutput = z.infer<typeof GeneratePrescriptionOutputSchema>;
@@ -38,31 +56,33 @@ export async function generatePrescription(input: GeneratePrescriptionInput): Pr
 }
 
 const prompt = ai.definePrompt({
-  name: 'generatePrescriptionPrompt',
+  name: 'generateOpdSummaryPrompt',
   input: {schema: GeneratePrescriptionInputSchema},
   output: {schema: GeneratePrescriptionOutputSchema},
-  prompt: `You are an AI assistant helping doctors generate prescriptions quickly.
+  prompt: `You are an AI assistant helping doctors in India generate OPD summaries.
+The user will provide patient details, diagnosis, prescription information, and other notes.
+Your task is to structure this information into a clean OPD summary.
 
-  The doctor will provide you with structured data for a prescription.
-  Your task is to convert this into a single-row structured prescription table, using Markdown format.
+The prescription table should be in Markdown format with a header and one row for each medicine.
 
-  The table should have the following columns:
-  - Medicine: The name of the medicine.
-  - Dosage: The dosage of the medicine.
-  - Frequency: When the medicine should be taken (e.g., twice a day).
-  - Duration: How many days the medicine should be taken for.
-  - Instructions: Additional notes for the patient.
+User Input:
+Patient Name: {{patientName}}
+Patient Age: {{patientAge}}
+Patient Gender: {{patientGender}}
+Provisional Diagnosis: {{provisionalDiagnosis}}
+Tests Advised: {{testsAdvised}}
+Additional Notes: {{additionalNotes}}
+Follow-up Date: {{followUpDate}}
 
-  Here's the doctor's input:
-  Drug Name: {{drugName}}
-  Dosage: {{dosage}}
-  Frequency: {{frequency}}
-  Duration: {{duration}}
-  Instructions: {{instructions}}
+Medicines:
+{{#each medicines}}
+- Medicine: {{name}}, Dosage: {{dosage}}, Frequency: {{frequency}}, Duration: {{duration}}, Instructions: {{instructions}}
+{{/each}}
 
-  Please generate the prescription table in Markdown format with a header and one data row:
-  `,
+Generate the final OPD summary object.
+`,
 });
+
 
 const generatePrescriptionFlow = ai.defineFlow(
   {
@@ -70,8 +90,11 @@ const generatePrescriptionFlow = ai.defineFlow(
     inputSchema: GeneratePrescriptionInputSchema,
     outputSchema: GeneratePrescriptionOutputSchema,
   },
-  async input => {
+  async (input) => {
     const {output} = await prompt(input);
-    return output!;
+    if (!output) {
+      throw new Error('Failed to generate OPD summary');
+    }
+    return output;
   }
 );

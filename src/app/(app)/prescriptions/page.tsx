@@ -4,17 +4,13 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 export default function PrescriptionsPage() {
   return (
     <div className="grid flex-1 items-start gap-4">
-      <Card>
-        <CardHeader>
-          <CardTitle>AI-Powered Prescription Generator</CardTitle>
+        <CardHeader className="px-0">
+          <CardTitle>OPD Visit Entry</CardTitle>
           <CardDescription>
-            Enter the patient's prescription details in free-text. The AI will structure it for you. You can also use voice-to-text input.
+            Enter patient visit details to generate a printable OPD summary.
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <PrescriptionGenerator />
-        </CardContent>
-      </Card>
+        <PrescriptionGenerator />
     </div>
   );
 }
