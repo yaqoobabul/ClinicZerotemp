@@ -23,7 +23,7 @@ export function AppSidebar() {
 
   const renderNavItem = (item: { href: string; icon: React.ElementType; label: string }) => {
     const Icon = item.icon;
-    const isActive = pathname === item.href;
+    const isActive = pathname.startsWith(item.href);
     return (
       <TooltipProvider key={item.href}>
         <Tooltip>
