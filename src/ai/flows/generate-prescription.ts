@@ -10,7 +10,7 @@
  */
 
 import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import {z} from 'zod';
 
 const GeneratePrescriptionInputSchema = z.object({
   patientName: z.string().describe("The patient's full name."),
@@ -25,7 +25,11 @@ const GeneratePrescriptionInputSchema = z.object({
       duration: z.string().describe('How long to take the drug for (e.g., 5 days).'),
       instructions: z.string().optional().describe('Additional instructions (e.g., After food).'),
   })).optional(),
-  testsAdvised: z.array(z.string()).optional().describe('Any diagnostic tests that are advised.'),
+  radiographsAdvised: z.array(z.object({
+    type: z.string().describe('The type of radiograph advised.'),
+    toothNumber: z.string().optional().describe('The tooth number for the radiograph.'),
+  })).optional().describe('Radiographic tests advised.'),
+  testsAdvised: z.array(z.string()).optional().describe('Any diagnostic lab tests that are advised.'),
   additionalNotes: z.string().optional().describe('Any additional notes for the patient.'),
   followUpDate: z.string().optional().describe('The recommended follow-up date.'),
 });
@@ -77,6 +81,12 @@ Patient Age: {{patientAge}}
 Patient Gender: {{patientGender}}
 Provisional Diagnosis: {{provisionalDiagnosis}}
 {{#if toothChartNotes}}Tooth Chart Notes: {{toothChartNotes}}{{/if}}
+{{#if radiographsAdvised}}
+Radiographs Advised:
+{{#each radiographsAdvised}}
+- Type: {{type}}{{#if toothNumber}}, Tooth: {{toothNumber}}{{/if}}
+{{/each}}
+{{/if}}
 Tests Advised: {{#if testsAdvised}} {{#each testsAdvised}} {{this}}{{#unless @last}}, {{/unless}}{{/each}}{{/if}}
 Additional Notes: {{additionalNotes}}
 Follow-up Date: {{followUpDate}}
@@ -89,7 +99,8 @@ Medicines:
 {{/if}}
 
 Generate the final OPD summary object.
-If tests are advised, list them in a single comma-separated string.
+Combine both radiographs and other tests into the 'testsAdvised' field as a single comma-separated string.
+For radiographs, format them as "Type (Tooth: #number)" or just "Type" if no tooth number is given.
 If tooth chart notes are provided, include them.
 If no medicines are provided, do not generate the prescriptionTable field.
 `,
@@ -112,13 +123,25 @@ const generatePrescriptionFlow = ai.defineFlow(
       }
     }
 
+    // Pre-process tests to combine them for the prompt
+    let combinedTests: string[] = [];
+    if (input.radiographsAdvised) {
+      const radiographStrings = input.radiographsAdvised.map(r => {
+        return r.toothNumber ? `${r.type} (w.r.t #${r.toothNumber})` : r.type;
+      });
+      combinedTests.push(...radiographStrings);
+    }
+    if (input.testsAdvised) {
+      combinedTests.push(...input.testsAdvised);
+    }
 
-    const {output} = await prompt(input);
+    const modifiedInput = { ...input, testsAdvised: combinedTests };
+
+
+    const {output} = await prompt(modifiedInput);
     if (!output) {
       throw new Error('Failed to generate OPD summary');
     }
     return output;
   }
 );
-
-    

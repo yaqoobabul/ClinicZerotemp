@@ -97,19 +97,27 @@ const ComboboxField = ({ form, name, suggestions, placeholder }: { form: any, na
   };
 
 const medicineSchema = z.object({
-  name: z.string().min(1, 'Drug name is required.'),
-  dosageValue: z.string().min(1, 'Dosage value is required.'),
-  dosageUnit: z.string().min(1, 'Dosage unit is required.'),
-  frequencyValue: z.string().min(1, 'Frequency is required.'),
-  frequencyUnit: z.string().min(1, 'Unit is required.'),
-  durationValue: z.string().min(1, 'Duration is required.'),
-  durationUnit: z.string().min(1, 'Unit is required.'),
+  name: z.string(),
+  dosageValue: z.string(),
+  dosageUnit: z.string(),
+  frequencyValue: z.string(),
+  frequencyUnit: z.string(),
+  durationValue: z.string(),
+  durationUnit: z.string(),
   instructions: z.string().optional(),
-});
+}).partial().refine(data => {
+    return Object.values(data).some(val => val !== '' && val !== undefined);
+}, { message: "At least one field must be filled.", path: ['name']});
+
 
 const toothNoteSchema = z.object({
   tooth: z.string(),
   note: z.string(),
+});
+
+const radiographSchema = z.object({
+  type: z.string().min(1, 'Type is required.'),
+  toothNumber: z.string().optional(),
 });
 
 const formSchema = z.object({
@@ -118,7 +126,8 @@ const formSchema = z.object({
   patientGender: z.string().min(1, 'Patient gender is required.'),
   toothNotes: z.array(toothNoteSchema).optional(),
   provisionalDiagnosis: z.string().min(1, 'Diagnosis is required.'),
-  medicines: z.array(medicineSchema),
+  medicines: z.array(medicineSchema).optional(),
+  radiographsAdvised: z.array(radiographSchema).optional(),
   testsAdvised: z.array(z.object({ value: z.string().min(1, 'Test name cannot be empty.')})).optional(),
   additionalNotes: z.string().optional(),
   followUpDate: z.string().optional(),
@@ -129,7 +138,7 @@ const dosageUnits = ["mg", "mcg", "g", "ml", "tsp", "tbsp", "IU", "drops"];
 const durationUnits = ["Days", "Weeks", "Months", "Year(s)"];
 const frequencyUnits = ["daily", "weekly", "monthly"];
 const instructionSuggestions = ["Before food", "After food", "With meals", "Empty stomach"];
-const commonTests = ["OPG", "IOPA", "CBCT", "Biopsy"];
+const radiographTypes = ["OPG", "IOPA", "CBCT", "Bitewing"];
 
 export function DentalPrescriptionGenerator() {
   const [isLoading, setIsLoading] = useState(false);
@@ -145,6 +154,7 @@ export function DentalPrescriptionGenerator() {
       toothNotes: [],
       provisionalDiagnosis: '',
       medicines: [],
+      radiographsAdvised: [],
       testsAdvised: [],
       additionalNotes: '',
       followUpDate: '',
@@ -154,6 +164,11 @@ export function DentalPrescriptionGenerator() {
   const { fields: medicineFields, append: appendMedicine, remove: removeMedicine } = useFieldArray({
     control: form.control,
     name: "medicines"
+  });
+
+  const { fields: radiographFields, append: appendRadiograph, remove: removeRadiograph } = useFieldArray({
+    control: form.control,
+    name: "radiographsAdvised"
   });
 
   const { fields: testFields, append: appendTest, remove: removeTest } = useFieldArray({
@@ -168,12 +183,18 @@ export function DentalPrescriptionGenerator() {
 
     const transformedValues = {
         ...values,
-        medicines: values.medicines.map(m => ({
-            name: m.name,
+        medicines: values.medicines
+            ?.filter(m => m.name) // Filter out empty medicine rows
+            .map(m => ({
+            name: m.name!,
             dosage: `${m.dosageValue} ${m.dosageUnit}`,
             frequency: `${m.frequencyValue} time(s) ${m.frequencyUnit}`,
             duration: `${m.durationValue} ${m.durationUnit}`,
             instructions: m.instructions,
+        })),
+        radiographsAdvised: values.radiographsAdvised?.map(r => ({
+            type: r.type,
+            toothNumber: r.toothNumber,
         })),
         testsAdvised: values.testsAdvised?.map(t => t.value),
         toothChartNotes: values.toothNotes
@@ -326,34 +347,85 @@ export function DentalPrescriptionGenerator() {
           </Card>
           
           <Card>
-            <CardHeader><CardTitle>Tests Advised</CardTitle></CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                {testFields.map((field, index) => (
-                  <div key={field.id} className="flex items-center gap-2">
-                    <FormField
-                      control={form.control}
-                      name={`testsAdvised.${index}.value`}
-                      render={({ field }) => (
-                        <FormItem className="flex-grow">
-                            <FormControl>
-                                <Input placeholder="e.g., OPG" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <Button type="button" variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive" onClick={() => removeTest(index)}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ))}
-                <Button type="button" variant="outline" size="sm" onClick={() => appendTest({ value: '' })}>
-                  <Plus className="mr-2 h-4 w-4" /> Add Test
-                </Button>
-              </div>
+            <CardHeader><CardTitle>Investigations Advised</CardTitle></CardHeader>
+            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <h4 className="font-semibold mb-2">Radiograph Advised</h4>
+                    <div className="space-y-2">
+                        {radiographFields.map((field, index) => (
+                        <div key={field.id} className="flex items-start gap-2">
+                            <FormField
+                            control={form.control}
+                            name={`radiographsAdvised.${index}.type`}
+                            render={({ field }) => (
+                                <FormItem className="flex-grow">
+                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                        <FormControl>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select type" />
+                                            </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            {radiographTypes.map(type => <SelectItem key={type} value={type}>{type}</SelectItem>)}
+                                        </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                            />
+                             <FormField
+                            control={form.control}
+                            name={`radiographsAdvised.${index}.toothNumber`}
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormControl>
+                                        <Input placeholder="Tooth #" {...field} className="w-24" />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                            />
+                            <Button type="button" variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive" onClick={() => removeRadiograph(index)}>
+                            <Trash2 className="h-4 w-4" />
+                            </Button>
+                        </div>
+                        ))}
+                        <Button type="button" variant="outline" size="sm" onClick={() => appendRadiograph({ type: '', toothNumber: '' })}>
+                        <Plus className="mr-2 h-4 w-4" /> Add Radiograph
+                        </Button>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 className="font-semibold mb-2">Other Tests Advised</h4>
+                    <div className="space-y-2">
+                        {testFields.map((field, index) => (
+                        <div key={field.id} className="flex items-center gap-2">
+                            <FormField
+                            control={form.control}
+                            name={`testsAdvised.${index}.value`}
+                            render={({ field }) => (
+                                <FormItem className="flex-grow">
+                                    <FormControl>
+                                        <Input placeholder="e.g., Biopsy" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                            />
+                            <Button type="button" variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive" onClick={() => removeTest(index)}>
+                            <Trash2 className="h-4 w-4" />
+                            </Button>
+                        </div>
+                        ))}
+                        <Button type="button" variant="outline" size="sm" onClick={() => appendTest({ value: '' })}>
+                        <Plus className="mr-2 h-4 w-4" /> Add Test
+                        </Button>
+                    </div>
+                </div>
             </CardContent>
           </Card>
+
 
           <Card>
             <CardHeader><CardTitle>Prescription</CardTitle></CardHeader>
@@ -529,5 +601,3 @@ export function DentalPrescriptionGenerator() {
     </div>
   );
 }
-
-    
