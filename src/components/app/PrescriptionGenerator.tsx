@@ -61,7 +61,7 @@ const testAdvisedSchema = z.object({
 
 const formSchema = z.object({
   patientName: z.string().min(1, 'Patient name is required.'),
-  patientAge: z.string().min(1, 'Patient age is required.').regex(/^\d+$/, 'Age must be a number.'),
+  patientAge: z.string().min(1, 'Patient age is required.'),
   patientGender: z.string().min(1, 'Patient gender is required.'),
   medicalHistory: z.string().optional(),
   provisionalDiagnosis: z.string().min(1, 'Diagnosis is required.'),
@@ -185,7 +185,7 @@ export function PrescriptionGenerator() {
                     <FormItem><FormLabel>Patient Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
                 <FormField control={form.control} name="patientAge" render={({ field }) => (
-                    <FormItem><FormLabel>Age</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+                    <FormItem><FormLabel>Age</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
                 <FormField control={form.control} name="patientGender" render={({ field }) => (
                   <FormItem>
@@ -477,3 +477,5 @@ export function PrescriptionGenerator() {
     </div>
   );
 }
+
+    
