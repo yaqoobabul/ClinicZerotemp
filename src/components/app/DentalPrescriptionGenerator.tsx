@@ -113,6 +113,7 @@ const formSchema = z.object({
   patientName: z.string().min(1, 'Patient name is required.'),
   patientAge: z.string().min(1, 'Patient age is required.'),
   patientGender: z.string().min(1, 'Patient gender is required.'),
+  toothChartNotes: z.string().optional(),
   provisionalDiagnosis: z.string().min(1, 'Diagnosis is required.'),
   medicines: z.array(medicineSchema).min(1, 'At least one medicine is required.'),
   testsAdvised: z.array(z.object({ value: z.string().min(1, 'Test name cannot be empty.')})).optional(),
@@ -125,9 +126,9 @@ const dosageUnits = ["mg", "mcg", "g", "ml", "tsp", "tbsp", "IU", "drops"];
 const durationUnits = ["Days", "Weeks", "Months", "Year(s)"];
 const frequencyUnits = ["daily", "weekly", "monthly"];
 const instructionSuggestions = ["Before food", "After food", "With meals", "Empty stomach"];
-const commonTests = ["Complete Blood Count (CBC)", "Urinalysis", "Lipid Profile", "Thyroid Function Test (TFT)", "X-Ray"];
+const commonTests = ["OPG", "IOPA", "CBCT", "Biopsy"];
 
-export function PrescriptionGenerator() {
+export function DentalPrescriptionGenerator() {
   const [isLoading, setIsLoading] = useState(false);
   const [opdSummary, setOpdSummary] = useState<GeneratePrescriptionOutput['opdSummary'] | null>(null);
   const { toast } = useToast();
@@ -138,6 +139,7 @@ export function PrescriptionGenerator() {
       patientName: '',
       patientAge: '',
       patientGender: '',
+      toothChartNotes: '',
       provisionalDiagnosis: '',
       medicines: [{ name: '', dosageValue: '', dosageUnit: 'mg', frequencyValue: '2', frequencyUnit: 'daily', durationValue: '', durationUnit: 'Days', instructions: 'After food' }],
       testsAdvised: [],
@@ -174,6 +176,8 @@ export function PrescriptionGenerator() {
     };
 
     try {
+      // NOTE: We are still using the general prescription flow.
+      // A dedicated dental flow might be needed if the tooth chart needs AI processing.
       const result = await generatePrescription(transformedValues);
       setOpdSummary(result.opdSummary);
     } catch (error) {
@@ -274,10 +278,23 @@ export function PrescriptionGenerator() {
           </Card>
           
           <Card>
+            <CardHeader><CardTitle>Tooth Chart & Notes</CardTitle></CardHeader>
+            <CardContent>
+                <FormField control={form.control} name="toothChartNotes" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Notes related to specific teeth (e.g., #16-Caries, #24-RCT)</FormLabel>
+                      <FormControl><Textarea placeholder="Enter any notes related to the tooth chart..." {...field} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                )} />
+            </CardContent>
+          </Card>
+
+          <Card>
             <CardHeader><CardTitle>Provisional Diagnosis</CardTitle></CardHeader>
             <CardContent>
                 <FormField control={form.control} name="provisionalDiagnosis" render={({ field }) => (
-                    <FormItem><FormControl><Input placeholder="e.g., Acute Gastroenteritis" {...field} /></FormControl><FormMessage /></FormItem>
+                    <FormItem><FormControl><Input placeholder="e.g., Symptomatic Irreversible Pulpitis" {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
             </CardContent>
           </Card>
@@ -294,7 +311,7 @@ export function PrescriptionGenerator() {
                       render={({ field }) => (
                         <FormItem className="flex-grow">
                             <FormControl>
-                                <Input placeholder="e.g., Complete Blood Count (CBC)" {...field} />
+                                <Input placeholder="e.g., OPG" {...field} />
                             </FormControl>
                             <FormMessage />
                         </FormItem>
@@ -319,11 +336,11 @@ export function PrescriptionGenerator() {
                 <div key={field.id} className="p-4 border rounded-lg space-y-4 relative bg-muted/20">
                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-x-4 gap-y-4 items-start">
                       <FormField control={form.control} name={`medicines.${index}.name`} render={({ field }) => (
-                          <FormItem className="lg:col-span-3"><FormLabel>Drug Name</FormLabel><FormControl><Input placeholder="e.g., Paracetamol" {...field} /></FormControl><FormMessage /></FormItem>
+                          <FormItem className="lg:col-span-3"><FormLabel>Drug Name</FormLabel><FormControl><Input placeholder="e.g., Amoxicillin" {...field} /></FormControl><FormMessage /></FormItem>
                       )} />
                       <div className="lg:col-span-2 grid grid-cols-2 gap-2">
                           <FormField control={form.control} name={`medicines.${index}.dosageValue`} render={({ field }) => (
-                              <FormItem><FormLabel>Dosage</FormLabel><FormControl><Input type="number" placeholder="e.g., 500" {...field} /></FormControl><FormMessage /></FormItem>
+                              <FormItem><FormLabel>Dosage</FormLabel><FormControl><Input type="number" placeholder="500" {...field} /></FormControl><FormMessage /></FormItem>
                           )} />
                           <FormField control={form.control} name={`medicines.${index}.dosageUnit`} render={({ field }) => (
                               <FormItem><FormLabel>Unit</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}>
@@ -334,7 +351,7 @@ export function PrescriptionGenerator() {
                       </div>
                       <div className="lg:col-span-2 grid grid-cols-2 gap-2">
                           <FormField control={form.control} name={`medicines.${index}.frequencyValue`} render={({ field }) => (
-                              <FormItem><FormLabel>Frequency</FormLabel><FormControl><Input type="number" placeholder="e.g., 2" {...field} /></FormControl><FormMessage /></FormItem>
+                              <FormItem><FormLabel>Frequency</FormLabel><FormControl><Input type="number" placeholder="3" {...field} /></FormControl><FormMessage /></FormItem>
                           )} />
                           <FormField control={form.control} name={`medicines.${index}.frequencyUnit`} render={({ field }) => (
                               <FormItem><FormLabel>Unit</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}>
@@ -345,7 +362,7 @@ export function PrescriptionGenerator() {
                       </div>
                        <div className="lg:col-span-2 grid grid-cols-2 gap-2">
                           <FormField control={form.control} name={`medicines.${index}.durationValue`} render={({ field }) => (
-                              <FormItem><FormLabel>Duration</FormLabel><FormControl><Input type="number" placeholder="e.g., 5" {...field} /></FormControl><FormMessage /></FormItem>
+                              <FormItem><FormLabel>Duration</FormLabel><FormControl><Input type="number" placeholder="5" {...field} /></FormControl><FormMessage /></FormItem>
                           )} />
                           <FormField control={form.control} name={`medicines.${index}.durationUnit`} render={({ field }) => (
                               <FormItem><FormLabel>Unit</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}>
@@ -376,10 +393,10 @@ export function PrescriptionGenerator() {
             <CardHeader><CardTitle>Notes & Follow-up</CardTitle></CardHeader>
             <CardContent className="grid md:grid-cols-2 gap-4">
                 <FormField control={form.control} name="additionalNotes" render={({ field }) => (
-                    <FormItem><FormLabel>Additional Notes</FormLabel><FormControl><Textarea placeholder="e.g., Take adequate rest and stay hydrated." {...field} /></FormControl><FormMessage /></FormItem>
+                    <FormItem><FormLabel>Additional Notes</FormLabel><FormControl><Textarea placeholder="e.g., Avoid hard foods." {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
                 <FormField control={form.control} name="followUpDate" render={({ field }) => (
-                    <FormItem><FormLabel>Follow-up Date</FormLabel><FormControl><Input placeholder="e.g., After 3 days" {...field} /></FormControl><FormMessage /></FormItem>
+                    <FormItem><FormLabel>Follow-up Date</FormLabel><FormControl><Input placeholder="e.g., After 1 week" {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
             </CardContent>
           </Card>
