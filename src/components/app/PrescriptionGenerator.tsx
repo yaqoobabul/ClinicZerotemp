@@ -57,19 +57,17 @@ const ComboboxField = ({ form, name, suggestions, placeholder }: { form: any, na
                 value={customValue}
                 onValueChange={setCustomValue}
               />
-              <CommandEmpty>
-                  <Button
-                    variant="ghost"
-                    className="w-full justify-start"
-                    onSelect={() => {
-                        form.setValue(name, customValue);
-                        setOpen(false);
-                    }}
-                   >
-                     Add "{customValue}"
-                   </Button>
-              </CommandEmpty>
               <CommandList>
+                <CommandEmpty>
+                    <CommandItem
+                      onSelect={() => {
+                          form.setValue(name, customValue);
+                          setOpen(false);
+                      }}
+                    >
+                      Add "{customValue}"
+                    </CommandItem>
+                </CommandEmpty>
                   <CommandGroup>
                       {suggestions.map((suggestion) => (
                       <CommandItem
@@ -114,7 +112,7 @@ const formSchema = z.object({
   patientAge: z.string().min(1, 'Patient age is required.'),
   patientGender: z.string().min(1, 'Patient gender is required.'),
   provisionalDiagnosis: z.string().min(1, 'Diagnosis is required.'),
-  medicines: z.array(medicineSchema).min(1, 'At least one medicine is required.'),
+  medicines: z.array(medicineSchema),
   testsAdvised: z.array(z.object({ value: z.string().min(1, 'Test name cannot be empty.')})).optional(),
   additionalNotes: z.string().optional(),
   followUpDate: z.string().optional(),
@@ -139,7 +137,7 @@ export function PrescriptionGenerator() {
       patientAge: '',
       patientGender: '',
       provisionalDiagnosis: '',
-      medicines: [{ name: '', dosageValue: '', dosageUnit: 'mg', frequencyValue: '2', frequencyUnit: 'daily', durationValue: '', durationUnit: 'Days', instructions: 'After food' }],
+      medicines: [],
       testsAdvised: [],
       additionalNotes: '',
       followUpDate: '',
@@ -192,14 +190,35 @@ export function PrescriptionGenerator() {
     const printableArea = document.getElementById('printable-prescription');
     if (!printableArea) return;
 
-    const printContents = printableArea.innerHTML;
-    const originalContents = document.body.innerHTML;
-    
-    document.body.innerHTML = printContents;
+    // Temporarily hide all other elements
+    const originalDisplay = [];
+    const bodyChildren = document.body.children;
+    for (let i = 0; i < bodyChildren.length; i++) {
+        const el = bodyChildren[i] as HTMLElement;
+        if (el.id !== 'printable-prescription-container') {
+            originalDisplay.push({ el, display: el.style.display });
+            el.style.display = 'none';
+        }
+    }
+
+    // Un-hide the printable area and its parents
+    let parent = printableArea.parentElement;
+    while(parent && parent !== document.body) {
+      originalDisplay.push({ el: parent, display: parent.style.display });
+      parent.style.display = 'block';
+      parent = parent.parentElement;
+    }
+    printableArea.style.display = 'block';
+
     window.print();
-    document.body.innerHTML = originalContents;
-    window.location.reload();
+
+    // Restore original display styles
+    originalDisplay.forEach(item => {
+        item.el.style.display = item.display;
+    });
+    printableArea.style.display = ''; // Reset its own style
   };
+
 
   const handleDownload = async () => {
     const input = document.getElementById('printable-prescription');
@@ -238,7 +257,7 @@ export function PrescriptionGenerator() {
   };
   
   return (
-    <div className="grid gap-6">
+    <div className="grid gap-6" id="prescription-generator">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 no-print">
           <Card>
@@ -359,7 +378,7 @@ export function PrescriptionGenerator() {
                           <ComboboxField form={form} name={`medicines.${index}.instructions`} suggestions={instructionSuggestions} placeholder="Instructions" />
                       </div>
                     </div>
-                   {medicineFields.length > 1 && (
+                   {medicineFields.length > 0 && (
                      <Button type="button" variant="ghost" size="icon" className="absolute top-2 right-2 text-muted-foreground hover:text-destructive" onClick={() => removeMedicine(index)}>
                         <Trash2 className="h-4 w-4" />
                      </Button>
@@ -400,6 +419,7 @@ export function PrescriptionGenerator() {
          </div>
       )}
 
+      <div id="printable-prescription-container">
       {opdSummary && (
         <div id="printable-prescription">
         <Card className="mt-6 printable-area">
@@ -442,10 +462,12 @@ export function PrescriptionGenerator() {
               </div>
             )}
 
-            <div>
-                <h3 className="font-bold mb-2">Prescription</h3>
-                <MarkdownTable content={opdSummary.prescriptionTable} />
-            </div>
+            {opdSummary.prescriptionTable && (
+              <div>
+                  <h3 className="font-bold mb-2">Prescription</h3>
+                  <MarkdownTable content={opdSummary.prescriptionTable} />
+              </div>
+            )}
 
             {opdSummary.additionalNotes && (
               <div className="rounded-md border p-4">
@@ -472,6 +494,9 @@ export function PrescriptionGenerator() {
         </Card>
         </div>
       )}
+      </div>
     </div>
   );
 }
+
+    

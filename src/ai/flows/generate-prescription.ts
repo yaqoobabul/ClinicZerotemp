@@ -24,7 +24,7 @@ const GeneratePrescriptionInputSchema = z.object({
       frequency: z.string().describe('How often to take the drug (e.g., 2 time(s) daily).'),
       duration: z.string().describe('How long to take the drug for (e.g., 5 days).'),
       instructions: z.string().optional().describe('Additional instructions (e.g., After food).'),
-  })),
+  })).optional(),
   testsAdvised: z.array(z.string()).optional().describe('Any diagnostic tests that are advised.'),
   additionalNotes: z.string().optional().describe('Any additional notes for the patient.'),
   followUpDate: z.string().optional().describe('The recommended follow-up date.'),
@@ -43,8 +43,9 @@ const GeneratePrescriptionOutputSchema = z.object({
     toothChartNotes: z.string().optional(),
     prescriptionTable: z
       .string()
+      .optional()
       .describe(
-        'A structured table (using markdown) representing the prescription, with columns for Medicine, Dosage, Frequency, Duration, and Instructions.'
+        'A structured markdown table representing the prescription, with columns for Medicine, Dosage, Frequency, Duration, and Instructions. This should only be generated if medicines are provided.'
       ),
     testsAdvised: z.string().optional().describe('A comma-separated string of all tests advised.'),
     additionalNotes: z.string().optional(),
@@ -66,7 +67,9 @@ const prompt = ai.definePrompt({
 The user will provide patient details, diagnosis, prescription information, and other notes.
 Your task is to structure this information into a clean OPD summary.
 
+{{#if medicines}}
 The prescription table should be in Markdown format with a header and one row for each medicine.
+{{/if}}
 
 User Input:
 Patient Name: {{patientName}}
@@ -78,14 +81,17 @@ Tests Advised: {{#if testsAdvised}} {{#each testsAdvised}} {{this}}{{#unless @la
 Additional Notes: {{additionalNotes}}
 Follow-up Date: {{followUpDate}}
 
+{{#if medicines}}
 Medicines:
 {{#each medicines}}
 - Medicine: {{name}}, Dosage: {{dosage}}, Frequency: {{frequency}}, Duration: {{duration}}, Instructions: {{instructions}}
 {{/each}}
+{{/if}}
 
 Generate the final OPD summary object.
 If tests are advised, list them in a single comma-separated string.
 If tooth chart notes are provided, include them.
+If no medicines are provided, do not generate the prescriptionTable field.
 `,
 });
 
@@ -97,6 +103,16 @@ const generatePrescriptionFlow = ai.defineFlow(
     outputSchema: GeneratePrescriptionOutputSchema,
   },
   async (input) => {
+    // If there are no medicines, and all the fields inside each medicine are empty strings, remove it.
+    // This is to prevent the AI from generating a table for an empty row.
+    if (input.medicines && input.medicines.length > 0) {
+      const allEmpty = input.medicines.every(m => !m.name && !m.dosage && !m.frequency && !m.duration && !m.instructions);
+      if (allEmpty) {
+        input.medicines = [];
+      }
+    }
+
+
     const {output} = await prompt(input);
     if (!output) {
       throw new Error('Failed to generate OPD summary');
@@ -104,3 +120,5 @@ const generatePrescriptionFlow = ai.defineFlow(
     return output;
   }
 );
+
+    
