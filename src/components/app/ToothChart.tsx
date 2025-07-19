@@ -14,15 +14,15 @@ interface ToothChartProps {
   onChange: (value: ToothNote[]) => void;
 }
 
-const adultUpperRight = ['8', '7', '6', '5', '4', '3', '2', '1'];
-const adultUpperLeft = ['1', '2', '3', '4', '5', '6', '7', '8'];
-const adultLowerRight = ['8', '7', '6', '5', '4', '3', '2', '1'];
-const adultLowerLeft = ['1', '2', '3', '4', '5', '6', '7', '8'];
+const adultUpperRight = ['18', '17', '16', '15', '14', '13', '12', '11'];
+const adultUpperLeft = ['21', '22', '23', '24', '25', '26', '27', '28'];
+const adultLowerLeft = ['31', '32', '33', '34', '35', '36', '37', '38'];
+const adultLowerRight = ['48', '47', '46', '45', '44', '43', '42', '41'];
 
-const primaryUpperRight = ['V', 'IV', 'III', 'II', 'I'];
-const primaryUpperLeft = ['I', 'II', 'III', 'IV', 'V'];
-const primaryLowerRight = ['V', 'IV', 'III', 'II', 'I'];
-const primaryLowerLeft = ['I', 'II', 'III', 'IV', 'V'];
+const primaryUpperRight = ['55', '54', '53', '52', '51'];
+const primaryUpperLeft = ['61', '62', '63', '64', '65'];
+const primaryLowerLeft = ['71', '72', '73', '74', '75'];
+const primaryLowerRight = ['85', '84', '83', '82', '81'];
 
 const toothConditions = [
   "Decayed",
@@ -35,18 +35,6 @@ const toothConditions = [
   "fractured",
   "impacted",
 ];
-
-const getQuadrantPrefix = (teethArray: string[]) => {
-  if (teethArray === adultUpperRight) return 'UR';
-  if (teethArray === adultUpperLeft) return 'UL';
-  if (teethArray === adultLowerRight) return 'LR';
-  if (teethArray === adultLowerLeft) return 'LL';
-  if (teethArray === primaryUpperRight) return 'PUR';
-  if (teethArray === primaryUpperLeft) return 'PUL';
-  if (teethArray === primaryLowerRight) return 'PLR';
-  if (teethArray === primaryLowerLeft) return 'PLL';
-  return '';
-};
 
 
 const Tooth: React.FC<{
@@ -87,18 +75,16 @@ const Quadrant: React.FC<{
   reverse?: boolean;
 }> = ({ teeth, notes, onNoteChange, isPrimary, reverse = false }) => {
   const orderedTeeth = reverse ? [...teeth].reverse() : teeth;
-  const quadrantPrefix = getQuadrantPrefix(teeth);
 
   return (
     <div className="flex gap-1">
       {orderedTeeth.map((toothNumber) => {
-        const fullToothId = `${quadrantPrefix}${toothNumber}`;
         return (
             <Tooth
-            key={fullToothId}
+            key={toothNumber}
             number={toothNumber}
-            note={notes.find((n) => n.tooth === fullToothId)?.note || ''}
-            onNoteChange={(note) => onNoteChange(fullToothId, note)}
+            note={notes.find((n) => n.tooth === toothNumber)?.note || ''}
+            onNoteChange={(note) => onNoteChange(toothNumber, note)}
             isPrimary={isPrimary}
             />
         )
@@ -114,16 +100,13 @@ export const ToothChart: React.FC<ToothChartProps> = ({ value, onChange }) => {
         let newNotes = [...value];
 
         if (noteText === '') {
-            // If the note is cleared, remove it from the array
             if (existingNoteIndex > -1) {
                 newNotes.splice(existingNoteIndex, 1);
             }
         } else {
             if (existingNoteIndex > -1) {
-                // If note exists, update it
                 newNotes[existingNoteIndex] = { ...newNotes[existingNoteIndex], note: noteText };
             } else {
-                // If note doesn't exist, add it
                 newNotes.push({ tooth, note: noteText });
             }
         }
@@ -143,9 +126,9 @@ export const ToothChart: React.FC<ToothChartProps> = ({ value, onChange }) => {
                     </div>
                     <div className="border-b-2 border-gray-400 my-2 w-full max-w-lg mx-auto"></div>
                     <div className="flex justify-center gap-1 md:gap-2">
-                        <Quadrant teeth={adultLowerRight} notes={value} onNoteChange={handleNoteChange} reverse />
-                        <div className="border-l-2 border-gray-400 mx-1"></div>
                         <Quadrant teeth={adultLowerLeft} notes={value} onNoteChange={handleNoteChange} />
+                        <div className="border-l-2 border-gray-400 mx-1"></div>
+                        <Quadrant teeth={adultLowerRight} notes={value} onNoteChange={handleNoteChange} reverse />
                     </div>
                 </div>
 
@@ -161,9 +144,9 @@ export const ToothChart: React.FC<ToothChartProps> = ({ value, onChange }) => {
                     </div>
                      <div className="border-b-2 border-gray-400 my-2 w-full max-w-sm mx-auto"></div>
                     <div className="flex justify-center gap-1 md:gap-2">
-                        <Quadrant teeth={primaryLowerRight} notes={value} onNoteChange={handleNoteChange} isPrimary reverse/>
-                        <div className="border-l-2 border-gray-400 mx-1"></div>
                         <Quadrant teeth={primaryLowerLeft} notes={value} onNoteChange={handleNoteChange} isPrimary />
+                        <div className="border-l-2 border-gray-400 mx-1"></div>
+                        <Quadrant teeth={primaryLowerRight} notes={value} onNoteChange={handleNoteChange} isPrimary reverse />
                     </div>
                 </div>
             </div>
