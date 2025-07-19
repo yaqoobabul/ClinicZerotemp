@@ -6,7 +6,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { cn } from '@/lib/utils';
 import { StethoscopeIcon } from '@/components/icons/StethoscopeIcon';
 import { Home, Calendar, Users, FileText, Settings } from 'lucide-react';
-import { ToothIcon } from '../icons/ToothIcon';
+import { ToothIconSimple as ToothIcon } from '../icons/ToothIconSimple';
 
 const navItems = [
   { href: '/dashboard', icon: Home, label: 'Dashboard' },

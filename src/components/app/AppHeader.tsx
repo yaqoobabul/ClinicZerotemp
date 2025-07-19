@@ -32,7 +32,7 @@ import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import Image from 'next/image';
 import { StethoscopeIcon } from '@/components/icons/StethoscopeIcon';
-import { ToothIcon } from '../icons/ToothIcon';
+import { ToothIconSimple as ToothIcon } from '../icons/ToothIconSimple';
 
 const navItems = [
     { href: '/dashboard', icon: Home, label: 'Dashboard' },
