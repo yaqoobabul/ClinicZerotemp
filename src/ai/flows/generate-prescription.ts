@@ -19,7 +19,7 @@ const GeneratePrescriptionInputSchema = z.object({
   medicines: z.array(z.object({
       name: z.string().describe('The name of the drug.'),
       dosage: z.string().describe('The dosage of the drug (e.g., 500mg).'),
-      frequency: z.string().describe('How often to take the drug (e.g., Twice a day).'),
+      frequency: z.string().describe('How often to take the drug (e.g., 2 time(s) daily).'),
       duration: z.string().describe('How long to take the drug for (e.g., 5 days).'),
       instructions: z.string().optional().describe('Additional instructions (e.g., After food).'),
   })),

@@ -20,33 +20,6 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { cn } from '@/lib/utils';
 
 
-const medicineSchema = z.object({
-  name: z.string().min(1, 'Drug name is required.'),
-  dosageValue: z.string().min(1, 'Dosage value is required.'),
-  dosageUnit: z.string().min(1, 'Dosage unit is required.'),
-  frequency: z.string().min(1, 'Frequency is required.'),
-  durationValue: z.string().min(1, 'Duration is required.'),
-  durationUnit: z.string().min(1, 'Unit is required.'),
-  instructions: z.string().optional(),
-});
-
-const formSchema = z.object({
-  patientName: z.string().min(1, 'Patient name is required.'),
-  patientAge: z.string().min(1, 'Patient age is required.'),
-  patientGender: z.string().min(1, 'Patient gender is required.'),
-  provisionalDiagnosis: z.string().min(1, 'Diagnosis is required.'),
-  medicines: z.array(medicineSchema).min(1, 'At least one medicine is required.'),
-  testsAdvised: z.array(z.object({ value: z.string().min(1, 'Test name cannot be empty.')})).optional(),
-  additionalNotes: z.string().optional(),
-  followUpDate: z.string().optional(),
-});
-
-
-const dosageUnits = ["mg", "mcg", "g", "ml", "tsp", "tbsp", "IU", "drops"];
-const durationUnits = ["Days", "Weeks", "Months", "Year(s)"];
-const frequencySuggestions = ["1-0-0 (Once a day)", "1-0-1 (Twice a day)", "1-1-1 (Thrice a day)", "0-0-1 (At night)", "SOS (As needed)"];
-const instructionSuggestions = ["Before food", "After food", "With meals", "Empty stomach"];
-
 const ComboboxField = ({ form, name, suggestions, placeholder }: { form: any, name: string, suggestions: string[], placeholder: string }) => {
     const [open, setOpen] = useState(false);
     return (
@@ -113,6 +86,34 @@ const ComboboxField = ({ form, name, suggestions, placeholder }: { form: any, na
     );
   };
 
+const medicineSchema = z.object({
+  name: z.string().min(1, 'Drug name is required.'),
+  dosageValue: z.string().min(1, 'Dosage value is required.'),
+  dosageUnit: z.string().min(1, 'Dosage unit is required.'),
+  frequencyValue: z.string().min(1, 'Frequency is required.'),
+  frequencyUnit: z.string().min(1, 'Unit is required.'),
+  durationValue: z.string().min(1, 'Duration is required.'),
+  durationUnit: z.string().min(1, 'Unit is required.'),
+  instructions: z.string().optional(),
+});
+
+const formSchema = z.object({
+  patientName: z.string().min(1, 'Patient name is required.'),
+  patientAge: z.string().min(1, 'Patient age is required.'),
+  patientGender: z.string().min(1, 'Patient gender is required.'),
+  provisionalDiagnosis: z.string().min(1, 'Diagnosis is required.'),
+  medicines: z.array(medicineSchema).min(1, 'At least one medicine is required.'),
+  testsAdvised: z.array(z.object({ value: z.string().min(1, 'Test name cannot be empty.')})).optional(),
+  additionalNotes: z.string().optional(),
+  followUpDate: z.string().optional(),
+});
+
+
+const dosageUnits = ["mg", "mcg", "g", "ml", "tsp", "tbsp", "IU", "drops"];
+const durationUnits = ["Days", "Weeks", "Months", "Year(s)"];
+const frequencyUnits = ["daily", "weekly", "monthly"];
+const instructionSuggestions = ["Before food", "After food", "With meals", "Empty stomach"];
+
 export function PrescriptionGenerator() {
   const [isLoading, setIsLoading] = useState(false);
   const [opdSummary, setOpdSummary] = useState<GeneratePrescriptionOutput['opdSummary'] | null>(null);
@@ -125,7 +126,7 @@ export function PrescriptionGenerator() {
       patientAge: '',
       patientGender: '',
       provisionalDiagnosis: '',
-      medicines: [{ name: '', dosageValue: '', dosageUnit: 'mg', frequency: '1-0-1 (Twice a day)', durationValue: '', durationUnit: 'Days', instructions: 'After food' }],
+      medicines: [{ name: '', dosageValue: '', dosageUnit: 'mg', frequencyValue: '2', frequencyUnit: 'daily', durationValue: '', durationUnit: 'Days', instructions: 'After food' }],
       testsAdvised: [],
       additionalNotes: '',
       followUpDate: '',
@@ -152,7 +153,7 @@ export function PrescriptionGenerator() {
         medicines: values.medicines.map(m => ({
             name: m.name,
             dosage: `${m.dosageValue} ${m.dosageUnit}`,
-            frequency: m.frequency,
+            frequency: `${m.frequencyValue} time(s) ${m.frequencyUnit}`,
             duration: `${m.durationValue} ${m.durationUnit}`,
             instructions: m.instructions,
         })),
@@ -218,7 +219,7 @@ export function PrescriptionGenerator() {
             <CardHeader><CardTitle>Provisional Diagnosis</CardTitle></CardHeader>
             <CardContent>
                 <FormField control={form.control} name="provisionalDiagnosis" render={({ field }) => (
-                    <FormItem><FormControl><Input placeholder="e.g., Viral Fever" {...field} /></FormControl><FormMessage /></FormItem>
+                    <FormItem><FormControl><Input placeholder="e.g., Acute Gastroenteritis" {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
             </CardContent>
           </Card>
@@ -258,11 +259,11 @@ export function PrescriptionGenerator() {
             <CardContent className="space-y-4">
               {medicineFields.map((field, index) => (
                 <div key={field.id} className="p-4 border rounded-lg space-y-4 relative bg-muted/20">
-                   <div className="grid grid-cols-1 lg:grid-cols-6 gap-4 items-start">
+                   <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
                       <FormField control={form.control} name={`medicines.${index}.name`} render={({ field }) => (
-                          <FormItem className="lg:col-span-2"><FormLabel>Drug Name</FormLabel><FormControl><Input placeholder="e.g., Paracetamol" {...field} /></FormControl><FormMessage /></FormItem>
+                          <FormItem className="lg:col-span-3"><FormLabel>Drug Name</FormLabel><FormControl><Input placeholder="e.g., Paracetamol" {...field} /></FormControl><FormMessage /></FormItem>
                       )} />
-                      <div className="grid grid-cols-2 gap-2">
+                      <div className="lg:col-span-2 grid grid-cols-2 gap-2">
                           <FormField control={form.control} name={`medicines.${index}.dosageValue`} render={({ field }) => (
                               <FormItem><FormLabel>Dosage</FormLabel><FormControl><Input type="number" placeholder="e.g., 500" {...field} /></FormControl><FormMessage /></FormItem>
                           )} />
@@ -273,11 +274,18 @@ export function PrescriptionGenerator() {
                               </Select><FormMessage /></FormItem>
                           )} />
                       </div>
-                      <div className="w-full">
-                          <FormLabel>Frequency</FormLabel>
-                          <ComboboxField form={form} name={`medicines.${index}.frequency`} suggestions={frequencySuggestions} placeholder="Frequency" />
+                      <div className="lg:col-span-2 grid grid-cols-2 gap-2">
+                          <FormField control={form.control} name={`medicines.${index}.frequencyValue`} render={({ field }) => (
+                              <FormItem><FormLabel>Frequency</FormLabel><FormControl><Input type="number" placeholder="e.g., 2" {...field} /></FormControl><FormMessage /></FormItem>
+                          )} />
+                          <FormField control={form.control} name={`medicines.${index}.frequencyUnit`} render={({ field }) => (
+                              <FormItem><FormLabel>Unit</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}>
+                                  <FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl>
+                                  <SelectContent>{frequencyUnits.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}</SelectContent>
+                              </Select><FormMessage /></FormItem>
+                          )} />
                       </div>
-                       <div className="grid grid-cols-2 gap-2">
+                       <div className="lg:col-span-2 grid grid-cols-2 gap-2">
                           <FormField control={form.control} name={`medicines.${index}.durationValue`} render={({ field }) => (
                               <FormItem><FormLabel>Duration</FormLabel><FormControl><Input type="number" placeholder="e.g., 5" {...field} /></FormControl><FormMessage /></FormItem>
                           )} />
@@ -288,7 +296,7 @@ export function PrescriptionGenerator() {
                               </Select><FormMessage /></FormItem>
                           )} />
                       </div>
-                       <div className="w-full">
+                       <div className="lg:col-span-3">
                           <FormLabel>Instructions</FormLabel>
                           <ComboboxField form={form} name={`medicines.${index}.instructions`} suggestions={instructionSuggestions} placeholder="Instructions" />
                       </div>
@@ -300,7 +308,7 @@ export function PrescriptionGenerator() {
                    )}
                 </div>
               ))}
-               <Button type="button" variant="outline" size="sm" onClick={() => appendMedicine({ name: '', dosageValue: '', dosageUnit: 'mg', frequency: '1-0-1 (Twice a day)', durationValue: '', durationUnit: 'Days', instructions: 'After food' })}>
+               <Button type="button" variant="outline" size="sm" onClick={() => appendMedicine({ name: '', dosageValue: '', dosageUnit: 'mg', frequencyValue: '2', frequencyUnit: 'daily', durationValue: '', durationUnit: 'Days', instructions: 'After food' })}>
                 <Plus className="mr-2 h-4 w-4" /> Add Another Medicine
               </Button>
             </CardContent>
@@ -356,7 +364,7 @@ export function PrescriptionGenerator() {
           <CardContent className="space-y-4">
             <div className="rounded-md border p-4">
                 <h3 className="font-bold mb-2">Patient Details</h3>
-                <div className="grid grid-cols-3 gap-x-4 gap-y-1 text-sm">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-2 text-sm">
                   <div><strong>Name:</strong> {opdSummary.patientDetails.name}</div>
                   <div><strong>Age:</strong> {opdSummary.patientDetails.age}</div>
                   <div><strong>Gender:</strong> {opdSummary.patientDetails.gender}</div>
