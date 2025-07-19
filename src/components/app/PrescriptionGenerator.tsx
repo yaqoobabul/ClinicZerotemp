@@ -29,22 +29,15 @@ type GeneratedSummary = {
 };
 
 const medicineSchema = z.object({
-  name: z.string(),
-  dosageValue: z.string(),
-  dosageUnit: z.string(),
-  frequencyValue: z.string(),
-  frequencyUnit: z.string(),
-  durationValue: z.string(),
-  durationUnit: z.string(),
+  name: z.string().optional(),
+  dosageValue: z.string().optional(),
+  dosageUnit: z.string().optional(),
+  frequencyValue: z.string().optional(),
+  frequencyUnit: z.string().optional(),
+  durationValue: z.string().optional(),
+  durationUnit: z.string().optional(),
   instructions: z.string().optional(),
-}).partial().refine(data => {
-    // If the entire object is empty, it's valid.
-    if (!Object.values(data).some(val => val !== undefined && val !== '')) {
-        return true;
-    }
-    // If some fields are filled, name is required.
-    return !!data.name && data.name.trim() !== '';
-}, { message: "Drug name is required if other fields are filled.", path: ['name']});
+});
 
 const testAdvisedSchema = z.object({ 
   value: z.string().optional()
@@ -239,10 +232,10 @@ export function PrescriptionGenerator() {
               <CardHeader><CardTitle>Prescription</CardTitle></CardHeader>
               <CardContent className="space-y-4">
                 {medicineFields.map((field, index) => (
-                   <div key={field.id} className="p-4 border rounded-lg bg-muted/20 space-y-4">
+                   <div key={field.id} className="p-4 border rounded-lg bg-muted/20">
                     <div className="flex flex-col md:flex-row md:items-end md:gap-4">
                         <div className="flex-grow space-y-4">
-                          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-1 lg:grid-cols-2 gap-4">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                             <FormField control={form.control} name={`medicines.${index}.name`} render={({ field }) => (
                                 <FormItem><FormLabel>Drug Name</FormLabel><FormControl><Input placeholder="e.g., Paracetamol" {...field} /></FormControl><FormMessage /></FormItem>
                             )} />
@@ -319,7 +312,7 @@ export function PrescriptionGenerator() {
                     </div>
                    </div>
                 ))}
-                <Button type="button" variant="outline" size="sm" onClick={() => appendMedicine({ name: '', dosageValue: '', dosageUnit: 'mg', frequencyValue: '2', frequencyUnit: 'daily', durationValue: '', durationUnit: 'Days', instructions: 'After food' })}>
+                <Button type="button" variant="outline" size="sm" onClick={() => appendMedicine({})}>
                   <Plus className="mr-2 h-4 w-4" /> Add Drug
                 </Button>
               </CardContent>
