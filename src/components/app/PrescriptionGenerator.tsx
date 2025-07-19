@@ -18,8 +18,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { cn } from '@/lib/utils';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 
 type GeneratedSummary = {
   patientDetails: {
@@ -222,6 +220,8 @@ export function PrescriptionGenerator() {
   };
 
   const handleDownload = async () => {
+    const { default: html2canvas } = await import('html2canvas');
+    const { default: jsPDF } = await import('jspdf');
     const input = document.getElementById('printable-prescription');
     if (input) {
       try {
@@ -332,69 +332,65 @@ export function PrescriptionGenerator() {
               <CardHeader><CardTitle>Prescription</CardTitle></CardHeader>
               <CardContent className="space-y-4">
                 {medicineFields.map((field, index) => (
-                  <div key={field.id} className="p-4 border rounded-lg bg-muted/20">
-                    <div className="flex items-start gap-4">
-                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-x-4 gap-y-4 items-start flex-grow">
-                          <FormField control={form.control} name={`medicines.${index}.name`} render={({ field }) => (
-                              <FormItem className="lg:col-span-3"><FormLabel>Drug Name</FormLabel><FormControl><Input placeholder="e.g., Paracetamol" {...field} /></FormControl><FormMessage /></FormItem>
-                          )} />
-                          
-                          <FormItem className="lg:col-span-2"><FormLabel>Dosage</FormLabel>
+                   <div key={field.id} className="p-4 border rounded-lg bg-muted/20 space-y-4">
+                      <div className="flex items-end gap-x-4 gap-y-4 flex-wrap">
+                        <FormField control={form.control} name={`medicines.${index}.name`} render={({ field }) => (
+                            <FormItem className="flex-grow" style={{flexBasis: '180px'}}><FormLabel>Drug Name</FormLabel><FormControl><Input placeholder="e.g., Paracetamol" {...field} /></FormControl><FormMessage /></FormItem>
+                        )} />
+                        
+                        <FormItem className="flex-grow" style={{flexBasis: '120px'}}><FormLabel>Dosage</FormLabel>
+                          <div className="flex gap-2">
+                            <FormField control={form.control} name={`medicines.${index}.dosageValue`} render={({ field }) => (
+                                <FormItem className="flex-grow"><FormControl><Input type="number" placeholder="500" {...field} className="text-base" /></FormControl><FormMessage /></FormItem>
+                            )} />
+                            <FormField control={form.control} name={`medicines.${index}.dosageUnit`} render={({ field }) => (
+                                <FormItem className="w-24 shrink-0"><Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl>
+                                    <SelectContent>{dosageUnits.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}</SelectContent>
+                                </Select><FormMessage /></FormItem>
+                            )} />
+                          </div>
+                        </FormItem>
+
+                        <FormItem className="flex-grow" style={{flexBasis: '120px'}}><FormLabel>Frequency</FormLabel>
+                          <div className="flex gap-2">
+                            <FormField control={form.control} name={`medicines.${index}.frequencyValue`} render={({ field }) => (
+                                <FormItem className="flex-grow"><FormControl><Input type="number" placeholder="3" {...field} className="text-base" /></FormControl><FormMessage /></FormItem>
+                            )} />
+                            <FormField control={form.control} name={`medicines.${index}.frequencyUnit`} render={({ field }) => (
+                                <FormItem className="w-24 shrink-0"><Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl>
+                                    <SelectContent>{frequencyUnits.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}</SelectContent>
+                                </Select><FormMessage /></FormItem>
+                            )} />
+                          </div>
+                        </FormItem>
+
+                        <FormItem className="flex-grow" style={{flexBasis: '120px'}}><FormLabel>Duration</FormLabel>
                             <div className="flex gap-2">
-                              <FormField control={form.control} name={`medicines.${index}.dosageValue`} render={({ field }) => (
-                                  <FormItem className="flex-grow"><FormControl><Input type="number" placeholder="500" {...field} className="text-base" /></FormControl><FormMessage /></FormItem>
+                              <FormField control={form.control} name={`medicines.${index}.durationValue`} render={({ field }) => (
+                                  <FormItem className="flex-grow"><FormControl><Input type="number" placeholder="5" {...field} className="text-base" /></FormControl><FormMessage /></FormItem>
                               )} />
-                              <FormField control={form.control} name={`medicines.${index}.dosageUnit`} render={({ field }) => (
-                                  <FormItem className="w-24"><Select onValueChange={field.onChange} defaultValue={field.value}>
-                                      <FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl>
-                                      <SelectContent>{dosageUnits.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}</SelectContent>
+                              <FormField control={form.control} name={`medicines.${index}.durationUnit`} render={({ field }) => (
+                                  <FormItem className="w-24 shrink-0"><Select onValueChange={field.onChange} defaultValue={field.value}>
+                                      <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                                      <SelectContent>{durationUnits.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}</SelectContent>
                                   </Select><FormMessage /></FormItem>
                               )} />
                             </div>
-                          </FormItem>
-
-                          <FormItem className="lg:col-span-2"><FormLabel>Frequency</FormLabel>
-                            <div className="flex gap-2">
-                              <FormField control={form.control} name={`medicines.${index}.frequencyValue`} render={({ field }) => (
-                                  <FormItem className="flex-grow"><FormControl><Input type="number" placeholder="3" {...field} className="text-base" /></FormControl><FormMessage /></FormItem>
-                              )} />
-                              <FormField control={form.control} name={`medicines.${index}.frequencyUnit`} render={({ field }) => (
-                                  <FormItem className="w-24"><Select onValueChange={field.onChange} defaultValue={field.value}>
-                                      <FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl>
-                                      <SelectContent>{frequencyUnits.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}</SelectContent>
-                                  </Select><FormMessage /></FormItem>
-                              )} />
-                            </div>
-                          </FormItem>
-
-                          <FormItem className="lg:col-span-2"><FormLabel>Duration</FormLabel>
-                              <div className="flex gap-2">
-                                <FormField control={form.control} name={`medicines.${index}.durationValue`} render={({ field }) => (
-                                    <FormItem className="flex-grow"><FormControl><Input type="number" placeholder="5" {...field} className="text-base" /></FormControl><FormMessage /></FormItem>
-                                )} />
-                                <FormField control={form.control} name={`medicines.${index}.durationUnit`} render={({ field }) => (
-                                    <FormItem className="w-24"><Select onValueChange={field.onChange} defaultValue={field.value}>
-                                        <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
-                                        <SelectContent>{durationUnits.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}</SelectContent>
-                                    </Select><FormMessage /></FormItem>
-                                )} />
-                              </div>
-                          </FormItem>
-                          <FormField control={form.control} name={`medicines.${index}.instructions`} render={({ field }) => (
-                              <FormItem className="lg:col-span-3">
-                                <FormLabel>Instructions</FormLabel>
-                                <FormControl>
-                                    <ComboboxField form={form} name={`medicines.${index}.instructions`} suggestions={instructionSuggestions} placeholder="Instructions" />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                          )} />
-                        </div>
-                        <div className="flex flex-col flex-shrink-0 mt-[29px]">
-                            <Button type="button" variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive" onClick={() => removeMedicine(index)}>
-                                <Trash2 className="h-4 w-4" />
-                            </Button>
-                        </div>
+                        </FormItem>
+                        <FormField control={form.control} name={`medicines.${index}.instructions`} render={({ field }) => (
+                            <FormItem className="flex-grow" style={{flexBasis: '180px'}}>
+                              <FormLabel>Instructions</FormLabel>
+                              <FormControl>
+                                  <ComboboxField form={form} name={`medicines.${index}.instructions`} suggestions={instructionSuggestions} placeholder="Instructions" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                        )} />
+                        <Button type="button" variant="ghost" size="icon" className="shrink-0 text-muted-foreground hover:text-destructive" onClick={() => removeMedicine(index)}>
+                              <Trash2 className="h-4 w-4" />
+                        </Button>
                     </div>
                   </div>
                 ))}
