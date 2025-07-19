@@ -14,15 +14,15 @@ interface ToothChartProps {
   onChange: (value: ToothNote[]) => void;
 }
 
-const adultUpperRight = ['18', '17', '16', '15', '14', '13', '12', '11'];
-const adultUpperLeft = ['21', '22', '23', '24', '25', '26', '27', '28'];
-const adultLowerRight = ['48', '47', '46', '45', '44', '43', '42', '41'];
-const adultLowerLeft = ['31', '32', '33', '34', '35', '36', '37', '38'];
+const adultUpperRight = ['8', '7', '6', '5', '4', '3', '2', '1'];
+const adultUpperLeft = ['1', '2', '3', '4', '5', '6', '7', '8'];
+const adultLowerRight = ['8', '7', '6', '5', '4', '3', '2', '1'];
+const adultLowerLeft = ['1', '2', '3', '4', '5', '6', '7', '8'];
 
-const primaryUpperRight = ['55', '54', '53', '52', '51'];
-const primaryUpperLeft = ['61', '62', '63', '64', '65'];
-const primaryLowerRight = ['85', '84', '83', '82', '81'];
-const primaryLowerLeft = ['71', '72', '73', '74', '75'];
+const primaryUpperRight = ['V', 'IV', 'III', 'II', 'I'];
+const primaryUpperLeft = ['I', 'II', 'III', 'IV', 'V'];
+const primaryLowerRight = ['V', 'IV', 'III', 'II', 'I'];
+const primaryLowerLeft = ['I', 'II', 'III', 'IV', 'V'];
 
 const toothConditions = [
   "Decayed",
@@ -35,6 +35,19 @@ const toothConditions = [
   "fractured",
   "impacted",
 ];
+
+const getQuadrantPrefix = (teethArray: string[]) => {
+  if (teethArray === adultUpperRight) return 'UR';
+  if (teethArray === adultUpperLeft) return 'UL';
+  if (teethArray === adultLowerRight) return 'LR';
+  if (teethArray === adultLowerLeft) return 'LL';
+  if (teethArray === primaryUpperRight) return 'PUR';
+  if (teethArray === primaryUpperLeft) return 'PUL';
+  if (teethArray === primaryLowerRight) return 'PLR';
+  if (teethArray === primaryLowerLeft) return 'PLL';
+  return '';
+};
+
 
 const Tooth: React.FC<{
   number: string;
@@ -74,17 +87,22 @@ const Quadrant: React.FC<{
   reverse?: boolean;
 }> = ({ teeth, notes, onNoteChange, isPrimary, reverse = false }) => {
   const orderedTeeth = reverse ? [...teeth].reverse() : teeth;
+  const quadrantPrefix = getQuadrantPrefix(teeth);
+
   return (
     <div className="flex gap-1">
-      {orderedTeeth.map((toothNumber) => (
-        <Tooth
-          key={toothNumber}
-          number={toothNumber}
-          note={notes.find((n) => n.tooth === toothNumber)?.note || ''}
-          onNoteChange={(note) => onNoteChange(toothNumber, note)}
-          isPrimary={isPrimary}
-        />
-      ))}
+      {orderedTeeth.map((toothNumber) => {
+        const fullToothId = `${quadrantPrefix}${toothNumber}`;
+        return (
+            <Tooth
+            key={fullToothId}
+            number={toothNumber}
+            note={notes.find((n) => n.tooth === fullToothId)?.note || ''}
+            onNoteChange={(note) => onNoteChange(fullToothId, note)}
+            isPrimary={isPrimary}
+            />
+        )
+      })}
     </div>
   );
 };
