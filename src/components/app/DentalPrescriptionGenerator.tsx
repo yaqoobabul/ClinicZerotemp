@@ -477,7 +477,7 @@ export function DentalPrescriptionGenerator() {
                       <p>123 Health St, Wellness City, India | Phone: +91 98765 43210</p>
                     </div>
                     <div className="text-right flex-shrink-0">
-                       
+                       <p><strong>Date:</strong> {new Date().toLocaleString('en-IN')}</p>
                     </div>
                 </div>
                 <div className="flex justify-end mt-1 no-print">
@@ -555,9 +555,9 @@ export function DentalPrescriptionGenerator() {
                       )}
                     </div>
                     <div className="text-center">
-                        <p><strong>Date:</strong> {new Date().toLocaleDateString('en-IN')}</p>
                         <div className="h-8"></div>
                         <p className="border-t-2 border-black pt-1">Doctor's Signature</p>
+                        <p>{new Date().toLocaleString('en-IN')}</p>
                     </div>
                 </div>
             </div>
