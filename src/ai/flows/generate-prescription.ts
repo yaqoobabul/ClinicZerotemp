@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -16,6 +17,7 @@ const GeneratePrescriptionInputSchema = z.object({
   patientAge: z.string().describe("The patient's age."),
   patientGender: z.string().describe("The patient's gender."),
   provisionalDiagnosis: z.string().describe('The provisional diagnosis for the patient.'),
+  toothChartNotes: z.string().optional().describe('Notes related to specific teeth, e.g., "#16-Caries, #24-RCT".'),
   medicines: z.array(z.object({
       name: z.string().describe('The name of the drug.'),
       dosage: z.string().describe('The dosage of the drug (e.g., 500mg).'),
@@ -38,6 +40,7 @@ const GeneratePrescriptionOutputSchema = z.object({
       gender: z.string(),
     }),
     provisionalDiagnosis: z.string(),
+    toothChartNotes: z.string().optional(),
     prescriptionTable: z
       .string()
       .describe(
@@ -70,6 +73,7 @@ Patient Name: {{patientName}}
 Patient Age: {{patientAge}}
 Patient Gender: {{patientGender}}
 Provisional Diagnosis: {{provisionalDiagnosis}}
+{{#if toothChartNotes}}Tooth Chart Notes: {{toothChartNotes}}{{/if}}
 Tests Advised: {{#if testsAdvised}} {{#each testsAdvised}} {{this}}{{#unless @last}}, {{/unless}}{{/each}}{{/if}}
 Additional Notes: {{additionalNotes}}
 Follow-up Date: {{followUpDate}}
@@ -81,6 +85,7 @@ Medicines:
 
 Generate the final OPD summary object.
 If tests are advised, list them in a single comma-separated string.
+If tooth chart notes are provided, include them.
 `,
 });
 

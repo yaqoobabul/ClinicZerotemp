@@ -2,7 +2,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useForm, useFieldArray } from 'react-hook-form';
+import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
@@ -21,7 +21,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { cn } from '@/lib/utils';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
-
+import { ToothChart } from './ToothChart';
 
 const ComboboxField = ({ form, name, suggestions, placeholder }: { form: any, name: string, suggestions: string[], placeholder: string }) => {
     const [open, setOpen] = useState(false);
@@ -57,19 +57,17 @@ const ComboboxField = ({ form, name, suggestions, placeholder }: { form: any, na
                 value={customValue}
                 onValueChange={setCustomValue}
               />
-              <CommandEmpty>
-                  <Button
-                    variant="ghost"
-                    className="w-full justify-start"
-                    onSelect={() => {
-                        form.setValue(name, customValue);
-                        setOpen(false);
-                    }}
-                   >
-                     Add "{customValue}"
-                   </Button>
-              </CommandEmpty>
               <CommandList>
+                <CommandEmpty>
+                    <CommandItem
+                      onSelect={() => {
+                          form.setValue(name, customValue);
+                          setOpen(false);
+                      }}
+                    >
+                      Add "{customValue}"
+                    </CommandItem>
+                </CommandEmpty>
                   <CommandGroup>
                       {suggestions.map((suggestion) => (
                       <CommandItem
@@ -109,11 +107,16 @@ const medicineSchema = z.object({
   instructions: z.string().optional(),
 });
 
+const toothNoteSchema = z.object({
+  tooth: z.string(),
+  note: z.string(),
+});
+
 const formSchema = z.object({
   patientName: z.string().min(1, 'Patient name is required.'),
   patientAge: z.string().min(1, 'Patient age is required.'),
   patientGender: z.string().min(1, 'Patient gender is required.'),
-  toothChartNotes: z.string().optional(),
+  toothNotes: z.array(toothNoteSchema).optional(),
   provisionalDiagnosis: z.string().min(1, 'Diagnosis is required.'),
   medicines: z.array(medicineSchema).min(1, 'At least one medicine is required.'),
   testsAdvised: z.array(z.object({ value: z.string().min(1, 'Test name cannot be empty.')})).optional(),
@@ -139,7 +142,7 @@ export function DentalPrescriptionGenerator() {
       patientName: '',
       patientAge: '',
       patientGender: '',
-      toothChartNotes: '',
+      toothNotes: [],
       provisionalDiagnosis: '',
       medicines: [{ name: '', dosageValue: '', dosageUnit: 'mg', frequencyValue: '2', frequencyUnit: 'daily', durationValue: '', durationUnit: 'Days', instructions: 'After food' }],
       testsAdvised: [],
@@ -173,11 +176,13 @@ export function DentalPrescriptionGenerator() {
             instructions: m.instructions,
         })),
         testsAdvised: values.testsAdvised?.map(t => t.value),
+        toothChartNotes: values.toothNotes
+            ?.filter(tn => tn.note.trim() !== '')
+            .map(tn => `#${tn.tooth}: ${tn.note}`)
+            .join(', '),
     };
 
     try {
-      // NOTE: We are still using the general prescription flow.
-      // A dedicated dental flow might be needed if the tooth chart needs AI processing.
       const result = await generatePrescription(transformedValues);
       setOpdSummary(result.opdSummary);
     } catch (error) {
@@ -196,12 +201,13 @@ export function DentalPrescriptionGenerator() {
     const printableArea = document.getElementById('printable-prescription');
     if (!printableArea) return;
 
-    const printContents = printableArea.innerHTML;
     const originalContents = document.body.innerHTML;
-    
+    const printContents = printableArea.innerHTML;
+
     document.body.innerHTML = printContents;
     window.print();
     document.body.innerHTML = originalContents;
+    // Reload to re-attach event listeners
     window.location.reload();
   };
 
@@ -278,15 +284,16 @@ export function DentalPrescriptionGenerator() {
           </Card>
           
           <Card>
-            <CardHeader><CardTitle>Tooth Chart & Notes</CardTitle></CardHeader>
+            <CardHeader>
+              <CardTitle>Tooth Chart & Notes</CardTitle>
+              <CardDescription>Click on a tooth or enter notes in the corresponding box.</CardDescription>
+            </CardHeader>
             <CardContent>
-                <FormField control={form.control} name="toothChartNotes" render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Notes related to specific teeth (e.g., #16-Caries, #24-RCT)</FormLabel>
-                      <FormControl><Textarea placeholder="Enter any notes related to the tooth chart..." {...field} /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                )} />
+              <Controller
+                control={form.control}
+                name="toothNotes"
+                render={({ field }) => <ToothChart value={field.value} onChange={field.onChange} />}
+              />
             </CardContent>
           </Card>
 
@@ -446,6 +453,13 @@ export function DentalPrescriptionGenerator() {
                   <div><strong>Gender:</strong> {opdSummary.patientDetails.gender}</div>
                 </div>
             </div>
+
+            {opdSummary.toothChartNotes && (
+              <div className="rounded-md border p-4">
+                  <h3 className="font-bold mb-2">Dental Notes</h3>
+                  <p>{opdSummary.toothChartNotes}</p>
+              </div>
+            )}
             
             <div className="rounded-md border p-4">
                 <h3 className="font-bold mb-2">Provisional Diagnosis</h3>
