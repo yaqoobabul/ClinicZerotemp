@@ -417,7 +417,7 @@ export function DentalPrescriptionGenerator() {
                     </div>
                   </div>
                 ))}
-                <Button type="button" variant="outline" size="sm" onClick={() => appendMedicine({})}>
+                <Button type="button" variant="outline" size="sm" onClick={() => appendMedicine({name: '', dosageValue: '', dosageUnit: '', frequencyValue: '', frequencyUnit: '', durationValue: '', durationUnit: '', instructions: ''})}>
                   <Plus className="mr-2 h-4 w-4" /> Add Drug
                 </Button>
               </CardContent>
