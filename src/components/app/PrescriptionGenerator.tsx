@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { generatePrescription, type GeneratePrescriptionOutput } from '@/ai/flows/generate-prescription';
 import { Loader2, Mic, Printer, Download } from 'lucide-react';
@@ -15,7 +15,11 @@ import { MarkdownTable } from './MarkdownTable';
 import { Separator } from '../ui/separator';
 
 const formSchema = z.object({
-  speechInput: z.string().min(10, 'Please provide more details for the prescription.'),
+  drugName: z.string().min(1, 'Drug name is required.'),
+  dosage: z.string().min(1, 'Dosage is required.'),
+  frequency: z.string().min(1, 'Frequency is required.'),
+  duration: z.string().min(1, 'Duration is required.'),
+  instructions: z.string().optional(),
 });
 
 export function PrescriptionGenerator() {
@@ -26,7 +30,11 @@ export function PrescriptionGenerator() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      speechInput: '',
+      drugName: '',
+      dosage: '',
+      frequency: '',
+      duration: '',
+      instructions: '',
     },
   });
 
@@ -49,60 +57,81 @@ export function PrescriptionGenerator() {
   }
 
   const handlePrint = () => {
-    const printableArea = document.getElementById('printable-prescription');
-    if (printableArea) {
-        const printWindow = window.open('', '', 'height=800,width=800');
-        printWindow?.document.write('<html><head><title>Prescription</title>');
-        // Inject styles
-        const styles = Array.from(document.styleSheets)
-            .map(styleSheet => {
-                try {
-                    return Array.from(styleSheet.cssRules)
-                        .map(rule => rule.cssText)
-                        .join('');
-                } catch (e) {
-                    console.log('Access to stylesheet %s is denied. Skipping.', styleSheet.href);
-                    return '';
-                }
-            }).join('');
-        printWindow?.document.write(`<style>${styles}</style>`);
-        printWindow?.document.write('<style>@media print { .no-print { display: none !important; } }</style>');
-        printWindow?.document.write('</head><body>');
-        printWindow?.document.write(printableArea.innerHTML);
-        printWindow?.document.write('</body></html>');
-        printWindow?.document.close();
-        printWindow?.focus();
-        printWindow?.print();
-    }
+    window.print();
   };
 
   return (
     <div className="grid gap-6">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="drugName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Drug Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g., Paracetamol" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="dosage"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Dosage</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g., 500mg" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="frequency"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Frequency</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g., Twice a day" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="duration"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Duration</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g., 3 days" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
           <FormField
             control={form.control}
-            name="speechInput"
+            name="instructions"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-base">Doctor's Notes</FormLabel>
+                <FormLabel>Instructions</FormLabel>
                 <FormControl>
-                  <div className="relative">
-                    <Textarea
-                      placeholder="e.g., 'Give Paracetamol 500mg twice a day for 3 days, and Azithromycin 250mg once a day before food for 5 days.'"
-                      rows={5}
-                      className="pr-12"
-                      {...field}
-                    />
-                    <Button type="button" size="icon" variant="ghost" className="absolute right-2 top-1/2 -translate-y-1/2">
-                      <Mic className="h-5 w-5" />
-                    </Button>
-                  </div>
+                  <Input placeholder="e.g., After food" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
+
           <Button type="submit" disabled={isLoading}>
             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Generate Prescription
@@ -120,11 +149,11 @@ export function PrescriptionGenerator() {
       )}
 
       {prescription && (
-        <Card className="mt-6" id="printable-prescription">
+        <Card className="mt-6 printable-area" id="printable-prescription">
           <CardHeader>
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between no-print">
                 <CardTitle>Generated OPD Summary</CardTitle>
-                <div className="flex gap-2 no-print">
+                <div className="flex gap-2">
                     <Button variant="outline" size="icon" onClick={handlePrint}>
                         <Printer className="h-4 w-4" />
                     </Button>
@@ -133,7 +162,7 @@ export function PrescriptionGenerator() {
                     </Button>
                 </div>
             </div>
-            <Separator className="my-4"/>
+            <Separator className="my-4 no-print"/>
             <div className="text-center">
                 <h2 className="font-headline text-2xl font-bold text-primary">Dr. Rajesh Kumar</h2>
                 <p>MBBS, MD (General Medicine)</p>
