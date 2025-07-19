@@ -18,6 +18,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { cn } from '@/lib/utils';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 
 const ComboboxField = ({ form, name, suggestions, placeholder }: { form: any, name: string, suggestions: string[], placeholder: string }) => {
@@ -177,6 +179,57 @@ export function PrescriptionGenerator() {
 
   const handlePrint = () => {
     window.print();
+  };
+
+  const handleDownload = async () => {
+    const input = document.getElementById('printable-prescription');
+    if (input) {
+      // Temporarily remove no-print elements from the DOM for capture
+      const noPrintElements = input.querySelectorAll('.no-print');
+      noPrintElements.forEach(el => (el as HTMLElement).style.display = 'none');
+
+      try {
+        const canvas = await html2canvas(input, {
+          scale: 2, // Higher scale for better quality
+          useCORS: true,
+          backgroundColor: '#ffffff',
+        });
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+        const canvasWidth = canvas.width;
+        const canvasHeight = canvas.height;
+        const ratio = canvasWidth / canvasHeight;
+        const pdfRatio = pdfWidth / pdfHeight;
+        let finalWidth, finalHeight;
+        
+        if (ratio > pdfRatio) {
+            finalWidth = pdfWidth;
+            finalHeight = pdfWidth / ratio;
+        } else {
+            finalHeight = pdfHeight;
+            finalWidth = pdfHeight * ratio;
+        }
+
+        const xPos = (pdfWidth - finalWidth) / 2;
+        const yPos = (pdfHeight - finalHeight) / 2;
+
+        pdf.addImage(imgData, 'PNG', xPos, yPos, finalWidth, finalHeight);
+        pdf.save(`opd-summary-${opdSummary?.patientDetails.name.replace(/ /g, '_') || 'patient'}.pdf`);
+
+      } catch (error) {
+        console.error("Error generating PDF:", error);
+        toast({
+          variant: 'destructive',
+          title: 'Error Downloading PDF',
+          description: 'Could not generate PDF. Please try again.',
+        });
+      } finally {
+        // Restore no-print elements
+        noPrintElements.forEach(el => (el as HTMLElement).style.display = '');
+      }
+    }
   };
   
   return (
@@ -343,13 +396,14 @@ export function PrescriptionGenerator() {
       )}
 
       {opdSummary && (
-        <Card className="mt-6 printable-area" id="printable-prescription">
+        <div id="printable-prescription">
+        <Card className="mt-6 printable-area">
           <CardHeader>
             <div className="flex items-center justify-between no-print">
                 <CardTitle>Generated OPD Summary</CardTitle>
                 <div className="flex gap-2">
                     <Button variant="outline" size="icon" onClick={handlePrint}><Printer className="h-4 w-4" /></Button>
-                    <Button variant="outline" size="icon"><Download className="h-4 w-4" /></Button>
+                    <Button variant="outline" size="icon" onClick={handleDownload}><Download className="h-4 w-4" /></Button>
                 </div>
             </div>
             <Separator className="my-4 no-print"/>
@@ -411,6 +465,7 @@ export function PrescriptionGenerator() {
 
           </CardContent>
         </Card>
+        </div>
       )}
     </div>
   );
