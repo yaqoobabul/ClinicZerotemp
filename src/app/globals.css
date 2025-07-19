@@ -73,6 +73,11 @@ body {
 }
 
 @media print {
+  @page {
+    size: auto;
+    margin: 0mm;
+  }
+
   body * {
     visibility: hidden;
   }
@@ -89,9 +94,10 @@ body {
     width: 100%;
     height: auto;
     margin: 0;
-    padding: 0.5rem;
+    padding: 1rem; /* Add padding to simulate margins */
     border: none;
     box-shadow: none;
     background-color: white !important;
+    color: black !important;
   }
 }
