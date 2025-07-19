@@ -490,9 +490,9 @@ export function DentalPrescriptionGenerator() {
                 <div className="flex items-start justify-between">
                     <div>
                       <h2 className="text-base font-bold text-primary">ClinicEase Clinic</h2>
+                      <p>123 Health St, Wellness City, India | Phone: +91 98765 43210</p>
                       <p className="font-semibold">Dr. Rajesh Kumar, MBBS, MD (General Medicine)</p>
                       <p className="text-muted-foreground">Reg. No. 12345</p>
-                      <p>123 Health St, Wellness City, India | Phone: +91 98765 43210</p>
                     </div>
                     <div className="text-right flex-shrink-0">
                        <p><strong>Date:</strong> {new Date().toLocaleString('en-IN')}</p>
