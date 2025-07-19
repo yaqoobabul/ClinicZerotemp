@@ -338,76 +338,76 @@ export function PrescriptionGenerator() {
       )}
 
       {opdSummary && (
-        <Card id="printable-prescription" className="mt-6 border-2 border-black">
-          <CardHeader className="p-4">
-            <div className="flex items-start justify-between">
-                <div>
-                  <h2 className="font-headline text-xl font-bold text-primary">ClinicEase Clinic</h2>
-                  <p className="font-semibold">Dr. Rajesh Kumar, MBBS, MD (General Medicine)</p>
-                  <p className="text-xs text-muted-foreground">Reg. No. 12345</p>
-                  <p className="text-xs">123 Health St, Wellness City, India | Phone: +91 98765 43210</p>
+        <div id="printable-prescription" className="mt-6 border-2 border-black p-2">
+            <div className="p-2">
+                <div className="flex items-start justify-between">
+                    <div>
+                        <h2 className="text-lg font-bold text-primary">ClinicEase Clinic</h2>
+                        <p className="text-sm font-semibold">Dr. Rajesh Kumar, MBBS, MD (General Medicine)</p>
+                        <p className="text-xs text-muted-foreground">Reg. No. 12345</p>
+                        <p className="text-xs">123 Health St, Wellness City, India | Phone: +91 98765 43210</p>
+                    </div>
+                    <div className="text-right flex-shrink-0">
+                        <p className="text-sm"><strong>Date:</strong> {new Date().toLocaleDateString('en-IN')}</p>
+                        <div className="flex gap-2 justify-end mt-2 no-print">
+                            <Button variant="outline" size="icon" onClick={handlePrint}><Printer className="h-4 w-4" /></Button>
+                        </div>
+                    </div>
                 </div>
-                <div className="text-right flex-shrink-0">
-                    <p className="text-sm"><strong>Date:</strong> {new Date().toLocaleDateString('en-IN')}</p>
-                    <div className="flex gap-2 justify-end mt-2 no-print">
-                        <Button variant="outline" size="icon" onClick={handlePrint}><Printer className="h-4 w-4" /></Button>
+                <Separator className="my-2 bg-black"/>
+            </div>
+            <div className="space-y-2 p-2 text-sm">
+                <div className="rounded-md border p-2">
+                    <h3 className="font-bold mb-1 text-base">Patient Details</h3>
+                    <div className="grid grid-cols-3 gap-x-4">
+                        <div><strong>Name:</strong> {opdSummary.patientDetails.name}</div>
+                        <div><strong>Age:</strong> {opdSummary.patientDetails.age}</div>
+                        <div><strong>Gender:</strong> {opdSummary.patientDetails.gender}</div>
+                    </div>
+                </div>
+                
+                <div className="rounded-md border p-2">
+                    <h3 className="font-bold mb-1 text-base">Provisional Diagnosis</h3>
+                    <p>{opdSummary.provisionalDiagnosis}</p>
+                </div>
+
+                {opdSummary.testsAdvised && (
+                <div className="rounded-md border p-2">
+                    <h3 className="font-bold mb-1 text-base">Tests Advised</h3>
+                    <p>{opdSummary.testsAdvised}</p>
+                </div>
+                )}
+
+                {opdSummary.prescriptionTable && (
+                <div>
+                    <h3 className="font-bold my-1 text-base">Prescription (Rx)</h3>
+                    <MarkdownTable content={opdSummary.prescriptionTable} />
+                </div>
+                )}
+
+                {opdSummary.additionalNotes && (
+                <div className="rounded-md border p-2">
+                    <h3 className="font-bold mb-1 text-base">Additional Notes</h3>
+                    <p>{opdSummary.additionalNotes}</p>
+                </div>
+                )}
+
+                <Separator className="my-2" />
+
+                <div className="flex justify-between items-end pt-4">
+                    <div>
+                        <p className="text-xs"><strong>Date:</strong> {new Date().toLocaleDateString('en-IN')}</p>
+                        {opdSummary.followUpDate && (
+                            <p className="text-xs"><strong>Follow-up:</strong> {opdSummary.followUpDate}</p>
+                        )}
+                    </div>
+                    <div className="text-center">
+                        <div className="h-8"></div>
+                        <p className="border-t-2 pt-1 text-xs">Doctor's Signature</p>
                     </div>
                 </div>
             </div>
-            <Separator className="my-2 bg-black"/>
-          </CardHeader>
-          <CardContent className="space-y-3 p-4 text-sm">
-              <div className="rounded-md border p-2">
-                  <h3 className="font-bold mb-1">Patient Details</h3>
-                  <div className="grid grid-cols-3 gap-x-4">
-                  <div><strong>Name:</strong> {opdSummary.patientDetails.name}</div>
-                  <div><strong>Age:</strong> {opdSummary.patientDetails.age}</div>
-                  <div><strong>Gender:</strong> {opdSummary.patientDetails.gender}</div>
-                  </div>
-              </div>
-              
-              <div className="rounded-md border p-2">
-                  <h3 className="font-bold mb-1">Provisional Diagnosis</h3>
-                  <p>{opdSummary.provisionalDiagnosis}</p>
-              </div>
-
-              {opdSummary.testsAdvised && (
-              <div className="rounded-md border p-2">
-                  <h3 className="font-bold mb-1">Tests Advised</h3>
-                  <p>{opdSummary.testsAdvised}</p>
-              </div>
-              )}
-
-              {opdSummary.prescriptionTable && (
-              <div>
-                  <h3 className="font-bold mb-1">Prescription (Rx)</h3>
-                  <MarkdownTable content={opdSummary.prescriptionTable} />
-              </div>
-              )}
-
-              {opdSummary.additionalNotes && (
-              <div className="rounded-md border p-2">
-                  <h3 className="font-bold mb-1">Additional Notes</h3>
-                  <p>{opdSummary.additionalNotes}</p>
-              </div>
-              )}
-
-              <Separator className="my-4" />
-
-              <div className="flex justify-between items-end pt-8">
-                  <div>
-                     <p className="text-xs"><strong>Date:</strong> {new Date().toLocaleDateString('en-IN')}</p>
-                    {opdSummary.followUpDate && (
-                        <p className="text-xs"><strong>Follow-up:</strong> {opdSummary.followUpDate}</p>
-                    )}
-                  </div>
-                  <div className="text-center">
-                      <div className="h-10"></div>
-                      <p className="border-t-2 pt-1 text-xs">Doctor's Signature</p>
-                  </div>
-              </div>
-          </CardContent>
-        </Card>
+        </div>
       )}
     </div>
   );

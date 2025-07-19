@@ -74,7 +74,7 @@ body {
 
 @media print {
   body {
-    background-color: white;
+    background-color: white !important;
   }
   .no-print {
     display: none !important;
@@ -85,8 +85,9 @@ body {
     left: 0;
     top: 0;
     width: 100%;
+    height: 100%;
     margin: 0;
-    padding: 1rem;
+    padding: 0.5rem;
     border: none;
     box-shadow: none;
   }
