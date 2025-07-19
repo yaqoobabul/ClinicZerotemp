@@ -3,7 +3,6 @@
 import React from 'react';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
-import { ToothIconSimple } from '../icons/ToothIconSimple';
 
 type ToothNote = {
   tooth: string;
@@ -33,20 +32,15 @@ const Tooth: React.FC<{
   isPrimary?: boolean;
 }> = ({ number, note, onNoteChange, isPrimary }) => (
   <div className="flex flex-col items-center gap-1 text-center">
-    <div className="relative">
-      <ToothIconSimple className={cn("h-8 w-6 md:h-10 md:w-8", isPrimary ? 'text-gray-500' : 'text-primary/70')} />
-      <span className={cn(
-        "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[45%] text-xs font-semibold pointer-events-none",
-        isPrimary ? 'text-white' : 'text-primary-foreground'
-      )}>
-        {number}
-      </span>
+    <div className={cn("h-6 w-12 flex items-center justify-center font-semibold text-sm", isPrimary ? 'text-muted-foreground' : 'text-foreground')}>
+      {number}
     </div>
     <Input
       type="text"
       value={note}
       onChange={(e) => onNoteChange(e.target.value)}
       className="h-6 w-12 text-xs text-center p-1"
+      aria-label={`Note for tooth ${number}`}
     />
   </div>
 );
