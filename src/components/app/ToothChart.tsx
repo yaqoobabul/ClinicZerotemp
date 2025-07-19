@@ -14,15 +14,15 @@ interface ToothChartProps {
   onChange: (value: ToothNote[]) => void;
 }
 
-const adultUpperRight = ['11', '12', '13', '14', '15', '16', '17', '18'];
+const adultUpperRight = ['18', '17', '16', '15', '14', '13', '12', '11'];
 const adultUpperLeft = ['21', '22', '23', '24', '25', '26', '27', '28'];
 const adultLowerLeft = ['31', '32', '33', '34', '35', '36', '37', '38'];
-const adultLowerRight = ['41', '42', '43', '44', '45', '46', '47', '48'];
+const adultLowerRight = ['48', '47', '46', '45', '44', '43', '42', '41'];
 
-const primaryUpperRight = ['51', '52', '53', '54', '55'];
+const primaryUpperRight = ['55', '54', '53', '52', '51'];
 const primaryUpperLeft = ['61', '62', '63', '64', '65'];
 const primaryLowerLeft = ['71', '72', '73', '74', '75'];
-const primaryLowerRight = ['81', '82', '83', '84', '85'];
+const primaryLowerRight = ['85', '84', '83', '82', '81'];
 
 
 const toothConditions = [
@@ -118,13 +118,13 @@ export const ToothChart: React.FC<ToothChartProps> = ({ value, onChange }) => {
                 <h3 className="text-sm font-medium text-center">Permanent Dentition</h3>
                 <div className="flex flex-col items-center gap-2">
                     <div className="flex justify-center gap-1 md:gap-2">
-                        <Quadrant teeth={adultUpperRight.slice().reverse()} notes={value} onNoteChange={handleNoteChange} />
+                        <Quadrant teeth={adultUpperRight} notes={value} onNoteChange={handleNoteChange} />
                         <div className="border-l-2 border-gray-400 mx-1"></div>
                         <Quadrant teeth={adultUpperLeft} notes={value} onNoteChange={handleNoteChange} />
                     </div>
                     <div className="border-b-2 border-gray-400 my-2 w-full max-w-lg mx-auto"></div>
                     <div className="flex justify-center gap-1 md:gap-2">
-                        <Quadrant teeth={adultLowerRight.slice().reverse()} notes={value} onNoteChange={handleNoteChange} />
+                        <Quadrant teeth={adultLowerRight} notes={value} onNoteChange={handleNoteChange} />
                         <div className="border-l-2 border-gray-400 mx-1"></div>
                         <Quadrant teeth={adultLowerLeft} notes={value} onNoteChange={handleNoteChange} />
                     </div>
@@ -136,13 +136,13 @@ export const ToothChart: React.FC<ToothChartProps> = ({ value, onChange }) => {
                 <h3 className="text-sm font-medium text-center">Primary Dentition</h3>
                 <div className="flex flex-col items-center gap-2">
                     <div className="flex justify-center gap-1 md:gap-2">
-                       <Quadrant teeth={primaryUpperRight.slice().reverse()} notes={value} onNoteChange={handleNoteChange} isPrimary />
+                       <Quadrant teeth={primaryUpperRight} notes={value} onNoteChange={handleNoteChange} isPrimary />
                        <div className="border-l-2 border-gray-400 mx-1"></div>
                        <Quadrant teeth={primaryUpperLeft} notes={value} onNoteChange={handleNoteChange} isPrimary />
                     </div>
                      <div className="border-b-2 border-gray-400 my-2 w-full max-w-sm mx-auto"></div>
                      <div className="flex justify-center gap-1 md:gap-2">
-                       <Quadrant teeth={primaryLowerRight.slice().reverse()} notes={value} onNoteChange={handleNoteChange} isPrimary />
+                       <Quadrant teeth={primaryLowerRight} notes={value} onNoteChange={handleNoteChange} isPrimary />
                        <div className="border-l-2 border-gray-400 mx-1"></div>
                        <Quadrant teeth={primaryLowerLeft} notes={value} onNoteChange={handleNoteChange} isPrimary />
                     </div>
