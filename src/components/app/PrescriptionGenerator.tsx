@@ -14,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui
 import { MarkdownTable } from './MarkdownTable';
 import { Separator } from '../ui/separator';
 import { Textarea } from '../ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const formSchema = z.object({
   patientName: z.string().min(1, 'Patient name is required.'),
@@ -160,12 +161,22 @@ export function PrescriptionGenerator() {
             <CardContent className="space-y-4">
               {fields.map((field, index) => (
                 <div key={field.id} className="p-4 border rounded-lg space-y-4 relative">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-                    <FormField control={form.control} name={`medicines.${index}.name`} render={({ field }) => (<FormItem><FormLabel>Medicine</FormLabel><FormControl><Input placeholder="e.g., Paracetamol" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                    <FormField control={form.control} name={`medicines.${index}.dosage`} render={({ field }) => (<FormItem><FormLabel>Dosage</FormLabel><FormControl><Input placeholder="e.g., 500mg" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                    <FormField control={form.control} name={`medicines.${index}.frequency`} render={({ field }) => (<FormItem><FormLabel>Frequency</FormLabel><FormControl><Input placeholder="e.g., 1-1-1" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                    <FormField control={form.control} name={`medicines.${index}.duration`} render={({ field }) => (<FormItem><FormLabel>Duration</FormLabel><FormControl><Input placeholder="e.g., 3 days" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                    <FormField control={form.control} name={`medicines.${index}.instructions`} render={({ field }) => (<FormItem><FormLabel>Instructions</FormLabel><FormControl><Input placeholder="e.g., After food" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 items-end">
+                    <FormField control={form.control} name={`medicines.${index}.name`} render={({ field }) => (
+                        <FormItem><FormLabel>Drug Name</FormLabel><FormControl><Input placeholder="e.g., Amoxicillin" {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                    <FormField control={form.control} name={`medicines.${index}.dosage`} render={({ field }) => (
+                        <FormItem><FormLabel>Dosage</FormLabel><FormControl><Input placeholder="e.g., 500mg" {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                    <FormField control={form.control} name={`medicines.${index}.frequency`} render={({ field }) => (
+                        <FormItem><FormLabel>Frequency</FormLabel><FormControl><Input placeholder="e.g., 1-0-1" {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                    <FormField control={form.control} name={`medicines.${index}.duration`} render={({ field }) => (
+                        <FormItem><FormLabel>Duration</FormLabel><FormControl><Input placeholder="e.g., 5 days" {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                    <FormField control={form.control} name={`medicines.${index}.instructions`} render={({ field }) => (
+                        <FormItem><FormLabel>Instructions</FormLabel><FormControl><Input placeholder="e.g., After Food" {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
                   </div>
                    {fields.length > 1 && (
                      <Button type="button" variant="ghost" size="icon" className="absolute top-2 right-2 text-muted-foreground hover:text-destructive" onClick={() => remove(index)}>
@@ -175,7 +186,7 @@ export function PrescriptionGenerator() {
                 </div>
               ))}
                <Button type="button" variant="outline" size="sm" onClick={() => append({ name: '', dosage: '', frequency: '', duration: '', instructions: '' })}>
-                <Plus className="mr-2 h-4 w-4" /> Add Medicine
+                <Plus className="mr-2 h-4 w-4" /> Add Another Medicine
               </Button>
             </CardContent>
           </Card>
@@ -210,7 +221,7 @@ export function PrescriptionGenerator() {
             </CardContent>
           </Card>
 
-          <Button type="submit" disabled={isLoading}>
+          <Button type="submit" disabled={isLoading} size="lg" className="w-full md:w-auto">
             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Generate OPD Summary
           </Button>
