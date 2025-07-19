@@ -47,7 +47,13 @@ const Tooth: React.FC<{
       {number}
     </div>
     <Select value={note} onValueChange={(value) => onNoteChange(value === "none" ? "" : value)}>
-      <SelectTrigger className="h-8 w-16 text-xs p-1" aria-label={`Note for tooth ${number}`}>
+      <SelectTrigger
+        className={cn(
+            "h-8 w-10 text-xs p-1",
+            note && "bg-accent text-accent-foreground"
+        )}
+        aria-label={`Note for tooth ${number}`}
+      >
         <SelectValue placeholder="-" />
       </SelectTrigger>
       <SelectContent>
