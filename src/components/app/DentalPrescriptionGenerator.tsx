@@ -336,15 +336,32 @@ export function DentalPrescriptionGenerator() {
               <CardContent className="space-y-4">
                 {medicineFields.map((field, index) => (
                   <div key={field.id} className="p-4 border rounded-lg bg-muted/20 space-y-4">
-                    <div className="flex flex-col md:flex-row md:items-end gap-4">
+                    <div className="flex flex-col md:flex-row md:items-end md:gap-4">
                         <div className="flex-grow space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr_1fr] gap-4 items-end">
-                                <div className="md:col-span-4">
-                                    <FormField control={form.control} name={`medicines.${index}.name`} render={({ field }) => (
-                                        <FormItem><FormLabel>Drug Name</FormLabel><FormControl><Input placeholder="e.g., Amoxicillin" {...field} /></FormControl><FormMessage /></FormItem>
-                                    )} />
-                                </div>
-                                
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <FormField control={form.control} name={`medicines.${index}.name`} render={({ field }) => (
+                                    <FormItem><FormLabel>Drug Name</FormLabel><FormControl><Input placeholder="e.g., Amoxicillin" {...field} /></FormControl><FormMessage /></FormItem>
+                                )} />
+                                <FormField control={form.control} name={`medicines.${index}.instructions`} render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Instructions</FormLabel>
+                                        <FormControl>
+                                            <Input
+                                                placeholder="e.g., After food"
+                                                {...field}
+                                                list={`instructions-suggestions-${index}`}
+                                            />
+                                        </FormControl>
+                                        <datalist id={`instructions-suggestions-${index}`}>
+                                        {instructionSuggestions.map((suggestion) => (
+                                            <option key={suggestion} value={suggestion} />
+                                        ))}
+                                        </datalist>
+                                        <FormMessage />
+                                    </FormItem>
+                                )} />
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                 <FormItem><FormLabel>Dosage</FormLabel>
                                     <div className="flex gap-2">
                                     <FormField control={form.control} name={`medicines.${index}.dosageValue`} render={({ field }) => (
@@ -384,29 +401,9 @@ export function DentalPrescriptionGenerator() {
                                     )} />
                                     </div>
                                 </FormItem>
-                                <div className="md:col-span-4">
-                                    <FormField control={form.control} name={`medicines.${index}.instructions`} render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Instructions</FormLabel>
-                                            <FormControl>
-                                                <Input
-                                                    placeholder="e.g., After food"
-                                                    {...field}
-                                                    list={`instructions-suggestions-${index}`}
-                                                />
-                                            </FormControl>
-                                            <datalist id={`instructions-suggestions-${index}`}>
-                                            {instructionSuggestions.map((suggestion) => (
-                                                <option key={suggestion} value={suggestion} />
-                                            ))}
-                                            </datalist>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )} />
-                                </div>
                             </div>
                         </div>
-                        <div className="flex items-end h-10">
+                        <div className="flex items-end h-full mt-auto">
                             <Button type="button" variant="ghost" size="icon" className="shrink-0 text-muted-foreground hover:text-destructive" onClick={() => removeMedicine(index)}>
                                 <Trash2 className="h-4 w-4" />
                             </Button>
@@ -450,27 +447,27 @@ export function DentalPrescriptionGenerator() {
       )}
 
       {opdSummary && (
-        <div id="printable-prescription" className="space-y-4">
-            <div className="p-2">
+        <div id="printable-prescription" className="space-y-2">
+            <div className="space-y-1">
                 <div className="flex items-start justify-between">
                     <div>
-                      <h2 className="text-xl font-bold text-primary">ClinicEase Clinic</h2>
-                      <p className="text-sm font-semibold">Dr. Rajesh Kumar, MBBS, MD (General Medicine)</p>
+                      <h2 className="text-lg font-bold text-primary">ClinicEase Clinic</h2>
+                      <p className="text-xs font-semibold">Dr. Rajesh Kumar, MBBS, MD (General Medicine)</p>
                       <p className="text-xs text-muted-foreground">Reg. No. 12345</p>
                       <p className="text-xs">123 Health St, Wellness City, India | Phone: +91 98765 43210</p>
                     </div>
                     <div className="text-right flex-shrink-0">
-                        <p className="text-sm"><strong>Date:</strong> {new Date().toLocaleDateString('en-IN')}</p>
-                        <div className="flex gap-2 justify-end mt-2 no-print">
+                        <p className="text-xs"><strong>Date:</strong> {new Date().toLocaleDateString('en-IN')}</p>
+                        <div className="flex gap-2 justify-end mt-1 no-print">
                             <Button variant="outline" size="icon" onClick={handlePrint}><Printer className="h-4 w-4" /></Button>
                         </div>
                     </div>
                 </div>
                 <Separator className="my-2 bg-black"/>
             </div>
-            <div className="space-y-2 px-2 text-sm">
-                <div className="rounded-md border p-2">
-                    <h3 className="font-bold mb-1 text-base">Patient Details</h3>
+            <div className="space-y-1 px-1 text-sm">
+                <div className="rounded-md border p-1 mb-1">
+                    <h3 className="font-bold text-sm">Patient Details</h3>
                     <div className="grid grid-cols-3 gap-x-4 text-xs">
                       <div><strong>Name:</strong> {opdSummary.patientDetails.name}</div>
                       <div><strong>Age:</strong> {opdSummary.patientDetails.age}</div>
@@ -478,30 +475,30 @@ export function DentalPrescriptionGenerator() {
                     </div>
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-1">
                     {opdSummary.toothChartNotes && (
-                      <div className='mb-2'>
-                          <h3 className="font-bold text-base">Dental Notes</h3>
+                      <div className='mb-1'>
+                          <h3 className="font-bold text-sm">Dental Notes</h3>
                           <p className="text-xs">{opdSummary.toothChartNotes}</p>
                       </div>
                     )}
                     
-                    <div className='mb-2'>
-                        <h3 className="font-bold text-base">Provisional Diagnosis</h3>
+                    <div className='mb-1'>
+                        <h3 className="font-bold text-sm">Provisional Diagnosis</h3>
                         <p className="text-xs">{opdSummary.provisionalDiagnosis}</p>
                     </div>
                     
                     {(opdSummary.radiographsAdvised || opdSummary.testsAdvised) && (
-                      <div className='mb-2'>
-                          <h3 className="font-bold text-base">Investigations Advised</h3>
+                      <div className='mb-1'>
+                          <h3 className="font-bold text-sm">Investigations Advised</h3>
                           {opdSummary.radiographsAdvised && <p className="text-xs"><strong>Radiographs:</strong> {opdSummary.radiographsAdvised}</p>}
                           {opdSummary.testsAdvised && <p className="text-xs"><strong>Tests:</strong> {opdSummary.testsAdvised}</p>}
                       </div>
                     )}
 
                     {prescriptionTableRows.length > 0 && (
-                      <div className="mb-2">
-                          <h3 className="font-bold text-base">Prescription (Rx)</h3>
+                      <div className="mb-1">
+                          <h3 className="font-bold text-sm">Prescription (Rx)</h3>
                           <table className="w-full text-xs border-collapse">
                             <thead>
                                 <tr className="border-b">
@@ -526,15 +523,15 @@ export function DentalPrescriptionGenerator() {
                     )}
 
                     {opdSummary.additionalNotes && (
-                      <div className="mb-2">
-                          <h3 className="font-bold text-base">Additional Notes</h3>
+                      <div className="mb-1">
+                          <h3 className="font-bold text-sm">Additional Notes</h3>
                           <p className="text-xs">{opdSummary.additionalNotes}</p>
                       </div>
                     )}
                 </div>
 
 
-                <div className="flex justify-between items-end pt-8">
+                <div className="flex justify-between items-end pt-4">
                     <div>
                       <p className="text-xs"><strong>Date:</strong> {new Date().toLocaleDateString('en-IN')}</p>
                       {opdSummary.followUpDate && (
@@ -552,4 +549,3 @@ export function DentalPrescriptionGenerator() {
     </div>
   );
 }
-
