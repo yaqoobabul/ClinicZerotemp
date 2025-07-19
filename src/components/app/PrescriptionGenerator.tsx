@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -178,7 +179,16 @@ export function PrescriptionGenerator() {
   }
 
   const handlePrint = () => {
-    window.print();
+    const printableArea = document.getElementById('printable-prescription');
+    if (printableArea) {
+      const originalContents = document.body.innerHTML;
+      const printContents = printableArea.innerHTML;
+      document.body.innerHTML = printContents;
+      window.print();
+      document.body.innerHTML = originalContents;
+      // Re-initialize the form state after printing to restore event listeners
+      window.location.reload(); 
+    }
   };
 
   const handleDownload = async () => {
@@ -201,21 +211,12 @@ export function PrescriptionGenerator() {
         const canvasWidth = canvas.width;
         const canvasHeight = canvas.height;
         const ratio = canvasWidth / canvasHeight;
-        const pdfRatio = pdfWidth / pdfHeight;
-        let finalWidth, finalHeight;
         
-        if (ratio > pdfRatio) {
-            finalWidth = pdfWidth;
-            finalHeight = pdfWidth / ratio;
-        } else {
-            finalHeight = pdfHeight;
-            finalWidth = pdfHeight * ratio;
-        }
+        // A4 page is 210mm x 297mm. We'll leave some margin.
+        const contentWidth = pdfWidth - 20;
+        const contentHeight = (contentWidth / canvasWidth) * canvasHeight;
 
-        const xPos = (pdfWidth - finalWidth) / 2;
-        const yPos = (pdfHeight - finalHeight) / 2;
-
-        pdf.addImage(imgData, 'PNG', xPos, yPos, finalWidth, finalHeight);
+        pdf.addImage(imgData, 'PNG', 10, 10, contentWidth, contentHeight);
         pdf.save(`opd-summary-${opdSummary?.patientDetails.name.replace(/ /g, '_') || 'patient'}.pdf`);
 
       } catch (error) {
