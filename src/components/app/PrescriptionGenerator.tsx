@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useForm, useFieldArray, Controller } from 'react-hook-form';
+import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { generatePrescription, type GeneratePrescriptionOutput } from '@/ai/flows/generate-prescription';
 import { Loader2, Printer, Download, Plus, Trash2, Check, ChevronsUpDown } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { MarkdownTable } from './MarkdownTable';
 import { Separator } from '../ui/separator';
 import { Textarea } from '../ui/textarea';
@@ -46,7 +46,72 @@ const dosageUnits = ["mg", "mcg", "g", "ml", "tsp", "tbsp", "IU", "drops"];
 const durationUnits = ["Days", "Weeks", "Months", "Year(s)"];
 const frequencySuggestions = ["1-0-0 (Once a day)", "1-0-1 (Twice a day)", "1-1-1 (Thrice a day)", "0-0-1 (At night)", "SOS (As needed)"];
 const instructionSuggestions = ["Before food", "After food", "With meals", "Empty stomach"];
-const commonTests = ["Complete Blood Count (CBC)", "Lipid Profile", "Liver Function Test (LFT)", "Kidney Function Test (KFT)", "Blood Sugar (Fasting & PP)", "Thyroid Profile (T3, T4, TSH)", "Urine Routine & Microscopy"];
+
+const ComboboxField = ({ form, name, suggestions, placeholder }: { form: any, name: string, suggestions: string[], placeholder: string }) => {
+    const [open, setOpen] = useState(false);
+    return (
+      <FormField
+        control={form.control}
+        name={name}
+        render={({ field }) => (
+          <FormItem className="flex flex-col">
+            <Popover open={open} onOpenChange={setOpen}>
+              <PopoverTrigger asChild>
+                <FormControl>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    className={cn(
+                      "w-full justify-between",
+                      !field.value && "text-muted-foreground"
+                    )}
+                  >
+                    {field.value
+                      ? suggestions.find(
+                          (s) => s.toLowerCase() === field.value.toLowerCase()
+                        ) || field.value
+                      : `Select ${placeholder}`}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </FormControl>
+              </PopoverTrigger>
+              <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                <Command>
+                    <CommandInput placeholder={`Search ${placeholder}...`} onValueChange={(search) => field.onChange(search)} />
+                    <CommandEmpty>
+                        <p className="p-2 text-sm">No {placeholder} found. Type to add custom value.</p>
+                    </CommandEmpty>
+                    <CommandList>
+                        <CommandGroup>
+                            {suggestions.map((suggestion) => (
+                            <CommandItem
+                                value={suggestion}
+                                key={suggestion}
+                                onSelect={() => {
+                                form.setValue(name as any, suggestion);
+                                setOpen(false);
+                                }}
+                            >
+                                <Check
+                                className={cn(
+                                    "mr-2 h-4 w-4",
+                                    suggestion === field.value ? "opacity-100" : "opacity-0"
+                                )}
+                                />
+                                {suggestion}
+                            </CommandItem>
+                            ))}
+                        </CommandGroup>
+                    </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+    );
+  };
 
 export function PrescriptionGenerator() {
   const [isLoading, setIsLoading] = useState(false);
@@ -113,76 +178,10 @@ export function PrescriptionGenerator() {
     window.print();
   };
   
-  const ComboboxField = ({ control, name, suggestions, placeholder }: { control: any, name: string, suggestions: string[], placeholder: string }) => {
-    const [open, setOpen] = useState(false);
-    return (
-      <FormField
-        control={control}
-        name={name}
-        render={({ field }) => (
-          <FormItem className="flex flex-col">
-            <Popover open={open} onOpenChange={setOpen}>
-              <PopoverTrigger asChild>
-                <FormControl>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    className={cn(
-                      "w-full justify-between",
-                      !field.value && "text-muted-foreground"
-                    )}
-                  >
-                    {field.value
-                      ? suggestions.find(
-                          (s) => s.toLowerCase() === field.value.toLowerCase()
-                        ) || field.value
-                      : `Select ${placeholder}`}
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </FormControl>
-              </PopoverTrigger>
-              <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                <Command>
-                    <CommandInput placeholder={`Search ${placeholder}...`} onValueChange={(search) => field.onChange(search)} />
-                    <CommandEmpty>
-                        <p className="p-2 text-sm">No {placeholder} found. Type to add custom value.</p>
-                    </CommandEmpty>
-                    <CommandList>
-                        <CommandGroup>
-                            {suggestions.map((suggestion) => (
-                            <CommandItem
-                                value={suggestion}
-                                key={suggestion}
-                                onSelect={() => {
-                                form.setValue(name as any, suggestion);
-                                setOpen(false);
-                                }}
-                            >
-                                <Check
-                                className={cn(
-                                    "mr-2 h-4 w-4",
-                                    suggestion === field.value ? "opacity-100" : "opacity-0"
-                                )}
-                                />
-                                {suggestion}
-                            </CommandItem>
-                            ))}
-                        </CommandGroup>
-                    </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-    );
-  };
-
   return (
     <div className="grid gap-6">
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 no-print">
           <Card>
             <CardHeader>
               <CardTitle>Patient Details</CardTitle>
@@ -270,11 +269,11 @@ export function PrescriptionGenerator() {
                     </div>
                     <div>
                         <FormLabel>Frequency</FormLabel>
-                        <ComboboxField control={form.control} name={`medicines.${index}.frequency`} suggestions={frequencySuggestions} placeholder="Frequency" />
+                        <ComboboxField form={form} name={`medicines.${index}.frequency`} suggestions={frequencySuggestions} placeholder="Frequency" />
                     </div>
                      <div>
                         <FormLabel>Instructions</FormLabel>
-                        <ComboboxField control={form.control} name={`medicines.${index}.instructions`} suggestions={instructionSuggestions} placeholder="Instructions" />
+                        <ComboboxField form={form} name={`medicines.${index}.instructions`} suggestions={instructionSuggestions} placeholder="Instructions" />
                     </div>
                   </div>
                    {medicineFields.length > 1 && (
