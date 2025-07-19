@@ -447,11 +447,11 @@ export function DentalPrescriptionGenerator() {
       )}
 
       {opdSummary && (
-        <div id="printable-prescription" className="space-y-2">
-            <div className="space-y-1">
+        <div id="printable-prescription" className="p-2">
+            <div>
                 <div className="flex items-start justify-between">
                     <div>
-                      <h2 className="text-lg font-bold text-primary">ClinicEase Clinic</h2>
+                      <h2 className="text-base font-bold text-primary">ClinicEase Clinic</h2>
                       <p className="text-xs font-semibold">Dr. Rajesh Kumar, MBBS, MD (General Medicine)</p>
                       <p className="text-xs text-muted-foreground">Reg. No. 12345</p>
                       <p className="text-xs">123 Health St, Wellness City, India | Phone: +91 98765 43210</p>
@@ -465,8 +465,8 @@ export function DentalPrescriptionGenerator() {
                 </div>
                 <Separator className="my-2 bg-black"/>
             </div>
-            <div className="space-y-1 px-1 text-sm">
-                <div className="rounded-md border p-1 mb-1">
+            <div className="px-1 text-sm">
+                <div className="mb-2">
                     <h3 className="font-bold text-sm">Patient Details</h3>
                     <div className="grid grid-cols-3 gap-x-4 text-xs">
                       <div><strong>Name:</strong> {opdSummary.patientDetails.name}</div>
@@ -477,19 +477,19 @@ export function DentalPrescriptionGenerator() {
 
                 <div className="space-y-1">
                     {opdSummary.toothChartNotes && (
-                      <div className='mb-1'>
+                      <div className='mb-2'>
                           <h3 className="font-bold text-sm">Dental Notes</h3>
                           <p className="text-xs">{opdSummary.toothChartNotes}</p>
                       </div>
                     )}
                     
-                    <div className='mb-1'>
+                    <div className='mb-2'>
                         <h3 className="font-bold text-sm">Provisional Diagnosis</h3>
                         <p className="text-xs">{opdSummary.provisionalDiagnosis}</p>
                     </div>
                     
                     {(opdSummary.radiographsAdvised || opdSummary.testsAdvised) && (
-                      <div className='mb-1'>
+                      <div className='mb-2'>
                           <h3 className="font-bold text-sm">Investigations Advised</h3>
                           {opdSummary.radiographsAdvised && <p className="text-xs"><strong>Radiographs:</strong> {opdSummary.radiographsAdvised}</p>}
                           {opdSummary.testsAdvised && <p className="text-xs"><strong>Tests:</strong> {opdSummary.testsAdvised}</p>}
@@ -497,23 +497,23 @@ export function DentalPrescriptionGenerator() {
                     )}
 
                     {prescriptionTableRows.length > 0 && (
-                      <div className="mb-1">
+                      <div className="mb-2">
                           <h3 className="font-bold text-sm">Prescription (Rx)</h3>
                           <table className="w-full text-xs border-collapse">
                             <thead>
                                 <tr className="border-b">
-                                    <th className="text-left font-semibold py-1 pr-2">Medicine</th>
-                                    <th className="text-left font-semibold py-1 px-2">Dosage</th>
-                                    <th className="text-left font-semibold py-1 px-2">Frequency</th>
-                                    <th className="text-left font-semibold py-1 px-2">Duration</th>
-                                    <th className="text-left font-semibold py-1 pl-2">Instructions</th>
+                                    <th className="text-left font-semibold py-0 pr-2">Medicine</th>
+                                    <th className="text-left font-semibold py-0 px-2">Dosage</th>
+                                    <th className="text-left font-semibold py-0 px-2">Frequency</th>
+                                    <th className="text-left font-semibold py-0 px-2">Duration</th>
+                                    <th className="text-left font-semibold py-0 pl-2">Instructions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {prescriptionTableRows.map((row, i) => (
                                     <tr key={i} className="border-b">
                                         {row.map((cell, j) => (
-                                            <td key={j} className={`py-1 ${j === 0 ? 'pr-2' : 'px-2'}`}>{cell}</td>
+                                            <td key={j} className={`py-0.5 ${j === 0 ? 'pr-2' : 'px-2'}`}>{cell}</td>
                                         ))}
                                     </tr>
                                 ))}
@@ -523,7 +523,7 @@ export function DentalPrescriptionGenerator() {
                     )}
 
                     {opdSummary.additionalNotes && (
-                      <div className="mb-1">
+                      <div className="mb-2">
                           <h3 className="font-bold text-sm">Additional Notes</h3>
                           <p className="text-xs">{opdSummary.additionalNotes}</p>
                       </div>
@@ -531,7 +531,7 @@ export function DentalPrescriptionGenerator() {
                 </div>
 
 
-                <div className="flex justify-between items-end pt-4">
+                <div className="flex justify-between items-end pt-2">
                     <div>
                       <p className="text-xs"><strong>Date:</strong> {new Date().toLocaleDateString('en-IN')}</p>
                       {opdSummary.followUpDate && (
@@ -539,8 +539,7 @@ export function DentalPrescriptionGenerator() {
                       )}
                     </div>
                     <div className="text-center">
-                        <div className="h-8"></div>
-                        <p className="border-t-2 border-black pt-1 text-xs">Doctor's Signature</p>
+                        <p className="border-t-2 border-black pt-1 text-xs mt-4">Doctor's Signature</p>
                     </div>
                 </div>
             </div>
