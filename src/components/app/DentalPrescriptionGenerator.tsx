@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -9,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Printer, Download, Plus, Trash2 } from 'lucide-react';
+import { Loader2, Printer, Plus, Trash2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { MarkdownTable } from './MarkdownTable';
 import { Separator } from '../ui/separator';
@@ -131,7 +130,6 @@ export function DentalPrescriptionGenerator() {
     setIsLoading(true);
     setOpdSummary(null);
 
-    // This delay allows the UI to update to the loading state before the main work begins.
     await new Promise(resolve => setTimeout(resolve, 100));
     
     try {
@@ -192,39 +190,6 @@ export function DentalPrescriptionGenerator() {
 
   const handlePrint = () => {
     window.print();
-  };
-
-  const handleDownload = async () => {
-    const { default: html2canvas } = await import('html2canvas');
-    const { default: jsPDF } = await import('jspdf');
-    const input = document.getElementById('printable-prescription');
-    if (input) {
-      try {
-        const canvas = await html2canvas(input, {
-          scale: 2,
-          useCORS: true,
-          backgroundColor: '#ffffff',
-        });
-        const imgData = canvas.toDataURL('image/png');
-        const pdf = new jsPDF('p', 'mm', 'a4');
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const canvasWidth = canvas.width;
-        const canvasHeight = canvas.height;
-        const ratio = pdfWidth / canvasWidth;
-        const pdfHeight = canvasHeight * ratio;
-
-        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-        pdf.save(`opd-summary-${opdSummary?.patientDetails.name.replace(/ /g, '_') || 'patient'}.pdf`);
-
-      } catch (error) {
-        console.error("Error generating PDF:", error);
-        toast({
-          variant: 'destructive',
-          title: 'Error Downloading PDF',
-          description: 'Could not generate PDF. Please try again.',
-        });
-      }
-    }
   };
   
   return (
@@ -375,77 +340,84 @@ export function DentalPrescriptionGenerator() {
                   <div key={field.id} className="p-4 border rounded-lg bg-muted/20 space-y-4">
                     <div className="flex flex-col md:flex-row md:items-end gap-4">
                       <div className="grid md:grid-cols-1 gap-4 flex-grow">
-                        {/* Line 1: Drug Name */}
-                        <FormField control={form.control} name={`medicines.${index}.name`} render={({ field }) => (
-                            <FormItem><FormLabel>Drug Name</FormLabel><FormControl><Input placeholder="e.g., Amoxicillin" {...field} /></FormControl><FormMessage /></FormItem>
-                        )} />
+                        {/* Responsive Layout: Mobile - 3 lines, Desktop - 1 line */}
+                        <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr_1fr_2fr] gap-4 items-end">
+                            {/* Drug Name - always full width on its own line on mobile */}
+                            <div className="md:col-span-1">
+                                <FormField control={form.control} name={`medicines.${index}.name`} render={({ field }) => (
+                                    <FormItem><FormLabel>Drug Name</FormLabel><FormControl><Input placeholder="e.g., Amoxicillin" {...field} /></FormControl><FormMessage /></FormItem>
+                                )} />
+                            </div>
+                            
+                            {/* Dosage, Frequency, Duration - in a subgrid */}
+                            <div className="md:col-span-3 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                <FormItem><FormLabel>Dosage</FormLabel>
+                                    <div className="flex gap-2">
+                                    <FormField control={form.control} name={`medicines.${index}.dosageValue`} render={({ field }) => (
+                                        <FormItem className="flex-grow"><FormControl><Input type="number" placeholder="500" {...field} /></FormControl><FormMessage /></FormItem>
+                                    )} />
+                                    <FormField control={form.control} name={`medicines.${index}.dosageUnit`} render={({ field }) => (
+                                        <FormItem className="w-28 shrink-0"><Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl>
+                                            <SelectContent>{dosageUnits.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}</SelectContent>
+                                        </Select><FormMessage /></FormItem>
+                                    )} />
+                                    </div>
+                                </FormItem>
+                                <FormItem><FormLabel>Frequency</FormLabel>
+                                    <div className="flex gap-2">
+                                    <FormField control={form.control} name={`medicines.${index}.frequencyValue`} render={({ field }) => (
+                                        <FormItem className="flex-grow"><FormControl><Input type="number" placeholder="3" {...field} /></FormControl><FormMessage /></FormItem>
+                                    )} />
+                                    <FormField control={form.control} name={`medicines.${index}.frequencyUnit`} render={({ field }) => (
+                                        <FormItem className="w-28 shrink-0"><Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl>
+                                            <SelectContent>{frequencyUnits.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}</SelectContent>
+                                        </Select><FormMessage /></FormItem>
+                                    )} />
+                                    </div>
+                                </FormItem>
+                                <FormItem><FormLabel>Duration</FormLabel>
+                                    <div className="flex gap-2">
+                                    <FormField control={form.control} name={`medicines.${index}.durationValue`} render={({ field }) => (
+                                        <FormItem className="flex-grow"><FormControl><Input type="number" placeholder="5" {...field} /></FormControl><FormMessage /></FormItem>
+                                    )} />
+                                    <FormField control={form.control} name={`medicines.${index}.durationUnit`} render={({ field }) => (
+                                        <FormItem className="w-28 shrink-0"><Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                                            <SelectContent>{durationUnits.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}</SelectContent>
+                                        </Select><FormMessage /></FormItem>
+                                    )} />
+                                    </div>
+                                </FormItem>
+                            </div>
 
-                        {/* Line 2: Dosage, Frequency, Duration */}
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                            <FormItem><FormLabel>Dosage</FormLabel>
-                                <div className="flex gap-2">
-                                <FormField control={form.control} name={`medicines.${index}.dosageValue`} render={({ field }) => (
-                                    <FormItem className="flex-grow"><FormControl><Input type="number" placeholder="500" {...field} /></FormControl><FormMessage /></FormItem>
-                                )} />
-                                <FormField control={form.control} name={`medicines.${index}.dosageUnit`} render={({ field }) => (
-                                    <FormItem className="w-28 shrink-0"><Select onValueChange={field.onChange} defaultValue={field.value}>
-                                        <FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl>
-                                        <SelectContent>{dosageUnits.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}</SelectContent>
-                                    </Select><FormMessage /></FormItem>
-                                )} />
-                                </div>
-                            </FormItem>
-                            <FormItem><FormLabel>Frequency</FormLabel>
-                                <div className="flex gap-2">
-                                <FormField control={form.control} name={`medicines.${index}.frequencyValue`} render={({ field }) => (
-                                    <FormItem className="flex-grow"><FormControl><Input type="number" placeholder="3" {...field} /></FormControl><FormMessage /></FormItem>
-                                )} />
-                                <FormField control={form.control} name={`medicines.${index}.frequencyUnit`} render={({ field }) => (
-                                    <FormItem className="w-28 shrink-0"><Select onValueChange={field.onChange} defaultValue={field.value}>
-                                        <FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl>
-                                        <SelectContent>{frequencyUnits.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}</SelectContent>
-                                    </Select><FormMessage /></FormItem>
-                                )} />
-                                </div>
-                            </FormItem>
-                            <FormItem><FormLabel>Duration</FormLabel>
-                                <div className="flex gap-2">
-                                <FormField control={form.control} name={`medicines.${index}.durationValue`} render={({ field }) => (
-                                    <FormItem className="flex-grow"><FormControl><Input type="number" placeholder="5" {...field} /></FormControl><FormMessage /></FormItem>
-                                )} />
-                                <FormField control={form.control} name={`medicines.${index}.durationUnit`} render={({ field }) => (
-                                    <FormItem className="w-28 shrink-0"><Select onValueChange={field.onChange} defaultValue={field.value}>
-                                        <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
-                                        <SelectContent>{durationUnits.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}</SelectContent>
-                                    </Select><FormMessage /></FormItem>
-                                )} />
-                                </div>
-                            </FormItem>
-                        </div>
-
-                        {/* Line 3: Instructions */}
-                        <FormField
-                            control={form.control}
-                            name={`medicines.${index}.instructions`}
-                            render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Instructions</FormLabel>
-                                <FormControl>
-                                <Input
-                                    placeholder="e.g., After food"
-                                    {...field}
-                                    list={`instructions-suggestions-${index}`}
+                            {/* Instructions */}
+                             <div className="md:col-span-1">
+                                <FormField
+                                    control={form.control}
+                                    name={`medicines.${index}.instructions`}
+                                    render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Instructions</FormLabel>
+                                        <FormControl>
+                                        <Input
+                                            placeholder="e.g., After food"
+                                            {...field}
+                                            list={`instructions-suggestions-${index}`}
+                                        />
+                                        </FormControl>
+                                        <datalist id={`instructions-suggestions-${index}`}>
+                                        {instructionSuggestions.map((suggestion) => (
+                                            <option key={suggestion} value={suggestion} />
+                                        ))}
+                                        </datalist>
+                                        <FormMessage />
+                                    </FormItem>
+                                    )}
                                 />
-                                </FormControl>
-                                <datalist id={`instructions-suggestions-${index}`}>
-                                {instructionSuggestions.map((suggestion) => (
-                                    <option key={suggestion} value={suggestion} />
-                                ))}
-                                </datalist>
-                                <FormMessage />
-                            </FormItem>
-                            )}
-                        />
+                            </div>
+                        </div>
                       </div>
                       <div className="flex items-end h-10">
                           <Button type="button" variant="ghost" size="icon" className="shrink-0 text-muted-foreground hover:text-destructive" onClick={() => removeMedicine(index)}>
@@ -491,29 +463,28 @@ export function DentalPrescriptionGenerator() {
       )}
 
       {opdSummary && (
-        <Card id="printable-prescription" className="mt-6">
-          <CardHeader>
+        <Card id="printable-prescription" className="mt-6 border-2 border-black">
+          <CardHeader className="p-4">
             <div className="flex items-start justify-between">
                 <div>
-                  <h2 className="font-headline text-2xl font-bold text-primary">ClinicEase Clinic</h2>
-                  <p className="font-semibold text-lg">Dr. Rajesh Kumar, MBBS, MD (General Medicine)</p>
-                  <p className="text-sm text-muted-foreground">Reg. No. 12345</p>
-                  <p className="text-sm">123 Health St, Wellness City, India | Phone: +91 98765 43210</p>
+                  <h2 className="font-headline text-xl font-bold text-primary">ClinicEase Clinic</h2>
+                  <p className="font-semibold">Dr. Rajesh Kumar, MBBS, MD (General Medicine)</p>
+                  <p className="text-xs text-muted-foreground">Reg. No. 12345</p>
+                  <p className="text-xs">123 Health St, Wellness City, India | Phone: +91 98765 43210</p>
                 </div>
                 <div className="text-right flex-shrink-0">
                     <p className="text-sm"><strong>Date:</strong> {new Date().toLocaleDateString('en-IN')}</p>
-                    <div className="flex gap-2 justify-end mt-4 no-print">
+                    <div className="flex gap-2 justify-end mt-2 no-print">
                         <Button variant="outline" size="icon" onClick={handlePrint}><Printer className="h-4 w-4" /></Button>
-                        <Button variant="outline" size="icon" onClick={handleDownload}><Download className="h-4 w-4" /></Button>
                     </div>
                 </div>
             </div>
-            <Separator className="my-4"/>
+            <Separator className="my-2 bg-black"/>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="rounded-md border p-4">
-                <h3 className="font-bold mb-2">Patient Details</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-2 text-sm">
+          <CardContent className="space-y-3 p-4 text-sm">
+            <div className="rounded-md border p-2">
+                <h3 className="font-bold mb-1">Patient Details</h3>
+                <div className="grid grid-cols-3 gap-x-4">
                   <div><strong>Name:</strong> {opdSummary.patientDetails.name}</div>
                   <div><strong>Age:</strong> {opdSummary.patientDetails.age}</div>
                   <div><strong>Gender:</strong> {opdSummary.patientDetails.gender}</div>
@@ -521,57 +492,51 @@ export function DentalPrescriptionGenerator() {
             </div>
 
             {opdSummary.toothChartNotes && (
-              <div className="rounded-md border p-4">
-                  <h3 className="font-bold mb-2">Dental Notes</h3>
+              <div className="rounded-md border p-2">
+                  <h3 className="font-bold mb-1">Dental Notes</h3>
                   <p>{opdSummary.toothChartNotes}</p>
               </div>
             )}
             
-            <div className="rounded-md border p-4">
-                <h3 className="font-bold mb-2">Provisional Diagnosis</h3>
+            <div className="rounded-md border p-2">
+                <h3 className="font-bold mb-1">Provisional Diagnosis</h3>
                 <p>{opdSummary.provisionalDiagnosis}</p>
             </div>
-
-            {opdSummary.radiographsAdvised && (
-              <div className="rounded-md border p-4">
-                  <h3 className="font-bold mb-2">Radiographs Advised</h3>
-                  <p>{opdSummary.radiographsAdvised}</p>
-              </div>
-            )}
             
-            {opdSummary.testsAdvised && (
-              <div className="rounded-md border p-4">
-                  <h3 className="font-bold mb-2">Tests Advised</h3>
-                  <p>{opdSummary.testsAdvised}</p>
+            {(opdSummary.radiographsAdvised || opdSummary.testsAdvised) && (
+              <div className="rounded-md border p-2">
+                  <h3 className="font-bold mb-1">Investigations Advised</h3>
+                  {opdSummary.radiographsAdvised && <p><strong>Radiographs:</strong> {opdSummary.radiographsAdvised}</p>}
+                  {opdSummary.testsAdvised && <p><strong>Tests:</strong> {opdSummary.testsAdvised}</p>}
               </div>
             )}
 
             {opdSummary.prescriptionTable && (
               <div>
-                  <h3 className="font-bold mb-2">Prescription</h3>
+                  <h3 className="font-bold mb-1">Prescription (Rx)</h3>
                   <MarkdownTable content={opdSummary.prescriptionTable} />
               </div>
             )}
 
             {opdSummary.additionalNotes && (
-              <div className="rounded-md border p-4">
-                  <h3 className="font-bold mb-2">Additional Notes</h3>
+              <div className="rounded-md border p-2">
+                  <h3 className="font-bold mb-1">Additional Notes</h3>
                   <p>{opdSummary.additionalNotes}</p>
               </div>
             )}
 
-            <Separator className="my-6" />
+            <Separator className="my-4" />
 
-            <div className="flex justify-between items-end">
+            <div className="flex justify-between items-end pt-8">
                 <div>
-                  <p className="text-sm"><strong>Date:</strong> {new Date().toLocaleDateString('en-IN')}</p>
+                  <p className="text-xs"><strong>Date:</strong> {new Date().toLocaleDateString('en-IN')}</p>
                   {opdSummary.followUpDate && (
-                    <p><strong>Follow-up:</strong> {opdSummary.followUpDate}</p>
+                    <p className="text-xs"><strong>Follow-up:</strong> {opdSummary.followUpDate}</p>
                   )}
                 </div>
                 <div className="text-center">
-                    <div className="h-12"></div>
-                    <p className="border-t-2 pt-1">Doctor's Signature</p>
+                    <div className="h-10"></div>
+                    <p className="border-t-2 pt-1 text-xs">Doctor's Signature</p>
                 </div>
             </div>
 

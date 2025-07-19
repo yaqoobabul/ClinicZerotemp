@@ -74,23 +74,20 @@ body {
 
 @media print {
   body {
-    visibility: hidden;
+    background-color: white;
   }
-
+  .no-print {
+    display: none !important;
+  }
   #printable-prescription {
-    visibility: visible;
+    display: block !important;
     position: absolute;
     left: 0;
     top: 0;
     width: 100%;
     margin: 0;
-    padding: 20px;
+    padding: 1rem;
     border: none;
     box-shadow: none;
-    background-color: white;
-  }
-  
-  .no-print {
-    display: none !important;
   }
 }
