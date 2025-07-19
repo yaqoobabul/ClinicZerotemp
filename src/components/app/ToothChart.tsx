@@ -14,15 +14,16 @@ interface ToothChartProps {
   onChange: (value: ToothNote[]) => void;
 }
 
-const adultUpperRight = ['18', '17', '16', '15', '14', '13', '12', '11'];
+const adultUpperRight = ['11', '12', '13', '14', '15', '16', '17', '18'];
 const adultUpperLeft = ['21', '22', '23', '24', '25', '26', '27', '28'];
 const adultLowerLeft = ['31', '32', '33', '34', '35', '36', '37', '38'];
-const adultLowerRight = ['48', '47', '46', '45', '44', '43', '42', '41'];
+const adultLowerRight = ['41', '42', '43', '44', '45', '46', '47', '48'];
 
-const primaryUpperRight = ['55', '54', '53', '52', '51'];
+const primaryUpperRight = ['51', '52', '53', '54', '55'];
 const primaryUpperLeft = ['61', '62', '63', '64', '65'];
 const primaryLowerLeft = ['71', '72', '73', '74', '75'];
-const primaryLowerRight = ['85', '84', '83', '82', '81'];
+const primaryLowerRight = ['81', '82', '83', '84', '85'];
+
 
 const toothConditions = [
   "Decayed",
