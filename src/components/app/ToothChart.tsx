@@ -1,8 +1,8 @@
 
 'use client';
 import React from 'react';
-import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 type ToothNote = {
   tooth: string;
@@ -24,6 +24,17 @@ const primaryUpperLeft = ['61', '62', '63', '64', '65'];
 const primaryLowerRight = ['85', '84', '83', '82', '81'];
 const primaryLowerLeft = ['71', '72', '73', '74', '75'];
 
+const toothConditions = [
+  "Decayed",
+  "Grossly Decayed",
+  "Restored",
+  "mobile",
+  "root stumps",
+  "RCT treated",
+  "missing",
+  "fractured",
+  "impacted",
+];
 
 const Tooth: React.FC<{
   number: string;
@@ -35,13 +46,17 @@ const Tooth: React.FC<{
     <div className={cn("h-6 w-12 flex items-center justify-center font-semibold text-sm", isPrimary ? 'text-muted-foreground' : 'text-foreground')}>
       {number}
     </div>
-    <Input
-      type="text"
-      value={note}
-      onChange={(e) => onNoteChange(e.target.value)}
-      className="h-6 w-12 text-xs text-center p-1"
-      aria-label={`Note for tooth ${number}`}
-    />
+    <Select value={note} onValueChange={(value) => onNoteChange(value === "none" ? "" : value)}>
+      <SelectTrigger className="h-8 w-24 text-xs p-1" aria-label={`Note for tooth ${number}`}>
+        <SelectValue placeholder="-" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="none"> - </SelectItem>
+        {toothConditions.map(condition => (
+          <SelectItem key={condition} value={condition}>{condition}</SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   </div>
 );
 
@@ -72,16 +87,21 @@ const Quadrant: React.FC<{
 export const ToothChart: React.FC<ToothChartProps> = ({ value, onChange }) => {
     const handleNoteChange = (tooth: string, noteText: string) => {
         const existingNoteIndex = value.findIndex((n) => n.tooth === tooth);
-        const newNotes = [...value];
+        let newNotes = [...value];
 
-        if (existingNoteIndex > -1) {
-            if (noteText === '') {
+        if (noteText === '') {
+            // If the note is cleared, remove it from the array
+            if (existingNoteIndex > -1) {
                 newNotes.splice(existingNoteIndex, 1);
-            } else {
-                newNotes[existingNoteIndex] = { tooth, note: noteText };
             }
-        } else if (noteText !== '') {
-            newNotes.push({ tooth, note: noteText });
+        } else {
+            if (existingNoteIndex > -1) {
+                // If note exists, update it
+                newNotes[existingNoteIndex] = { ...newNotes[existingNoteIndex], note: noteText };
+            } else {
+                // If note doesn't exist, add it
+                newNotes.push({ tooth, note: noteText });
+            }
         }
         onChange(newNotes);
     };
@@ -97,6 +117,7 @@ export const ToothChart: React.FC<ToothChartProps> = ({ value, onChange }) => {
                         <div className="border-l-2 border-gray-400 mx-1"></div>
                         <Quadrant teeth={adultUpperLeft} notes={value} onNoteChange={handleNoteChange} />
                     </div>
+                    <div className="border-b-2 border-gray-400 my-2 w-full"></div>
                     <div className="flex justify-center gap-2">
                         <Quadrant teeth={adultLowerRight} notes={value} onNoteChange={handleNoteChange} reverse />
                         <div className="border-l-2 border-gray-400 mx-1"></div>
@@ -114,6 +135,7 @@ export const ToothChart: React.FC<ToothChartProps> = ({ value, onChange }) => {
                         <div className="border-l-2 border-gray-400 mx-1"></div>
                         <Quadrant teeth={primaryUpperLeft} notes={value} onNoteChange={handleNoteChange} isPrimary />
                     </div>
+                     <div className="border-b-2 border-gray-400 my-2 w-full max-w-sm mx-auto"></div>
                     <div className="flex justify-center gap-2">
                         <Quadrant teeth={primaryLowerRight} notes={value} onNoteChange={handleNoteChange} isPrimary reverse/>
                         <div className="border-l-2 border-gray-400 mx-1"></div>
