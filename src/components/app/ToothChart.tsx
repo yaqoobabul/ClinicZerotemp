@@ -34,9 +34,9 @@ const Tooth: React.FC<{
 }> = ({ number, note, onNoteChange, isPrimary }) => (
   <div className="flex flex-col items-center gap-1 text-center">
     <div className="relative">
-      <ToothIconSimple className={cn("h-8 w-6 md:h-10 md:w-8", isPrimary ? 'text-gray-700' : 'text-primary/70')} />
+      <ToothIconSimple className={cn("h-8 w-6 md:h-10 md:w-8", isPrimary ? 'text-gray-500' : 'text-primary/70')} />
       <span className={cn(
-        "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-xs font-semibold",
+        "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[45%] text-xs font-semibold pointer-events-none",
         isPrimary ? 'text-white' : 'text-primary-foreground'
       )}>
         {number}
