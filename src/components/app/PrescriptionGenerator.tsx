@@ -194,45 +194,62 @@ export function PrescriptionGenerator() {
                   <FormItem><FormLabel>Age</FormLabel><FormControl><Input placeholder="e.g., 35" {...field} /></FormControl><FormMessage /></FormItem>
               )} />
               <FormField control={form.control} name="patientGender" render={({ field }) => (
-                  <FormItem><FormLabel>Gender</FormLabel><FormControl><Input placeholder="e.g., Male" {...field} /></FormControl><FormMessage /></FormItem>
+                <FormItem>
+                  <FormLabel>Gender</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select gender" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="Male">Male</SelectItem>
+                      <SelectItem value="Female">Female</SelectItem>
+                      <SelectItem value="Other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
               )} />
             </CardContent>
           </Card>
           
           <Card>
-            <CardHeader><CardTitle>Clinical Details</CardTitle></CardHeader>
-            <CardContent className="space-y-4">
+            <CardHeader><CardTitle>Provisional Diagnosis</CardTitle></CardHeader>
+            <CardContent>
                 <FormField control={form.control} name="provisionalDiagnosis" render={({ field }) => (
-                    <FormItem><FormLabel>Provisional Diagnosis</FormLabel><FormControl><Input placeholder="e.g., Viral Fever" {...field} /></FormControl><FormMessage /></FormItem>
+                    <FormItem><FormControl><Input placeholder="e.g., Acute Gastroenteritis" {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
-                
-                <div>
-                  <FormLabel>Tests Advised</FormLabel>
-                  <div className="space-y-2 pt-2">
-                    {testFields.map((field, index) => (
-                      <div key={field.id} className="flex items-center gap-2">
-                        <FormField
-                          control={form.control}
-                          name={`testsAdvised.${index}.value`}
-                          render={({ field }) => (
-                            <FormItem className="flex-grow">
-                                <FormControl>
-                                    <Input placeholder="e.g., Complete Blood Count (CBC)" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <Button type="button" variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive" onClick={() => removeTest(index)}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ))}
-                    <Button type="button" variant="outline" size="sm" onClick={() => appendTest({ value: '' })}>
-                      <Plus className="mr-2 h-4 w-4" /> Add Test
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader><CardTitle>Tests Advised</CardTitle></CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {testFields.map((field, index) => (
+                  <div key={field.id} className="flex items-center gap-2">
+                    <FormField
+                      control={form.control}
+                      name={`testsAdvised.${index}.value`}
+                      render={({ field }) => (
+                        <FormItem className="flex-grow">
+                            <FormControl>
+                                <Input placeholder="e.g., Complete Blood Count (CBC)" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <Button type="button" variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive" onClick={() => removeTest(index)}>
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
-                </div>
+                ))}
+                <Button type="button" variant="outline" size="sm" onClick={() => appendTest({ value: '' })}>
+                  <Plus className="mr-2 h-4 w-4" /> Add Test
+                </Button>
+              </div>
             </CardContent>
           </Card>
 
@@ -240,10 +257,10 @@ export function PrescriptionGenerator() {
             <CardHeader><CardTitle>Prescription</CardTitle></CardHeader>
             <CardContent className="space-y-4">
               {medicineFields.map((field, index) => (
-                <div key={field.id} className="p-4 border rounded-lg space-y-4 relative">
-                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
+                <div key={field.id} className="p-4 border rounded-lg space-y-4 relative bg-muted/20">
+                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-start">
                     <FormField control={form.control} name={`medicines.${index}.name`} render={({ field }) => (
-                        <FormItem><FormLabel>Drug Name</FormLabel><FormControl><Input placeholder="e.g., Amoxicillin" {...field} /></FormControl><FormMessage /></FormItem>
+                        <FormItem className="lg:col-span-2"><FormLabel>Drug Name</FormLabel><FormControl><Input placeholder="e.g., Paracetamol" {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
                     <div className="grid grid-cols-2 gap-2">
                         <FormField control={form.control} name={`medicines.${index}.dosageValue`} render={({ field }) => (
@@ -267,13 +284,15 @@ export function PrescriptionGenerator() {
                             </Select><FormMessage /></FormItem>
                         )} />
                     </div>
-                    <div>
-                        <FormLabel>Frequency</FormLabel>
-                        <ComboboxField form={form} name={`medicines.${index}.frequency`} suggestions={frequencySuggestions} placeholder="Frequency" />
-                    </div>
-                     <div>
-                        <FormLabel>Instructions</FormLabel>
-                        <ComboboxField form={form} name={`medicines.${index}.instructions`} suggestions={instructionSuggestions} placeholder="Instructions" />
+                    <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="w-full">
+                            <FormLabel>Frequency</FormLabel>
+                            <ComboboxField form={form} name={`medicines.${index}.frequency`} suggestions={frequencySuggestions} placeholder="Frequency" />
+                        </div>
+                         <div className="w-full">
+                            <FormLabel>Instructions</FormLabel>
+                            <ComboboxField form={form} name={`medicines.${index}.instructions`} suggestions={instructionSuggestions} placeholder="Instructions" />
+                        </div>
                     </div>
                   </div>
                    {medicineFields.length > 1 && (
@@ -328,41 +347,43 @@ export function PrescriptionGenerator() {
                 </div>
             </div>
             <Separator className="my-4 no-print"/>
-            <div className="text-center">
-                <h2 className="font-headline text-2xl font-bold text-primary">Dr. Rajesh Kumar</h2>
-                <p>MBBS, MD (General Medicine)</p>
+            <div className="text-center space-y-1">
+                <h2 className="font-headline text-2xl font-bold text-primary">ClinicEase Clinic</h2>
+                <p className="font-semibold text-lg">Dr. Rajesh Kumar, MBBS, MD (General Medicine)</p>
                 <p className="text-sm text-muted-foreground">Reg. No. 12345</p>
                 <Separator className="my-2"/>
-                <p className="font-bold">ClinicEase Clinic</p>
-                <p className="text-sm">123 Health St, Wellness City, India</p>
-                <p className="text-sm">Phone: +91 98765 43210 | Date: {new Date().toLocaleDateString('en-IN')}</p>
+                <p className="text-sm">123 Health St, Wellness City, India | Phone: +91 98765 43210 | Date: {new Date().toLocaleDateString('en-IN')}</p>
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
             <div className="rounded-md border p-4">
                 <h3 className="font-bold mb-2">Patient Details</h3>
-                <p><strong>Name:</strong> {opdSummary.patientDetails.name}, <strong>Age:</strong> {opdSummary.patientDetails.age}, <strong>Gender:</strong> {opdSummary.patientDetails.gender}</p>
+                <div className="grid grid-cols-3 gap-x-4 gap-y-1 text-sm">
+                  <div><strong>Name:</strong> {opdSummary.patientDetails.name}</div>
+                  <div><strong>Age:</strong> {opdSummary.patientDetails.age}</div>
+                  <div><strong>Gender:</strong> {opdSummary.patientDetails.gender}</div>
+                </div>
             </div>
             
-            <div className="mt-4 rounded-md border p-4">
+            <div className="rounded-md border p-4">
                 <h3 className="font-bold mb-2">Provisional Diagnosis</h3>
                 <p>{opdSummary.provisionalDiagnosis}</p>
             </div>
 
             {opdSummary.testsAdvised && (
-              <div className="mt-4 rounded-md border p-4">
+              <div className="rounded-md border p-4">
                   <h3 className="font-bold mb-2">Tests Advised</h3>
                   <p>{opdSummary.testsAdvised}</p>
               </div>
             )}
 
-            <div className="mt-4">
+            <div>
                 <h3 className="font-bold mb-2">Prescription</h3>
                 <MarkdownTable content={opdSummary.prescriptionTable} />
             </div>
 
             {opdSummary.additionalNotes && (
-              <div className="mt-4 rounded-md border p-4">
+              <div className="rounded-md border p-4">
                   <h3 className="font-bold mb-2">Additional Notes</h3>
                   <p>{opdSummary.additionalNotes}</p>
               </div>
