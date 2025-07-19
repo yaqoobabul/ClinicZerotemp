@@ -42,9 +42,9 @@ const medicineSchema = z.object({
   instructions: z.string().optional(),
 }).partial().refine(data => {
     const hasValue = Object.values(data).some(val => val && val.trim() !== '');
-    if (!hasValue) return true; 
+    if (!hasValue) return true;
     return !!data.name && data.name.trim() !== '';
-}, { message: "Drug name is required.", path: ['name']});
+}, { message: "Drug name is required if other fields are filled.", path: ['name']});
 
 
 const toothNoteSchema = z.object({
@@ -53,9 +53,14 @@ const toothNoteSchema = z.object({
 });
 
 const radiographSchema = z.object({
-  type: z.string().min(1, 'Type is required.'),
+  type: z.string().min(1, 'Type is required if a radiograph is added.'),
   toothNumber: z.string().optional(),
-});
+}).partial();
+
+const testAdvisedSchema = z.object({ 
+  value: z.string().min(1, 'Test name cannot be empty if added.')
+}).partial();
+
 
 const formSchema = z.object({
   patientName: z.string().min(1, 'Patient name is required.'),
@@ -65,7 +70,7 @@ const formSchema = z.object({
   provisionalDiagnosis: z.string().min(1, 'Diagnosis is required.'),
   medicines: z.array(medicineSchema).optional(),
   radiographsAdvised: z.array(radiographSchema).optional(),
-  testsAdvised: z.array(z.object({ value: z.string().min(1, 'Test name cannot be empty.')})).optional(),
+  testsAdvised: z.array(testAdvisedSchema).optional(),
   additionalNotes: z.string().optional(),
   followUpDate: z.string().optional(),
 });
@@ -134,12 +139,12 @@ export function DentalPrescriptionGenerator() {
         ].join('\n') : undefined;
 
         const radiographs = values.radiographsAdvised
-            ?.filter(r => r.type)
+            ?.filter(r => r.type && r.type.trim() !== '')
             .map(r => r.toothNumber ? `${r.type} (w.r.t #${r.toothNumber})` : r.type)
             .join(', ') || undefined;
 
         const otherTests = values.testsAdvised
-            ?.filter(t => t.value)
+            ?.filter(t => t.value && t.value.trim() !== '')
             .map(t => t.value)
             .join(', ') || undefined;
 
@@ -290,7 +295,7 @@ export function DentalPrescriptionGenerator() {
                                   </FormItem>
                               )}
                               />
-                              <Button type="button" variant="ghost" size="icon" className="shrink-0 text-muted-foreground hover:text-destructive mt-px" onClick={() => removeRadiograph(index)}>
+                              <Button type="button" variant="ghost" size="icon" className="shrink-0 text-muted-foreground hover:text-destructive" onClick={() => removeRadiograph(index)}>
                               <Trash2 className="h-4 w-4" />
                               </Button>
                           </div>
@@ -403,7 +408,7 @@ export function DentalPrescriptionGenerator() {
                                 </FormItem>
                             </div>
                         </div>
-                        <div className="flex items-end h-full mt-auto">
+                        <div className="flex items-end h-full">
                             <Button type="button" variant="ghost" size="icon" className="shrink-0 text-muted-foreground hover:text-destructive" onClick={() => removeMedicine(index)}>
                                 <Trash2 className="h-4 w-4" />
                             </Button>
@@ -438,7 +443,7 @@ export function DentalPrescriptionGenerator() {
       </div>
 
       {isLoading && (
-         <div className="flex items-center justify-center rounded-lg border border-dashed p-8">
+         <div className="flex items-center justify-center rounded-lg border border-dashed p-8 no-print">
             <div className="text-center">
                 <Loader2 className="mx-auto h-12 w-12 animate-spin text-primary" />
                 <p className="mt-4 text-muted-foreground">Generating summary...</p>
@@ -448,98 +453,97 @@ export function DentalPrescriptionGenerator() {
 
       {opdSummary && (
         <div id="printable-prescription" className="p-2">
-            <div>
-                <div className="flex items-start justify-between">
+            <div className="text-[10px]">
+                <div className="flex items-start justify-between mb-1">
                     <div>
-                      <h2 className="text-base font-bold text-primary">ClinicEase Clinic</h2>
-                      <p className="text-xs font-semibold">Dr. Rajesh Kumar, MBBS, MD (General Medicine)</p>
-                      <p className="text-xs text-muted-foreground">Reg. No. 12345</p>
-                      <p className="text-xs">123 Health St, Wellness City, India | Phone: +91 98765 43210</p>
+                      <h2 className="text-sm font-bold text-primary">ClinicEase Clinic</h2>
+                      <p className="font-semibold">Dr. Rajesh Kumar, MBBS, MD (General Medicine)</p>
+                      <p className="text-muted-foreground">Reg. No. 12345</p>
+                      <p>123 Health St, Wellness City, India | Phone: +91 98765 43210</p>
                     </div>
                     <div className="text-right flex-shrink-0">
-                        <p className="text-xs"><strong>Date:</strong> {new Date().toLocaleDateString('en-IN')}</p>
+                        <p><strong>Date:</strong> {new Date().toLocaleDateString('en-IN')}</p>
                         <div className="flex gap-2 justify-end mt-1 no-print">
                             <Button variant="outline" size="icon" onClick={handlePrint}><Printer className="h-4 w-4" /></Button>
                         </div>
                     </div>
                 </div>
-                <Separator className="my-2 bg-black"/>
-            </div>
-            <div className="px-1 text-sm">
-                <div className="mb-2">
-                    <h3 className="font-bold text-sm">Patient Details</h3>
-                    <div className="grid grid-cols-3 gap-x-4 text-xs">
-                      <div><strong>Name:</strong> {opdSummary.patientDetails.name}</div>
-                      <div><strong>Age:</strong> {opdSummary.patientDetails.age}</div>
-                      <div><strong>Gender:</strong> {opdSummary.patientDetails.gender}</div>
+                <Separator className="my-1 bg-black"/>
+                <div className="px-1">
+                    <div className="mb-1">
+                        <h3 className="font-bold text-xs">Patient Details</h3>
+                        <div className="grid grid-cols-3 gap-x-4">
+                          <div><strong>Name:</strong> {opdSummary.patientDetails.name}</div>
+                          <div><strong>Age:</strong> {opdSummary.patientDetails.age}</div>
+                          <div><strong>Gender:</strong> {opdSummary.patientDetails.gender}</div>
+                        </div>
                     </div>
-                </div>
 
-                <div className="space-y-1">
-                    {opdSummary.toothChartNotes && (
-                      <div className='mb-2'>
-                          <h3 className="font-bold text-sm">Dental Notes</h3>
-                          <p className="text-xs">{opdSummary.toothChartNotes}</p>
-                      </div>
-                    )}
-                    
-                    <div className='mb-2'>
-                        <h3 className="font-bold text-sm">Provisional Diagnosis</h3>
-                        <p className="text-xs">{opdSummary.provisionalDiagnosis}</p>
-                    </div>
-                    
-                    {(opdSummary.radiographsAdvised || opdSummary.testsAdvised) && (
-                      <div className='mb-2'>
-                          <h3 className="font-bold text-sm">Investigations Advised</h3>
-                          {opdSummary.radiographsAdvised && <p className="text-xs"><strong>Radiographs:</strong> {opdSummary.radiographsAdvised}</p>}
-                          {opdSummary.testsAdvised && <p className="text-xs"><strong>Tests:</strong> {opdSummary.testsAdvised}</p>}
-                      </div>
-                    )}
+                    <div className="space-y-1">
+                        {opdSummary.toothChartNotes && (
+                        <div className='mb-1'>
+                            <h3 className="font-bold text-xs">Dental Notes</h3>
+                            <p>{opdSummary.toothChartNotes}</p>
+                        </div>
+                        )}
+                        
+                        <div className='mb-1'>
+                            <h3 className="font-bold text-xs">Provisional Diagnosis</h3>
+                            <p>{opdSummary.provisionalDiagnosis}</p>
+                        </div>
+                        
+                        {(opdSummary.radiographsAdvised || opdSummary.testsAdvised) && (
+                        <div className='mb-1'>
+                            <h3 className="font-bold text-xs">Investigations Advised</h3>
+                            {opdSummary.radiographsAdvised && <p><strong>Radiographs:</strong> {opdSummary.radiographsAdvised}</p>}
+                            {opdSummary.testsAdvised && <p><strong>Tests:</strong> {opdSummary.testsAdvised}</p>}
+                        </div>
+                        )}
 
-                    {prescriptionTableRows.length > 0 && (
-                      <div className="mb-2">
-                          <h3 className="font-bold text-sm">Prescription (Rx)</h3>
-                          <table className="w-full text-xs border-collapse">
-                            <thead>
-                                <tr className="border-b">
-                                    <th className="text-left font-semibold py-0 pr-2">Medicine</th>
-                                    <th className="text-left font-semibold py-0 px-2">Dosage</th>
-                                    <th className="text-left font-semibold py-0 px-2">Frequency</th>
-                                    <th className="text-left font-semibold py-0 px-2">Duration</th>
-                                    <th className="text-left font-semibold py-0 pl-2">Instructions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {prescriptionTableRows.map((row, i) => (
-                                    <tr key={i} className="border-b">
-                                        {row.map((cell, j) => (
-                                            <td key={j} className={`py-0.5 ${j === 0 ? 'pr-2' : 'px-2'}`}>{cell}</td>
-                                        ))}
+                        {prescriptionTableRows.length > 0 && (
+                        <div className="mb-1">
+                            <h3 className="font-bold text-xs">Prescription (Rx)</h3>
+                            <table className="w-full border-collapse">
+                                <thead>
+                                    <tr className="border-b">
+                                        <th className="text-left font-semibold py-0 pr-2">Medicine</th>
+                                        <th className="text-left font-semibold py-0 px-2">Dosage</th>
+                                        <th className="text-left font-semibold py-0 px-2">Frequency</th>
+                                        <th className="text-left font-semibold py-0 px-2">Duration</th>
+                                        <th className="text-left font-semibold py-0 pl-2">Instructions</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                          </table>
-                      </div>
-                    )}
+                                </thead>
+                                <tbody>
+                                    {prescriptionTableRows.map((row, i) => (
+                                        <tr key={i} className="border-b">
+                                            {row.map((cell, j) => (
+                                                <td key={j} className={`py-0.5 ${j === 0 ? 'pr-2' : 'px-2'}`}>{cell}</td>
+                                            ))}
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                        )}
 
-                    {opdSummary.additionalNotes && (
-                      <div className="mb-2">
-                          <h3 className="font-bold text-sm">Additional Notes</h3>
-                          <p className="text-xs">{opdSummary.additionalNotes}</p>
-                      </div>
-                    )}
-                </div>
-
-
-                <div className="flex justify-between items-end pt-2">
-                    <div>
-                      <p className="text-xs"><strong>Date:</strong> {new Date().toLocaleDateString('en-IN')}</p>
-                      {opdSummary.followUpDate && (
-                        <p className="text-xs"><strong>Follow-up:</strong> {opdSummary.followUpDate}</p>
-                      )}
+                        {opdSummary.additionalNotes && (
+                        <div className="mb-1">
+                            <h3 className="font-bold text-xs">Additional Notes</h3>
+                            <p>{opdSummary.additionalNotes}</p>
+                        </div>
+                        )}
                     </div>
-                    <div className="text-center">
-                        <p className="border-t-2 border-black pt-1 text-xs mt-4">Doctor's Signature</p>
+
+                    <div className="flex justify-between items-end pt-1">
+                        <div>
+                          {opdSummary.followUpDate && (
+                            <p><strong>Follow-up:</strong> {opdSummary.followUpDate}</p>
+                          )}
+                        </div>
+                        <div className="text-center">
+                            <div className="h-8"></div>
+                            <p className="border-t-2 border-black pt-1">Doctor's Signature</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -548,3 +552,5 @@ export function DentalPrescriptionGenerator() {
     </div>
   );
 }
+
+    
