@@ -29,12 +29,12 @@ const toothConditions = [
   "Decayed",
   "Grossly Decayed",
   "Restored",
-  "mobile",
-  "root stumps",
-  "RCT treated",
-  "missing",
-  "fractured",
-  "impacted",
+  "Mobile",
+  "Root Stumps",
+  "RCT Treated",
+  "Missing",
+  "Fractured",
+  "Impacted",
 ];
 
 
@@ -73,13 +73,10 @@ const Quadrant: React.FC<{
   notes: ToothNote[];
   onNoteChange: (tooth: string, note: string) => void;
   isPrimary?: boolean;
-  reverse?: boolean;
-}> = ({ teeth, notes, onNoteChange, isPrimary, reverse = false }) => {
-  const orderedTeeth = reverse ? [...teeth].reverse() : teeth;
-
+}> = ({ teeth, notes, onNoteChange, isPrimary }) => {
   return (
     <div className="flex gap-1">
-      {orderedTeeth.map((toothNumber) => {
+      {teeth.map((toothNumber) => {
         return (
             <Tooth
             key={toothNumber}
@@ -121,13 +118,13 @@ export const ToothChart: React.FC<ToothChartProps> = ({ value, onChange }) => {
                 <h3 className="text-sm font-medium text-center">Permanent Dentition</h3>
                 <div className="flex flex-col items-center gap-2">
                     <div className="flex justify-center gap-1 md:gap-2">
-                        <Quadrant teeth={adultUpperRight} notes={value} onNoteChange={handleNoteChange} reverse />
+                        <Quadrant teeth={adultUpperRight.slice().reverse()} notes={value} onNoteChange={handleNoteChange} />
                         <div className="border-l-2 border-gray-400 mx-1"></div>
                         <Quadrant teeth={adultUpperLeft} notes={value} onNoteChange={handleNoteChange} />
                     </div>
                     <div className="border-b-2 border-gray-400 my-2 w-full max-w-lg mx-auto"></div>
                     <div className="flex justify-center gap-1 md:gap-2">
-                        <Quadrant teeth={adultLowerRight} notes={value} onNoteChange={handleNoteChange} reverse />
+                        <Quadrant teeth={adultLowerRight.slice().reverse()} notes={value} onNoteChange={handleNoteChange} />
                         <div className="border-l-2 border-gray-400 mx-1"></div>
                         <Quadrant teeth={adultLowerLeft} notes={value} onNoteChange={handleNoteChange} />
                     </div>
@@ -138,20 +135,16 @@ export const ToothChart: React.FC<ToothChartProps> = ({ value, onChange }) => {
                 {/* Primary Teeth */}
                 <h3 className="text-sm font-medium text-center">Primary Dentition</h3>
                 <div className="flex flex-col items-center gap-2">
-                    <div className="flex justify-center w-full">
-                        <div className="flex justify-center gap-1 md:gap-2">
-                           <Quadrant teeth={primaryUpperRight} notes={value} onNoteChange={handleNoteChange} isPrimary reverse/>
-                           <div className="border-l-2 border-gray-400 mx-1"></div>
-                           <Quadrant teeth={primaryUpperLeft} notes={value} onNoteChange={handleNoteChange} isPrimary reverse />
-                        </div>
+                    <div className="flex justify-center gap-1 md:gap-2">
+                       <Quadrant teeth={primaryUpperRight.slice().reverse()} notes={value} onNoteChange={handleNoteChange} isPrimary />
+                       <div className="border-l-2 border-gray-400 mx-1"></div>
+                       <Quadrant teeth={primaryUpperLeft} notes={value} onNoteChange={handleNoteChange} isPrimary />
                     </div>
                      <div className="border-b-2 border-gray-400 my-2 w-full max-w-sm mx-auto"></div>
-                     <div className="flex justify-center w-full">
-                        <div className="flex justify-center gap-1 md:gap-2">
-                           <Quadrant teeth={primaryLowerRight} notes={value} onNoteChange={handleNoteChange} isPrimary reverse/>
-                           <div className="border-l-2 border-gray-400 mx-1"></div>
-                           <Quadrant teeth={primaryLowerLeft} notes={value} onNoteChange={handleNoteChange} isPrimary />
-                        </div>
+                     <div className="flex justify-center gap-1 md:gap-2">
+                       <Quadrant teeth={primaryLowerRight.slice().reverse()} notes={value} onNoteChange={handleNoteChange} isPrimary />
+                       <div className="border-l-2 border-gray-400 mx-1"></div>
+                       <Quadrant teeth={primaryLowerLeft} notes={value} onNoteChange={handleNoteChange} isPrimary />
                     </div>
                 </div>
             </div>

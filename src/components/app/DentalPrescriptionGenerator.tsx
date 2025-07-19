@@ -120,10 +120,10 @@ const medicineSchema = z.object({
   durationUnit: z.string(),
   instructions: z.string().optional(),
 }).partial().refine(data => {
-    const hasValue = Object.values(data).some(val => val !== '' && val !== undefined);
-    if (!hasValue) return true;
-    return !!data.name;
-}, { message: "Drug name is required if other fields are filled.", path: ['name']});
+    const hasValue = Object.values(data).some(val => val && val.trim() !== '');
+    if (!hasValue) return true; // It's a completely empty row, so it's valid.
+    return !!data.name && data.name.trim() !== ''; // If any field has a value, name is required.
+}, { message: "Drug name is required.", path: ['name']});
 
 
 const toothNoteSchema = z.object({
@@ -262,9 +262,6 @@ export function DentalPrescriptionGenerator() {
   const handleDownload = async () => {
     const input = document.getElementById('printable-prescription');
     if (input) {
-      const noPrintElements = Array.from(input.querySelectorAll('.no-print')) as HTMLElement[];
-      noPrintElements.forEach(el => (el.style.display = 'none'));
-
       try {
         const canvas = await html2canvas(input, {
           scale: 2,
@@ -289,14 +286,12 @@ export function DentalPrescriptionGenerator() {
           title: 'Error Downloading PDF',
           description: 'Could not generate PDF. Please try again.',
         });
-      } finally {
-        noPrintElements.forEach(el => (el.style.display = ''));
       }
     }
   };
   
   return (
-    <div className="grid gap-6" id="dental-prescription-generator">
+    <div className="grid gap-6">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 no-print">
           <Card>
@@ -541,24 +536,24 @@ export function DentalPrescriptionGenerator() {
       )}
 
       {opdSummary && (
-        <div id="printable-prescription">
-        <Card className="mt-6">
+        <Card id="printable-prescription" className="mt-6">
           <CardHeader>
-            <div className="flex items-center justify-between no-print">
-                <CardTitle>Generated OPD Summary</CardTitle>
-                <div className="flex gap-2">
-                    <Button variant="outline" size="icon" onClick={handlePrint}><Printer className="h-4 w-4" /></Button>
-                    <Button variant="outline" size="icon" onClick={handleDownload}><Download className="h-4 w-4" /></Button>
+            <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="font-headline text-2xl font-bold text-primary">ClinicEase Clinic</h2>
+                  <p className="font-semibold text-lg">Dr. Rajesh Kumar, MBBS, MD (General Medicine)</p>
+                  <p className="text-sm text-muted-foreground">Reg. No. 12345</p>
+                  <p className="text-sm">123 Health St, Wellness City, India | Phone: +91 98765 43210</p>
+                </div>
+                <div className="text-right">
+                    <p className="text-sm"><strong>Date:</strong> {new Date().toLocaleDateString('en-IN')}</p>
+                    <div className="flex gap-2 justify-end mt-4 no-print">
+                        <Button variant="outline" size="icon" onClick={handlePrint}><Printer className="h-4 w-4" /></Button>
+                        <Button variant="outline" size="icon" onClick={handleDownload}><Download className="h-4 w-4" /></Button>
+                    </div>
                 </div>
             </div>
-            <Separator className="my-4 no-print"/>
-            <div className="text-center space-y-1">
-                <h2 className="font-headline text-2xl font-bold text-primary">ClinicEase Clinic</h2>
-                <p className="font-semibold text-lg">Dr. Rajesh Kumar, MBBS, MD (General Medicine)</p>
-                <p className="text-sm text-muted-foreground">Reg. No. 12345</p>
-                <Separator className="my-2"/>
-                <p className="text-sm">123 Health St, Wellness City, India | Phone: +91 98765 43210</p>
-            </div>
+            <Separator className="my-4"/>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="rounded-md border p-4">
@@ -614,7 +609,6 @@ export function DentalPrescriptionGenerator() {
 
             <div className="flex justify-between items-end">
                 <div>
-                  <p className="text-sm"><strong>Date:</strong> {new Date().toLocaleDateString('en-IN')}</p>
                   {opdSummary.followUpDate && (
                     <p><strong>Follow-up:</strong> {opdSummary.followUpDate}</p>
                   )}
@@ -627,7 +621,6 @@ export function DentalPrescriptionGenerator() {
 
           </CardContent>
         </Card>
-        </div>
       )}
     </div>
   );

@@ -117,10 +117,10 @@ const medicineSchema = z.object({
   durationUnit: z.string(),
   instructions: z.string().optional(),
 }).partial().refine(data => {
-    const hasValue = Object.values(data).some(val => val !== '' && val !== undefined);
-    if (!hasValue) return true;
-    return !!data.name;
-}, { message: "Drug name is required if other fields are filled.", path: ['name']});
+    const hasValue = Object.values(data).some(val => val && val.trim() !== '');
+    if (!hasValue) return true; // It's a completely empty row, so it's valid.
+    return !!data.name && data.name.trim() !== ''; // If any field has a value, name is required.
+}, { message: "Drug name is required.", path: ['name']});
 
 
 const formSchema = z.object({
@@ -224,9 +224,6 @@ export function PrescriptionGenerator() {
   const handleDownload = async () => {
     const input = document.getElementById('printable-prescription');
     if (input) {
-      const noPrintElements = Array.from(input.querySelectorAll('.no-print')) as HTMLElement[];
-      noPrintElements.forEach(el => (el.style.display = 'none'));
-
       try {
         const canvas = await html2canvas(input, {
           scale: 2,
@@ -251,14 +248,12 @@ export function PrescriptionGenerator() {
           title: 'Error Downloading PDF',
           description: 'Could not generate PDF. Please try again.',
         });
-      } finally {
-        noPrintElements.forEach(el => (el.style.display = ''));
       }
     }
   };
   
   return (
-    <div className="grid gap-6" id="prescription-generator">
+    <div className="grid gap-6">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 no-print">
           <Card>
@@ -376,10 +371,15 @@ export function PrescriptionGenerator() {
                           )} />
                       </div>
                        <div className="lg:col-span-3">
-                          <FormLabel>Instructions</FormLabel>
-                           <FormControl>
-                            <ComboboxField form={form} name={`medicines.${index}.instructions`} suggestions={instructionSuggestions} placeholder="Instructions" />
-                          </FormControl>
+                        <FormField control={form.control} name={`medicines.${index}.instructions`} render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Instructions</FormLabel>
+                            <FormControl>
+                                <ComboboxField form={form} name={`medicines.${index}.instructions`} suggestions={instructionSuggestions} placeholder="Instructions" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )} />
                        </div>
                     </div>
                     <div className="flex flex-col flex-shrink-0 mt-[29px]">
@@ -425,79 +425,76 @@ export function PrescriptionGenerator() {
       )}
 
       {opdSummary && (
-        <div id="printable-prescription">
-            <Card className="mt-6">
-            <CardHeader>
-                <div className="flex items-center justify-between no-print">
-                    <CardTitle>Generated OPD Summary</CardTitle>
-                    <div className="flex gap-2">
+        <Card id="printable-prescription" className="mt-6">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="font-headline text-2xl font-bold text-primary">ClinicEase Clinic</h2>
+                  <p className="font-semibold text-lg">Dr. Rajesh Kumar, MBBS, MD (General Medicine)</p>
+                  <p className="text-sm text-muted-foreground">Reg. No. 12345</p>
+                  <p className="text-sm">123 Health St, Wellness City, India | Phone: +91 98765 43210</p>
+                </div>
+                <div className="text-right">
+                    <p className="text-sm"><strong>Date:</strong> {new Date().toLocaleDateString('en-IN')}</p>
+                    <div className="flex gap-2 justify-end mt-4 no-print">
                         <Button variant="outline" size="icon" onClick={handlePrint}><Printer className="h-4 w-4" /></Button>
                         <Button variant="outline" size="icon" onClick={handleDownload}><Download className="h-4 w-4" /></Button>
                     </div>
                 </div>
-                <Separator className="my-4 no-print"/>
-                <div className="text-center space-y-1">
-                    <h2 className="font-headline text-2xl font-bold text-primary">ClinicEase Clinic</h2>
-                    <p className="font-semibold text-lg">Dr. Rajesh Kumar, MBBS, MD (General Medicine)</p>
-                    <p className="text-sm text-muted-foreground">Reg. No. 12345</p>
-                    <Separator className="my-2"/>
-                    <p className="text-sm">123 Health St, Wellness City, India | Phone: +91 98765 43210</p>
-                </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-                <div className="rounded-md border p-4">
-                    <h3 className="font-bold mb-2">Patient Details</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-2 text-sm">
-                    <div><strong>Name:</strong> {opdSummary.patientDetails.name}</div>
-                    <div><strong>Age:</strong> {opdSummary.patientDetails.age}</div>
-                    <div><strong>Gender:</strong> {opdSummary.patientDetails.gender}</div>
-                    </div>
-                </div>
-                
-                <div className="rounded-md border p-4">
-                    <h3 className="font-bold mb-2">Provisional Diagnosis</h3>
-                    <p>{opdSummary.provisionalDiagnosis}</p>
-                </div>
+            </div>
+            <Separator className="my-4"/>
+          </CardHeader>
+          <CardContent className="space-y-4">
+              <div className="rounded-md border p-4">
+                  <h3 className="font-bold mb-2">Patient Details</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-2 text-sm">
+                  <div><strong>Name:</strong> {opdSummary.patientDetails.name}</div>
+                  <div><strong>Age:</strong> {opdSummary.patientDetails.age}</div>
+                  <div><strong>Gender:</strong> {opdSummary.patientDetails.gender}</div>
+                  </div>
+              </div>
+              
+              <div className="rounded-md border p-4">
+                  <h3 className="font-bold mb-2">Provisional Diagnosis</h3>
+                  <p>{opdSummary.provisionalDiagnosis}</p>
+              </div>
 
-                {opdSummary.testsAdvised && (
-                <div className="rounded-md border p-4">
-                    <h3 className="font-bold mb-2">Tests Advised</h3>
-                    <p>{opdSummary.testsAdvised}</p>
-                </div>
-                )}
+              {opdSummary.testsAdvised && (
+              <div className="rounded-md border p-4">
+                  <h3 className="font-bold mb-2">Tests Advised</h3>
+                  <p>{opdSummary.testsAdvised}</p>
+              </div>
+              )}
 
-                {opdSummary.prescriptionTable && (
-                <div>
-                    <h3 className="font-bold mb-2">Prescription</h3>
-                    <MarkdownTable content={opdSummary.prescriptionTable} />
-                </div>
-                )}
+              {opdSummary.prescriptionTable && (
+              <div>
+                  <h3 className="font-bold mb-2">Prescription</h3>
+                  <MarkdownTable content={opdSummary.prescriptionTable} />
+              </div>
+              )}
 
-                {opdSummary.additionalNotes && (
-                <div className="rounded-md border p-4">
-                    <h3 className="font-bold mb-2">Additional Notes</h3>
-                    <p>{opdSummary.additionalNotes}</p>
-                </div>
-                )}
+              {opdSummary.additionalNotes && (
+              <div className="rounded-md border p-4">
+                  <h3 className="font-bold mb-2">Additional Notes</h3>
+                  <p>{opdSummary.additionalNotes}</p>
+              </div>
+              )}
 
-                <Separator className="my-6" />
+              <Separator className="my-6" />
 
-                <div className="flex justify-between items-end">
-                    <div>
-                      <p className="text-sm"><strong>Date:</strong> {new Date().toLocaleDateString('en-IN')}</p>
-                      {opdSummary.followUpDate && (
-                          <p><strong>Follow-up:</strong> {opdSummary.followUpDate}</p>
-                      )}
-                    </div>
-                    <div className="text-center">
-                        <div className="h-12"></div>
-                        <p className="border-t-2 pt-1">Doctor's Signature</p>
-                    </div>
-                </div>
-
-            </CardContent>
-            </Card>
-        </div>
+              <div className="flex justify-between items-end">
+                  <div>
+                    {opdSummary.followUpDate && (
+                        <p><strong>Follow-up:</strong> {opdSummary.followUpDate}</p>
+                    )}
+                  </div>
+                  <div className="text-center">
+                      <div className="h-12"></div>
+                      <p className="border-t-2 pt-1">Doctor's Signature</p>
+                  </div>
+              </div>
+          </CardContent>
+        </Card>
       )}
     </div>
   );
