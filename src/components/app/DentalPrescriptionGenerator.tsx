@@ -9,7 +9,6 @@ import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { generatePrescription, type GeneratePrescriptionOutput } from '@/ai/flows/generate-prescription';
 import { Loader2, Printer, Download, Plus, Trash2, Check, ChevronsUpDown } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { MarkdownTable } from './MarkdownTable';
@@ -22,6 +21,20 @@ import { cn } from '@/lib/utils';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { ToothChart } from './ToothChart';
+
+type GeneratedSummary = {
+  patientDetails: {
+    name: string;
+    age: string;
+    gender: string;
+  };
+  provisionalDiagnosis: string;
+  toothChartNotes?: string;
+  prescriptionTable?: string;
+  testsAdvised?: string;
+  additionalNotes?: string;
+  followUpDate?: string;
+};
 
 const ComboboxField = ({ form, name, suggestions, placeholder }: { form: any, name: string, suggestions: string[], placeholder: string }) => {
     const [open, setOpen] = useState(false);
@@ -142,7 +155,7 @@ const radiographTypes = ["OPG", "IOPA", "CBCT", "Bitewing"];
 
 export function DentalPrescriptionGenerator() {
   const [isLoading, setIsLoading] = useState(false);
-  const [opdSummary, setOpdSummary] = useState<GeneratePrescriptionOutput['opdSummary'] | null>(null);
+  const [opdSummary, setOpdSummary] = useState<GeneratedSummary | null>(null);
   const { toast } = useToast();
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -181,74 +194,70 @@ export function DentalPrescriptionGenerator() {
     setIsLoading(true);
     setOpdSummary(null);
 
-    const transformedValues = {
-        ...values,
-        medicines: values.medicines
-            ?.filter(m => m.name) // Filter out empty medicine rows
-            .map(m => ({
-            name: m.name!,
-            dosage: `${m.dosageValue} ${m.dosageUnit}`,
-            frequency: `${m.frequencyValue} time(s) ${m.frequencyUnit}`,
-            duration: `${m.durationValue} ${m.durationUnit}`,
-            instructions: m.instructions,
-        })),
-        radiographsAdvised: values.radiographsAdvised?.map(r => ({
-            type: r.type,
-            toothNumber: r.toothNumber,
-        })),
-        testsAdvised: values.testsAdvised?.map(t => t.value),
-        toothChartNotes: values.toothNotes
-            ?.filter(tn => tn.note.trim() !== '')
-            .map(tn => `#${tn.tooth}: ${tn.note}`)
-            .join(', '),
-    };
-
+    // Simulate a short delay for user feedback
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
     try {
-      const result = await generatePrescription(transformedValues);
-      setOpdSummary(result.opdSummary);
+        const filteredMedicines = values.medicines
+            ?.filter(m => m.name && m.name.trim() !== '') || [];
+
+        const prescriptionTable = filteredMedicines.length > 0 ? [
+            '| Medicine | Dosage | Frequency | Duration | Instructions |',
+            '|---|---|---|---|---|',
+            ...filteredMedicines.map(m => {
+                const dosage = `${m.dosageValue || ''} ${m.dosageUnit || ''}`.trim();
+                const frequency = `${m.frequencyValue || ''} time(s) ${m.frequencyUnit || ''}`.trim();
+                const duration = `${m.durationValue || ''} ${m.durationUnit || ''}`.trim();
+                return `| ${m.name} | ${dosage} | ${frequency} | ${duration} | ${m.instructions || ''} |`;
+            })
+        ].join('\n') : undefined;
+
+        const combinedTests: string[] = [];
+        if (values.radiographsAdvised && values.radiographsAdvised.length > 0) {
+            values.radiographsAdvised.forEach(r => {
+                if (r.type) {
+                    combinedTests.push(r.toothNumber ? `${r.type} (w.r.t #${r.toothNumber})` : r.type);
+                }
+            });
+        }
+        if (values.testsAdvised && values.testsAdvised.length > 0) {
+            values.testsAdvised.forEach(t => {
+                if (t.value) combinedTests.push(t.value);
+            });
+        }
+
+        const summary: GeneratedSummary = {
+            patientDetails: {
+                name: values.patientName,
+                age: values.patientAge,
+                gender: values.patientGender,
+            },
+            provisionalDiagnosis: values.provisionalDiagnosis,
+            toothChartNotes: values.toothNotes
+                ?.filter(tn => tn.note.trim() !== '')
+                .map(tn => `#${tn.tooth}: ${tn.note}`)
+                .join(', ') || undefined,
+            testsAdvised: combinedTests.length > 0 ? combinedTests.join(', ') : undefined,
+            prescriptionTable,
+            additionalNotes: values.additionalNotes || undefined,
+            followUpDate: values.followUpDate || undefined,
+        };
+
+        setOpdSummary(summary);
     } catch (error) {
-      console.error(error);
-      toast({
-        variant: 'destructive',
-        title: 'Error Generating Summary',
-        description: 'An unexpected error occurred. Please try again.',
-      });
+        console.error(error);
+        toast({
+            variant: 'destructive',
+            title: 'Error Generating Summary',
+            description: 'An unexpected error occurred. Please try again.',
+        });
     } finally {
-      setIsLoading(false);
+        setIsLoading(false);
     }
-  }
+}
 
   const handlePrint = () => {
-    const printableArea = document.getElementById('printable-prescription');
-    if (!printableArea) return;
-
-    // Temporarily hide all other elements
-    const originalDisplay = [];
-    const bodyChildren = document.body.children;
-    for (let i = 0; i < bodyChildren.length; i++) {
-        const el = bodyChildren[i] as HTMLElement;
-        if (el.id !== 'printable-prescription-container') {
-            originalDisplay.push({ el, display: el.style.display });
-            el.style.display = 'none';
-        }
-    }
-
-    // Un-hide the printable area and its parents
-    let parent = printableArea.parentElement;
-    while(parent && parent !== document.body) {
-      originalDisplay.push({ el: parent, display: parent.style.display });
-      parent.style.display = 'block';
-      parent = parent.parentElement;
-    }
-    printableArea.style.display = 'block';
-
     window.print();
-
-    // Restore original display styles
-    originalDisplay.forEach(item => {
-        item.el.style.display = item.display;
-    });
-    printableArea.style.display = ''; // Reset its own style
   };
 
   const handleDownload = async () => {
@@ -523,7 +532,7 @@ export function DentalPrescriptionGenerator() {
          <div className="flex items-center justify-center rounded-lg border border-dashed p-8">
             <div className="text-center">
                 <Loader2 className="mx-auto h-12 w-12 animate-spin text-primary" />
-                <p className="mt-4 text-muted-foreground">The AI is thinking... please wait.</p>
+                <p className="mt-4 text-muted-foreground">Generating summary...</p>
             </div>
          </div>
       )}
