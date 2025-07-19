@@ -117,11 +117,8 @@ const medicineSchema = z.object({
   durationUnit: z.string(),
   instructions: z.string().optional(),
 }).partial().refine(data => {
-    // This allows a row to be "empty" if all its fields are empty.
     const hasValue = Object.values(data).some(val => val !== '' && val !== undefined);
     if (!hasValue) return true;
-    
-    // If there is a value, name is required
     return !!data.name;
 }, { message: "Drug name is required if other fields are filled.", path: ['name']});
 
@@ -177,7 +174,6 @@ export function PrescriptionGenerator() {
     setIsLoading(true);
     setOpdSummary(null);
 
-    // Simulate a short delay for user feedback
     await new Promise(resolve => setTimeout(resolve, 500));
     
     try {
@@ -429,7 +425,7 @@ export function PrescriptionGenerator() {
       )}
 
       {opdSummary && (
-        <div id="printable-prescription">
+        <div id="printable-prescription" className="hidden print:block">
             <Card className="mt-6 printable-area">
             <CardHeader>
                 <div className="flex items-center justify-between no-print">
@@ -445,7 +441,7 @@ export function PrescriptionGenerator() {
                     <p className="font-semibold text-lg">Dr. Rajesh Kumar, MBBS, MD (General Medicine)</p>
                     <p className="text-sm text-muted-foreground">Reg. No. 12345</p>
                     <Separator className="my-2"/>
-                    <p className="text-sm">123 Health St, Wellness City, India | Phone: +91 98765 43210 | Date: {new Date().toLocaleDateString('en-IN')}</p>
+                    <p className="text-sm">123 Health St, Wellness City, India | Phone: +91 98765 43210</p>
                 </div>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -488,9 +484,10 @@ export function PrescriptionGenerator() {
 
                 <div className="flex justify-between items-end">
                     <div>
-                    {opdSummary.followUpDate && (
-                        <p><strong>Follow-up:</strong> {opdSummary.followUpDate}</p>
-                    )}
+                      <p className="text-sm"><strong>Date:</strong> {new Date().toLocaleDateString('en-IN')}</p>
+                      {opdSummary.followUpDate && (
+                          <p><strong>Follow-up:</strong> {opdSummary.followUpDate}</p>
+                      )}
                     </div>
                     <div className="text-center">
                         <div className="h-12"></div>

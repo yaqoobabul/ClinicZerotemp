@@ -73,19 +73,17 @@ body {
 }
 
 @media print {
-  body * {
-    visibility: hidden;
-  }
-  #printable-prescription, #printable-prescription * {
-    visibility: visible;
-  }
-  #printable-prescription {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
+  body {
+    background-color: #fff;
   }
   .no-print {
     display: none !important;
+  }
+  #printable-prescription {
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
   }
 }
