@@ -178,10 +178,10 @@ export function PrescriptionGenerator() {
               </CardHeader>
               <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <FormField control={form.control} name="patientName" render={({ field }) => (
-                    <FormItem><FormLabel>Patient Name</FormLabel><FormControl><Input placeholder="e.g., John Doe" {...field} /></FormControl><FormMessage /></FormItem>
+                    <FormItem><FormLabel>Patient Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
                 <FormField control={form.control} name="patientAge" render={({ field }) => (
-                    <FormItem><FormLabel>Age</FormLabel><FormControl><Input placeholder="e.g., 35" {...field} /></FormControl><FormMessage /></FormItem>
+                    <FormItem><FormLabel>Age</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
                 <FormField control={form.control} name="patientGender" render={({ field }) => (
                   <FormItem>
@@ -208,7 +208,7 @@ export function PrescriptionGenerator() {
               <CardHeader><CardTitle>Provisional Diagnosis</CardTitle></CardHeader>
               <CardContent>
                   <FormField control={form.control} name="provisionalDiagnosis" render={({ field }) => (
-                      <FormItem><FormControl><Input placeholder="e.g., Acute Gastroenteritis" {...field} /></FormControl><FormMessage /></FormItem>
+                      <FormItem><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                   )} />
               </CardContent>
             </Card>
@@ -225,7 +225,7 @@ export function PrescriptionGenerator() {
                         render={({ field }) => (
                           <FormItem className="flex-grow">
                               <FormControl>
-                                  <Input placeholder="e.g., Complete Blood Count (CBC)" {...field} />
+                                  <Input {...field} />
                               </FormControl>
                               <FormMessage />
                           </FormItem>
@@ -283,7 +283,7 @@ export function PrescriptionGenerator() {
                                       <FormItem className="flex-grow"><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
                                   )} />
                                   <FormField control={form.control} name={`medicines.${index}.dosageUnit`} render={({ field }) => (
-                                      <FormItem className="w-28 shrink-0"><Select onValueChange={field.onChange} defaultValue={field.value}>
+                                      <FormItem className="w-28 shrink-0"><Select onValueChange={field.onChange} value={field.value}>
                                           <FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl>
                                           <SelectContent>{dosageUnits.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}</SelectContent>
                                       </Select><FormMessage /></FormItem>
@@ -296,7 +296,7 @@ export function PrescriptionGenerator() {
                                       <FormItem className="flex-grow"><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
                                   )} />
                                   <FormField control={form.control} name={`medicines.${index}.frequencyUnit`} render={({ field }) => (
-                                      <FormItem className="w-28 shrink-0"><Select onValueChange={field.onChange} defaultValue={field.value}>
+                                      <FormItem className="w-28 shrink-0"><Select onValueChange={field.onChange} value={field.value}>
                                           <FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl>
                                           <SelectContent>{frequencyUnits.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}</SelectContent>
                                       </Select><FormMessage /></FormItem>
@@ -309,7 +309,7 @@ export function PrescriptionGenerator() {
                                       <FormItem className="flex-grow"><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
                                   )} />
                                   <FormField control={form.control} name={`medicines.${index}.durationUnit`} render={({ field }) => (
-                                      <FormItem className="w-28 shrink-0"><Select onValueChange={field.onChange} defaultValue={field.value}>
+                                      <FormItem className="w-28 shrink-0"><Select onValueChange={field.onChange} value={field.value}>
                                           <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
                                           <SelectContent>{durationUnits.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}</SelectContent>
                                       </Select><FormMessage /></FormItem>
@@ -326,7 +326,7 @@ export function PrescriptionGenerator() {
                     </div>
                    </div>
                 ))}
-                <Button type="button" variant="outline" size="sm" onClick={() => appendMedicine({name: '', dosageValue: '', dosageUnit: '', frequencyValue: '', frequencyUnit: '', durationValue: '', durationUnit: '', instructions: ''})}>
+                <Button type="button" variant="outline" size="sm" onClick={() => appendMedicine({name: '', dosageValue: '', dosageUnit: 'mg', frequencyValue: '', frequencyUnit: 'daily', durationValue: '', durationUnit: 'Days', instructions: ''})}>
                   <Plus className="mr-2 h-4 w-4" /> Add Drug
                 </Button>
               </CardContent>
@@ -336,10 +336,10 @@ export function PrescriptionGenerator() {
               <CardHeader><CardTitle>Notes & Follow-up</CardTitle></CardHeader>
               <CardContent className="grid md:grid-cols-2 gap-4">
                   <FormField control={form.control} name="additionalNotes" render={({ field }) => (
-                      <FormItem><FormLabel>Additional Notes</FormLabel><FormControl><Textarea placeholder="e.g., Take adequate rest and stay hydrated." {...field} /></FormControl><FormMessage /></FormItem>
+                      <FormItem><FormLabel>Additional Notes</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>
                   )} />
                   <FormField control={form.control} name="followUpDate" render={({ field }) => (
-                      <FormItem><FormLabel>Follow-up Date</FormLabel><FormControl><Input placeholder="e.g., After 3 days" {...field} /></FormControl><FormMessage /></FormItem>
+                      <FormItem><FormLabel>Follow-up Date</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                   )} />
               </CardContent>
             </Card>
@@ -372,7 +372,7 @@ export function PrescriptionGenerator() {
                         <p>123 Health St, Wellness City, India | Phone: +91 98765 43210</p>
                     </div>
                     <div className="text-right flex-shrink-0">
-                        <p><strong>Date:</strong> {new Date().toLocaleDateString('en-IN')}</p>
+                        
                     </div>
                 </div>
                 <div className="flex justify-end mt-1 no-print">
@@ -442,7 +442,8 @@ export function PrescriptionGenerator() {
                         )}
                     </div>
                     <div className="text-center">
-                            <div className="h-8"></div>
+                        <p><strong>Date:</strong> {new Date().toLocaleDateString('en-IN')}</p>
+                        <div className="h-8"></div>
                         <p className="border-t-2 border-black pt-1">Doctor's Signature</p>
                     </div>
                 </div>
@@ -452,5 +453,3 @@ export function PrescriptionGenerator() {
     </div>
   );
 }
-
-    
