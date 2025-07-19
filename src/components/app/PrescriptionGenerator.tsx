@@ -38,14 +38,17 @@ const medicineSchema = z.object({
   durationUnit: z.string(),
   instructions: z.string().optional(),
 }).partial().refine(data => {
-    const hasValue = Object.values(data).some(val => val && val.trim() !== '');
-    if (!hasValue) return true;
+    // If the entire object is empty, it's valid.
+    if (!Object.values(data).some(val => val !== undefined && val !== '')) {
+        return true;
+    }
+    // If some fields are filled, name is required.
     return !!data.name && data.name.trim() !== '';
 }, { message: "Drug name is required if other fields are filled.", path: ['name']});
 
 const testAdvisedSchema = z.object({ 
-  value: z.string().min(1, 'Test name cannot be empty if added.')
-}).partial();
+  value: z.string().optional()
+});
 
 const formSchema = z.object({
   patientName: z.string().min(1, 'Patient name is required.'),
@@ -100,7 +103,7 @@ export function PrescriptionGenerator() {
     
     try {
         const filteredMedicines = values.medicines
-            ?.filter(m => Object.values(m).some(val => val && val.trim() !== '')) || [];
+            ?.filter(m => m.name && m.name.trim() !== '') || [];
 
         const prescriptionTable = filteredMedicines.length > 0 ? [
             '| Medicine | Dosage | Frequency | Duration | Instructions |',
@@ -444,5 +447,3 @@ export function PrescriptionGenerator() {
     </div>
   );
 }
-
-    

@@ -10,7 +10,6 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Printer, Plus, Trash2 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Separator } from '../ui/separator';
 import { Textarea } from '../ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -41,8 +40,11 @@ const medicineSchema = z.object({
   durationUnit: z.string(),
   instructions: z.string().optional(),
 }).partial().refine(data => {
-    const hasValue = Object.values(data).some(val => val && val.trim() !== '');
-    if (!hasValue) return true;
+    // If the entire object is empty, it's valid.
+    if (!Object.values(data).some(val => val !== undefined && val !== '')) {
+      return true;
+    }
+    // If some fields are filled, name is required.
     return !!data.name && data.name.trim() !== '';
 }, { message: "Drug name is required if other fields are filled.", path: ['name']});
 
@@ -53,13 +55,13 @@ const toothNoteSchema = z.object({
 });
 
 const radiographSchema = z.object({
-  type: z.string().min(1, 'Type is required if a radiograph is added.'),
+  type: z.string().optional(),
   toothNumber: z.string().optional(),
-}).partial();
+});
 
 const testAdvisedSchema = z.object({ 
-  value: z.string().min(1, 'Test name cannot be empty if added.')
-}).partial();
+  value: z.string().optional()
+});
 
 
 const formSchema = z.object({
@@ -125,7 +127,7 @@ export function DentalPrescriptionGenerator() {
     
     try {
         const filteredMedicines = values.medicines
-            ?.filter(m => Object.values(m).some(val => val && val.trim() !== '')) || [];
+            ?.filter(m => m.name && m.name.trim() !== '') || [];
 
         const prescriptionTable = filteredMedicines.length > 0 ? [
             '| Medicine | Dosage | Frequency | Duration | Instructions |',
@@ -347,15 +349,18 @@ export function DentalPrescriptionGenerator() {
                                 <FormField control={form.control} name={`medicines.${index}.name`} render={({ field }) => (
                                     <FormItem><FormLabel>Drug Name</FormLabel><FormControl><Input placeholder="e.g., Amoxicillin" {...field} /></FormControl><FormMessage /></FormItem>
                                 )} />
-                                <FormField control={form.control} name={`medicines.${index}.instructions`} render={({ field }) => (
+                                 <FormField
+                                    control={form.control}
+                                    name={`medicines.${index}.instructions`}
+                                    render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>Instructions</FormLabel>
                                         <FormControl>
-                                            <Input
-                                                placeholder="e.g., After food"
-                                                {...field}
-                                                list={`instructions-suggestions-${index}`}
-                                            />
+                                        <Input
+                                            placeholder="e.g., After food"
+                                            {...field}
+                                            list={`instructions-suggestions-${index}`}
+                                        />
                                         </FormControl>
                                         <datalist id={`instructions-suggestions-${index}`}>
                                         {instructionSuggestions.map((suggestion) => (
@@ -364,7 +369,8 @@ export function DentalPrescriptionGenerator() {
                                         </datalist>
                                         <FormMessage />
                                     </FormItem>
-                                )} />
+                                    )}
+                                />
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                 <FormItem><FormLabel>Dosage</FormLabel>
@@ -552,5 +558,3 @@ export function DentalPrescriptionGenerator() {
     </div>
   );
 }
-
-    
