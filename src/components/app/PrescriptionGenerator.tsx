@@ -384,7 +384,7 @@ export function PrescriptionGenerator() {
             <div className="text-sm">
                 <div className="flex items-start justify-between">
                     <div>
-                        <h2 className="text-base font-bold text-primary">ClinicEase Clinic</h2>
+                        <h2 className="text-base font-bold text-primary">ClinicZero</h2>
                         <p>123 Health St, Wellness City, India | Phone: +91 98765 43210</p>
                         <p className="font-semibold">Dr. Rajesh Kumar, MBBS, MD (General Medicine)</p>
                         <p className="text-muted-foreground">Reg. No. 12345</p>
