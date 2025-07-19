@@ -22,6 +22,7 @@ type GeneratedSummary = {
     age: string;
     gender: string;
   };
+  medicalHistory?: string;
   provisionalDiagnosis: string;
   toothChartNotes?: string;
   prescriptionTable?: string;
@@ -44,18 +45,18 @@ const medicineSchema = z.object({
     (data) => {
       if (data.name && data.name.trim() !== '') {
         return (
-          data.dosageValue &&
-          data.frequencyValue &&
-          data.durationValue
+          data.dosageValue && data.dosageValue.trim() !== '' &&
+          data.frequencyValue && data.frequencyValue.trim() !== '' &&
+          data.durationValue && data.durationValue.trim() !== ''
         );
       }
       return true;
     },
     {
-      message: 'Dosage, frequency, and duration are required if drug name is filled.',
-      path: ['name'], // Show error message on the name field for simplicity
+      message: 'Dosage, frequency, and duration are required.',
+      path: ['dosageValue'],
     }
-  );
+);
 
 
 const toothNoteSchema = z.object({
@@ -77,6 +78,7 @@ const formSchema = z.object({
   patientName: z.string().min(1, 'Patient name is required.'),
   patientAge: z.string().min(1, 'Patient age is required.'),
   patientGender: z.string().min(1, 'Patient gender is required.'),
+  medicalHistory: z.string().optional(),
   toothNotes: z.array(toothNoteSchema).optional(),
   provisionalDiagnosis: z.string().min(1, 'Diagnosis is required.'),
   medicines: z.array(medicineSchema).optional(),
@@ -104,6 +106,7 @@ export function DentalPrescriptionGenerator() {
       patientName: '',
       patientAge: '',
       patientGender: '',
+      medicalHistory: '',
       toothNotes: [],
       provisionalDiagnosis: '',
       medicines: [],
@@ -166,6 +169,7 @@ export function DentalPrescriptionGenerator() {
                 age: values.patientAge,
                 gender: values.patientGender,
             },
+            medicalHistory: values.medicalHistory || undefined,
             provisionalDiagnosis: values.provisionalDiagnosis,
             toothChartNotes: values.toothNotes
                 ?.filter(tn => tn.note && tn.note.trim() !== '')
@@ -242,6 +246,20 @@ export function DentalPrescriptionGenerator() {
                     <FormMessage />
                   </FormItem>
                 )} />
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader><CardTitle>Medical History</CardTitle></CardHeader>
+              <CardContent>
+                  <FormField control={form.control} name="medicalHistory" render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <Textarea {...field} className="text-destructive placeholder:text-destructive/50" placeholder="e.g., Hypertension, Diabetes, Allergy to Penicillin" />
+                          </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                  )} />
               </CardContent>
             </Card>
             
@@ -493,6 +511,13 @@ export function DentalPrescriptionGenerator() {
                           <div><strong>Gender:</strong> {opdSummary.patientDetails.gender}</div>
                         </div>
                     </div>
+                    
+                    {opdSummary.medicalHistory && (
+                      <div className='mb-1'>
+                          <h3 className="font-bold text-xs text-red-600">Medical History</h3>
+                          <p className="text-red-600">{opdSummary.medicalHistory}</p>
+                      </div>
+                    )}
 
                     {opdSummary.toothChartNotes && (
                     <div className='mb-1'>

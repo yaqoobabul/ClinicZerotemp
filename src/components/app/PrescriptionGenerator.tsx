@@ -21,6 +21,7 @@ type GeneratedSummary = {
     age: string;
     gender: string;
   };
+  medicalHistory?: string;
   provisionalDiagnosis: string;
   prescriptionTable?: string;
   testsAdvised?: string;
@@ -41,18 +42,18 @@ const medicineSchema = z.object({
     (data) => {
       if (data.name && data.name.trim() !== '') {
         return (
-          data.dosageValue &&
-          data.frequencyValue &&
-          data.durationValue
+          data.dosageValue && data.dosageValue.trim() !== '' &&
+          data.frequencyValue && data.frequencyValue.trim() !== '' &&
+          data.durationValue && data.durationValue.trim() !== ''
         );
       }
       return true;
     },
     {
-      message: 'Dosage, frequency, and duration are required if drug name is filled.',
-      path: ['name'], // Show error message on the name field for simplicity
+      message: 'Dosage, frequency, and duration are required.',
+      path: ['dosageValue'],
     }
-  );
+);
 
 const testAdvisedSchema = z.object({ 
   value: z.string().optional()
@@ -62,6 +63,7 @@ const formSchema = z.object({
   patientName: z.string().min(1, 'Patient name is required.'),
   patientAge: z.string().min(1, 'Patient age is required.'),
   patientGender: z.string().min(1, 'Patient gender is required.'),
+  medicalHistory: z.string().optional(),
   provisionalDiagnosis: z.string().min(1, 'Diagnosis is required.'),
   medicines: z.array(medicineSchema).optional(),
   testsAdvised: z.array(testAdvisedSchema).optional(),
@@ -86,6 +88,7 @@ export function PrescriptionGenerator() {
       patientName: '',
       patientAge: '',
       patientGender: '',
+      medicalHistory: '',
       provisionalDiagnosis: '',
       medicines: [],
       testsAdvised: [],
@@ -130,6 +133,7 @@ export function PrescriptionGenerator() {
                 age: values.patientAge,
                 gender: values.patientGender,
             },
+            medicalHistory: values.medicalHistory || undefined,
             provisionalDiagnosis: values.provisionalDiagnosis,
             testsAdvised: values.testsAdvised?.filter(t => t.value && t.value.trim() !== '').map(t => t.value).join(', ') || undefined,
             prescriptionTable,
@@ -201,6 +205,20 @@ export function PrescriptionGenerator() {
                     <FormMessage />
                   </FormItem>
                 )} />
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader><CardTitle>Medical History</CardTitle></CardHeader>
+              <CardContent>
+                  <FormField control={form.control} name="medicalHistory" render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <Textarea {...field} className="text-destructive placeholder:text-destructive/50" placeholder="e.g., Hypertension, Diabetes, Allergy to Penicillin" />
+                          </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                  )} />
               </CardContent>
             </Card>
             
@@ -389,6 +407,13 @@ export function PrescriptionGenerator() {
                         </div>
                     </div>
                     
+                    {opdSummary.medicalHistory && (
+                      <div className='mb-1'>
+                          <h3 className="font-bold text-xs text-red-600">Medical History</h3>
+                          <p className="text-red-600">{opdSummary.medicalHistory}</p>
+                      </div>
+                    )}
+
                     <div className='mb-1'>
                         <h3 className="font-bold text-xs">Provisional Diagnosis</h3>
                         <p>{opdSummary.provisionalDiagnosis}</p>
