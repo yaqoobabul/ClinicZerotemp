@@ -485,11 +485,11 @@ export function DentalPrescriptionGenerator() {
       )}
 
       {opdSummary && (
-        <div id="printable-prescription" className="p-2">
-            <div className="text-xs">
-                <div className="flex items-start justify-between mb-1">
+        <div id="printable-prescription">
+            <div className="text-sm">
+                <div className="flex items-start justify-between">
                     <div>
-                      <h2 className="text-sm font-bold text-primary">ClinicEase Clinic</h2>
+                      <h2 className="text-base font-bold text-primary">ClinicEase Clinic</h2>
                       <p className="font-semibold">Dr. Rajesh Kumar, MBBS, MD (General Medicine)</p>
                       <p className="text-muted-foreground">Reg. No. 12345</p>
                       <p>123 Health St, Wellness City, India | Phone: +91 98765 43210</p>
@@ -580,7 +580,6 @@ export function DentalPrescriptionGenerator() {
                       )}
                     </div>
                     <div className="text-center">
-                        
                         <p className="border-t-2 border-black pt-1 mt-8">Doctor's Signature</p>
                         <p>{new Date().toLocaleString('en-IN')}</p>
                     </div>
