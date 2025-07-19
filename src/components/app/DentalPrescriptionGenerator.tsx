@@ -31,6 +31,7 @@ type GeneratedSummary = {
   provisionalDiagnosis: string;
   toothChartNotes?: string;
   prescriptionTable?: string;
+  radiographsAdvised?: string;
   testsAdvised?: string;
   additionalNotes?: string;
   followUpDate?: string;
@@ -119,7 +120,8 @@ const medicineSchema = z.object({
   durationUnit: z.string(),
   instructions: z.string().optional(),
 }).partial().refine(data => {
-    return Object.values(data).some(val => val !== '' && val !== undefined);
+    const hasValue = Object.values(data).some(val => val !== '' && val !== undefined);
+    return hasValue;
 }, { message: "At least one field must be filled.", path: ['name']});
 
 
@@ -199,7 +201,7 @@ export function DentalPrescriptionGenerator() {
     
     try {
         const filteredMedicines = values.medicines
-            ?.filter(m => m.name && m.name.trim() !== '') || [];
+            ?.filter(m => Object.values(m).some(val => val && val !== '')) || [];
 
         const prescriptionTable = filteredMedicines.length > 0 ? [
             '| Medicine | Dosage | Frequency | Duration | Instructions |',
@@ -208,23 +210,19 @@ export function DentalPrescriptionGenerator() {
                 const dosage = `${m.dosageValue || ''} ${m.dosageUnit || ''}`.trim();
                 const frequency = `${m.frequencyValue || ''} time(s) ${m.frequencyUnit || ''}`.trim();
                 const duration = `${m.durationValue || ''} ${m.durationUnit || ''}`.trim();
-                return `| ${m.name} | ${dosage} | ${frequency} | ${duration} | ${m.instructions || ''} |`;
+                return `| ${m.name || ''} | ${dosage} | ${frequency} | ${duration} | ${m.instructions || ''} |`;
             })
         ].join('\n') : undefined;
 
-        const combinedTests: string[] = [];
-        if (values.radiographsAdvised && values.radiographsAdvised.length > 0) {
-            values.radiographsAdvised.forEach(r => {
-                if (r.type) {
-                    combinedTests.push(r.toothNumber ? `${r.type} (w.r.t #${r.toothNumber})` : r.type);
-                }
-            });
-        }
-        if (values.testsAdvised && values.testsAdvised.length > 0) {
-            values.testsAdvised.forEach(t => {
-                if (t.value) combinedTests.push(t.value);
-            });
-        }
+        const radiographs = values.radiographsAdvised
+            ?.filter(r => r.type)
+            .map(r => r.toothNumber ? `${r.type} (w.r.t #${r.toothNumber})` : r.type)
+            .join(', ') || undefined;
+
+        const otherTests = values.testsAdvised
+            ?.filter(t => t.value)
+            .map(t => t.value)
+            .join(', ') || undefined;
 
         const summary: GeneratedSummary = {
             patientDetails: {
@@ -234,10 +232,11 @@ export function DentalPrescriptionGenerator() {
             },
             provisionalDiagnosis: values.provisionalDiagnosis,
             toothChartNotes: values.toothNotes
-                ?.filter(tn => tn.note.trim() !== '')
+                ?.filter(tn => tn.note && tn.note.trim() !== '')
                 .map(tn => `#${tn.tooth}: ${tn.note}`)
                 .join(', ') || undefined,
-            testsAdvised: combinedTests.length > 0 ? combinedTests.join(', ') : undefined,
+            radiographsAdvised: radiographs,
+            testsAdvised: otherTests,
             prescriptionTable,
             additionalNotes: values.additionalNotes || undefined,
             followUpDate: values.followUpDate || undefined,
@@ -440,8 +439,9 @@ export function DentalPrescriptionGenerator() {
             <CardHeader><CardTitle>Prescription</CardTitle></CardHeader>
             <CardContent className="space-y-4">
               {medicineFields.map((field, index) => (
-                <div key={field.id} className="p-4 border rounded-lg space-y-4 relative bg-muted/20">
-                   <div className="grid grid-cols-1 lg:grid-cols-12 gap-x-4 gap-y-4 items-end">
+                <div key={field.id} className="p-4 border rounded-lg bg-muted/20">
+                   <div className="flex items-start gap-4">
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-x-4 gap-y-4 items-start flex-grow">
                       <FormField control={form.control} name={`medicines.${index}.name`} render={({ field }) => (
                           <FormItem className="lg:col-span-3"><FormLabel>Drug Name</FormLabel><FormControl><Input placeholder="e.g., Amoxicillin" {...field} /></FormControl><FormMessage /></FormItem>
                       )} />
@@ -491,16 +491,19 @@ export function DentalPrescriptionGenerator() {
                        <FormField control={form.control} name={`medicines.${index}.instructions`} render={({ field }) => (
                           <FormItem className="lg:col-span-3">
                             <FormLabel>Instructions</FormLabel>
-                            <ComboboxField form={form} name={`medicines.${index}.instructions`} suggestions={instructionSuggestions} placeholder="Instructions" />
+                            <FormControl>
+                                <ComboboxField form={form} name={`medicines.${index}.instructions`} suggestions={instructionSuggestions} placeholder="Instructions" />
+                            </FormControl>
                              <FormMessage />
                           </FormItem>
                        )} />
                     </div>
-                   {medicineFields.length > 0 && (
-                     <Button type="button" variant="ghost" size="icon" className="absolute top-2 right-2 text-muted-foreground hover:text-destructive" onClick={() => removeMedicine(index)}>
+                    {medicineFields.length > 0 && (
+                     <Button type="button" variant="ghost" size="icon" className="shrink-0 text-muted-foreground hover:text-destructive mt-[29px]" onClick={() => removeMedicine(index)}>
                         <Trash2 className="h-4 w-4" />
                      </Button>
                    )}
+                   </div>
                 </div>
               ))}
                <Button type="button" variant="outline" size="sm" onClick={() => appendMedicine({ name: '', dosageValue: '', dosageUnit: 'mg', frequencyValue: '2', frequencyUnit: 'daily', durationValue: '', durationUnit: 'Days', instructions: 'After food' })}>
@@ -580,6 +583,13 @@ export function DentalPrescriptionGenerator() {
                 <p>{opdSummary.provisionalDiagnosis}</p>
             </div>
 
+            {opdSummary.radiographsAdvised && (
+              <div className="rounded-md border p-4">
+                  <h3 className="font-bold mb-2">Radiographs Advised</h3>
+                  <p>{opdSummary.radiographsAdvised}</p>
+              </div>
+            )}
+            
             {opdSummary.testsAdvised && (
               <div className="rounded-md border p-4">
                   <h3 className="font-bold mb-2">Tests Advised</h3>

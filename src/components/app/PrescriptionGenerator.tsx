@@ -177,7 +177,7 @@ export function PrescriptionGenerator() {
     
     try {
         const filteredMedicines = values.medicines
-            ?.filter(m => m.name && m.name.trim() !== '') || [];
+            ?.filter(m => Object.values(m).some(val => val && val !== '')) || [];
 
         const prescriptionTable = filteredMedicines.length > 0 ? [
             '| Medicine | Dosage | Frequency | Duration | Instructions |',
@@ -186,7 +186,7 @@ export function PrescriptionGenerator() {
                 const dosage = `${m.dosageValue || ''} ${m.dosageUnit || ''}`.trim();
                 const frequency = `${m.frequencyValue || ''} time(s) ${m.frequencyUnit || ''}`.trim();
                 const duration = `${m.durationValue || ''} ${m.durationUnit || ''}`.trim();
-                return `| ${m.name} | ${dosage} | ${frequency} | ${duration} | ${m.instructions || ''} |`;
+                return `| ${m.name || ''} | ${dosage} | ${frequency} | ${duration} | ${m.instructions || ''} |`;
             })
         ].join('\n') : undefined;
 
@@ -335,8 +335,9 @@ export function PrescriptionGenerator() {
             <CardHeader><CardTitle>Prescription</CardTitle></CardHeader>
             <CardContent className="space-y-4">
               {medicineFields.map((field, index) => (
-                <div key={field.id} className="p-4 border rounded-lg space-y-4 relative bg-muted/20">
-                   <div className="grid grid-cols-1 lg:grid-cols-12 gap-x-4 gap-y-4 items-start">
+                <div key={field.id} className="p-4 border rounded-lg bg-muted/20">
+                  <div className="flex items-start gap-4">
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-x-4 gap-y-4 items-start flex-grow">
                       <FormField control={form.control} name={`medicines.${index}.name`} render={({ field }) => (
                           <FormItem className="lg:col-span-3"><FormLabel>Drug Name</FormLabel><FormControl><Input placeholder="e.g., Paracetamol" {...field} /></FormControl><FormMessage /></FormItem>
                       )} />
@@ -375,14 +376,17 @@ export function PrescriptionGenerator() {
                       </div>
                        <div className="lg:col-span-3">
                           <FormLabel>Instructions</FormLabel>
-                          <ComboboxField form={form} name={`medicines.${index}.instructions`} suggestions={instructionSuggestions} placeholder="Instructions" />
+                           <FormControl>
+                            <ComboboxField form={form} name={`medicines.${index}.instructions`} suggestions={instructionSuggestions} placeholder="Instructions" />
+                          </FormControl>
                        </div>
                     </div>
                    {medicineFields.length > 0 && (
-                     <Button type="button" variant="ghost" size="icon" className="absolute top-2 right-2 text-muted-foreground hover:text-destructive" onClick={() => removeMedicine(index)}>
+                     <Button type="button" variant="ghost" size="icon" className="shrink-0 text-muted-foreground hover:text-destructive mt-[29px]" onClick={() => removeMedicine(index)}>
                         <Trash2 className="h-4 w-4" />
                      </Button>
                    )}
+                   </div>
                 </div>
               ))}
                <Button type="button" variant="outline" size="sm" onClick={() => appendMedicine({ name: '', dosageValue: '', dosageUnit: 'mg', frequencyValue: '2', frequencyUnit: 'daily', durationValue: '', durationUnit: 'Days', instructions: 'After food' })}>
