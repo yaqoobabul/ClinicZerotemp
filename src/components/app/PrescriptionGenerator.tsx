@@ -97,22 +97,27 @@ const ComboboxField = ({ form, name, suggestions, placeholder }: { form: any, na
   };
 
 const medicineSchema = z.object({
-  name: z.string().min(1, 'Drug name is required.'),
-  dosageValue: z.string().min(1, 'Dosage value is required.'),
-  dosageUnit: z.string().min(1, 'Dosage unit is required.'),
-  frequencyValue: z.string().min(1, 'Frequency is required.'),
-  frequencyUnit: z.string().min(1, 'Unit is required.'),
-  durationValue: z.string().min(1, 'Duration is required.'),
-  durationUnit: z.string().min(1, 'Unit is required.'),
+  name: z.string(),
+  dosageValue: z.string(),
+  dosageUnit: z.string(),
+  frequencyValue: z.string(),
+  frequencyUnit: z.string(),
+  durationValue: z.string(),
+  durationUnit: z.string(),
   instructions: z.string().optional(),
-});
+}).partial().refine(data => {
+    // A medicine row is valid if at least one of its fields is filled out.
+    // This allows submitting the form with partially filled rows, which get filtered out later.
+    return Object.values(data).some(val => val !== '' && val !== undefined);
+}, { message: "At least one field must be filled.", path: ['name']});
+
 
 const formSchema = z.object({
   patientName: z.string().min(1, 'Patient name is required.'),
   patientAge: z.string().min(1, 'Patient age is required.'),
   patientGender: z.string().min(1, 'Patient gender is required.'),
   provisionalDiagnosis: z.string().min(1, 'Diagnosis is required.'),
-  medicines: z.array(medicineSchema),
+  medicines: z.array(medicineSchema).optional(),
   testsAdvised: z.array(z.object({ value: z.string().min(1, 'Test name cannot be empty.')})).optional(),
   additionalNotes: z.string().optional(),
   followUpDate: z.string().optional(),
@@ -161,8 +166,10 @@ export function PrescriptionGenerator() {
 
     const transformedValues = {
         ...values,
-        medicines: values.medicines.map(m => ({
-            name: m.name,
+        medicines: values.medicines
+            ?.filter(m => m.name && m.dosageValue && m.dosageUnit && m.frequencyValue && m.frequencyUnit && m.durationValue && m.durationUnit)
+            .map(m => ({
+            name: m.name!,
             dosage: `${m.dosageValue} ${m.dosageUnit}`,
             frequency: `${m.frequencyValue} time(s) ${m.frequencyUnit}`,
             duration: `${m.durationValue} ${m.durationUnit}`,
@@ -376,7 +383,7 @@ export function PrescriptionGenerator() {
                        <div className="lg:col-span-3">
                           <FormLabel>Instructions</FormLabel>
                           <ComboboxField form={form} name={`medicines.${index}.instructions`} suggestions={instructionSuggestions} placeholder="Instructions" />
-                      </div>
+                       </div>
                     </div>
                    {medicineFields.length > 0 && (
                      <Button type="button" variant="ghost" size="icon" className="absolute top-2 right-2 text-muted-foreground hover:text-destructive" onClick={() => removeMedicine(index)}>
@@ -498,5 +505,3 @@ export function PrescriptionGenerator() {
     </div>
   );
 }
-
-    
