@@ -40,7 +40,22 @@ const medicineSchema = z.object({
   durationValue: z.string().optional(),
   durationUnit: z.string().optional(),
   instructions: z.string().optional(),
-});
+}).refine(
+    (data) => {
+      if (data.name && data.name.trim() !== '') {
+        return (
+          data.dosageValue &&
+          data.frequencyValue &&
+          data.durationValue
+        );
+      }
+      return true;
+    },
+    {
+      message: 'Dosage, frequency, and duration are required if drug name is filled.',
+      path: ['name'], // Show error message on the name field for simplicity
+    }
+  );
 
 
 const toothNoteSchema = z.object({
@@ -239,7 +254,7 @@ export function DentalPrescriptionGenerator() {
                 <Controller
                   control={form.control}
                   name="toothNotes"
-                  render={({ field }) => <ToothChart value={field.value} onChange={field.onChange} />}
+                  render={({ field }) => <ToothChart value={field.value || []} onChange={field.onChange} />}
                 />
               </CardContent>
             </Card>
@@ -342,7 +357,7 @@ export function DentalPrescriptionGenerator() {
                         <div className="flex-grow space-y-4">
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                                 <FormField control={form.control} name={`medicines.${index}.name`} render={({ field }) => (
-                                    <FormItem><FormLabel>Drug Name</FormLabel><FormControl><Input placeholder="e.g., Amoxicillin" {...field} /></FormControl><FormMessage /></FormItem>
+                                    <FormItem><FormLabel>Drug Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                                 )} />
                                  <FormField
                                     control={form.control}
@@ -352,7 +367,6 @@ export function DentalPrescriptionGenerator() {
                                         <FormLabel>Instructions</FormLabel>
                                         <FormControl>
                                         <Input
-                                            placeholder="e.g., After food"
                                             {...field}
                                             list={`instructions-suggestions-${index}`}
                                         />
@@ -371,7 +385,7 @@ export function DentalPrescriptionGenerator() {
                                 <FormItem><FormLabel>Dosage</FormLabel>
                                     <div className="flex gap-2">
                                     <FormField control={form.control} name={`medicines.${index}.dosageValue`} render={({ field }) => (
-                                        <FormItem className="flex-grow"><FormControl><Input type="number" placeholder="500" {...field} className="w-full" /></FormControl><FormMessage /></FormItem>
+                                        <FormItem className="flex-grow"><FormControl><Input type="number" {...field} className="w-full" /></FormControl><FormMessage /></FormItem>
                                     )} />
                                     <FormField control={form.control} name={`medicines.${index}.dosageUnit`} render={({ field }) => (
                                         <FormItem className="w-28 shrink-0"><Select onValueChange={field.onChange} defaultValue={field.value}>
@@ -384,7 +398,7 @@ export function DentalPrescriptionGenerator() {
                                 <FormItem><FormLabel>Frequency</FormLabel>
                                     <div className="flex gap-2">
                                     <FormField control={form.control} name={`medicines.${index}.frequencyValue`} render={({ field }) => (
-                                        <FormItem className="flex-grow"><FormControl><Input type="number" placeholder="3" {...field} className="w-full"/></FormControl><FormMessage /></FormItem>
+                                        <FormItem className="flex-grow"><FormControl><Input type="number" {...field} className="w-full"/></FormControl><FormMessage /></FormItem>
                                     )} />
                                     <FormField control={form.control} name={`medicines.${index}.frequencyUnit`} render={({ field }) => (
                                         <FormItem className="w-28 shrink-0"><Select onValueChange={field.onChange} defaultValue={field.value}>
@@ -397,7 +411,7 @@ export function DentalPrescriptionGenerator() {
                                 <FormItem><FormLabel>Duration</FormLabel>
                                     <div className="flex gap-2">
                                     <FormField control={form.control} name={`medicines.${index}.durationValue`} render={({ field }) => (
-                                        <FormItem className="flex-grow"><FormControl><Input type="number" placeholder="5" {...field} className="w-full"/></FormControl><FormMessage /></FormItem>
+                                        <FormItem className="flex-grow"><FormControl><Input type="number" {...field} className="w-full"/></FormControl><FormMessage /></FormItem>
                                     )} />
                                     <FormField control={form.control} name={`medicines.${index}.durationUnit`} render={({ field }) => (
                                         <FormItem className="w-28 shrink-0"><Select onValueChange={field.onChange} defaultValue={field.value}>
@@ -551,3 +565,5 @@ export function DentalPrescriptionGenerator() {
     </div>
   );
 }
+
+    

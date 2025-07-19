@@ -37,7 +37,22 @@ const medicineSchema = z.object({
   durationValue: z.string().optional(),
   durationUnit: z.string().optional(),
   instructions: z.string().optional(),
-});
+}).refine(
+    (data) => {
+      if (data.name && data.name.trim() !== '') {
+        return (
+          data.dosageValue &&
+          data.frequencyValue &&
+          data.durationValue
+        );
+      }
+      return true;
+    },
+    {
+      message: 'Dosage, frequency, and duration are required if drug name is filled.',
+      path: ['name'], // Show error message on the name field for simplicity
+    }
+  );
 
 const testAdvisedSchema = z.object({ 
   value: z.string().optional()
@@ -237,7 +252,7 @@ export function PrescriptionGenerator() {
                         <div className="flex-grow space-y-4">
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                             <FormField control={form.control} name={`medicines.${index}.name`} render={({ field }) => (
-                                <FormItem><FormLabel>Drug Name</FormLabel><FormControl><Input placeholder="e.g., Paracetamol" {...field} /></FormControl><FormMessage /></FormItem>
+                                <FormItem><FormLabel>Drug Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                             )} />
                             <FormField
                                 control={form.control}
@@ -247,7 +262,6 @@ export function PrescriptionGenerator() {
                                     <FormLabel>Instructions</FormLabel>
                                     <FormControl>
                                     <Input
-                                        placeholder="e.g., After food"
                                         {...field}
                                         list={`instructions-suggestions-${index}`}
                                     />
@@ -266,7 +280,7 @@ export function PrescriptionGenerator() {
                               <FormItem><FormLabel>Dosage</FormLabel>
                                   <div className="flex gap-2">
                                   <FormField control={form.control} name={`medicines.${index}.dosageValue`} render={({ field }) => (
-                                      <FormItem className="flex-grow"><FormControl><Input type="number" placeholder="500" {...field} /></FormControl><FormMessage /></FormItem>
+                                      <FormItem className="flex-grow"><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
                                   )} />
                                   <FormField control={form.control} name={`medicines.${index}.dosageUnit`} render={({ field }) => (
                                       <FormItem className="w-28 shrink-0"><Select onValueChange={field.onChange} defaultValue={field.value}>
@@ -279,7 +293,7 @@ export function PrescriptionGenerator() {
                               <FormItem><FormLabel>Frequency</FormLabel>
                                   <div className="flex gap-2">
                                   <FormField control={form.control} name={`medicines.${index}.frequencyValue`} render={({ field }) => (
-                                      <FormItem className="flex-grow"><FormControl><Input type="number" placeholder="3" {...field} /></FormControl><FormMessage /></FormItem>
+                                      <FormItem className="flex-grow"><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
                                   )} />
                                   <FormField control={form.control} name={`medicines.${index}.frequencyUnit`} render={({ field }) => (
                                       <FormItem className="w-28 shrink-0"><Select onValueChange={field.onChange} defaultValue={field.value}>
@@ -292,7 +306,7 @@ export function PrescriptionGenerator() {
                               <FormItem><FormLabel>Duration</FormLabel>
                                   <div className="flex gap-2">
                                   <FormField control={form.control} name={`medicines.${index}.durationValue`} render={({ field }) => (
-                                      <FormItem className="flex-grow"><FormControl><Input type="number" placeholder="5" {...field} /></FormControl><FormMessage /></FormItem>
+                                      <FormItem className="flex-grow"><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
                                   )} />
                                   <FormField control={form.control} name={`medicines.${index}.durationUnit`} render={({ field }) => (
                                       <FormItem className="w-28 shrink-0"><Select onValueChange={field.onChange} defaultValue={field.value}>
@@ -359,13 +373,13 @@ export function PrescriptionGenerator() {
                     </div>
                     <div className="text-right flex-shrink-0">
                         <p><strong>Date:</strong> {new Date().toLocaleDateString('en-IN')}</p>
-                        <div className="flex gap-2 justify-end mt-1 no-print">
-                            <Button variant="outline" size="icon" onClick={handlePrint}><Printer className="h-4 w-4" /></Button>
-                        </div>
                     </div>
                 </div>
+                <div className="flex justify-end mt-1 no-print">
+                    <Button variant="outline" size="icon" onClick={handlePrint}><Printer className="h-4 w-4" /></Button>
+                </div>
                 <Separator className="my-1 bg-black"/>
-                <div className="px-1">
+                <div className="px-1 space-y-1">
                     <div className="mb-1">
                         <h3 className="font-bold text-xs">Patient Details</h3>
                         <div className="grid grid-cols-3 gap-x-4">
@@ -375,63 +389,61 @@ export function PrescriptionGenerator() {
                         </div>
                     </div>
                     
-                    <div className="space-y-1">
-                        <div className='mb-1'>
-                            <h3 className="font-bold text-xs">Provisional Diagnosis</h3>
-                            <p>{opdSummary.provisionalDiagnosis}</p>
-                        </div>
-
-                        {opdSummary.testsAdvised && (
-                        <div className="mb-1">
-                            <h3 className="font-bold text-xs">Tests Advised</h3>
-                            <p>{opdSummary.testsAdvised}</p>
-                        </div>
-                        )}
-
-                        {prescriptionTableRows.length > 0 && (
-                        <div className="mb-1">
-                            <h3 className="font-bold text-xs">Prescription (Rx)</h3>
-                            <table className="w-full border-collapse">
-                                <thead>
-                                    <tr className="border-b">
-                                        <th className="text-left font-semibold py-0 pr-2">Medicine</th>
-                                        <th className="text-left font-semibold py-0 px-2">Dosage</th>
-                                        <th className="text-left font-semibold py-0 px-2">Frequency</th>
-                                        <th className="text-left font-semibold py-0 px-2">Duration</th>
-                                        <th className="text-left font-semibold py-0 pl-2">Instructions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {prescriptionTableRows.map((row, i) => (
-                                        <tr key={i} className="border-b">
-                                            {row.map((cell, j) => (
-                                                <td key={j} className={`py-0.5 ${j === 0 ? 'pr-2' : 'px-2'}`}>{cell}</td>
-                                            ))}
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                        )}
-
-                        {opdSummary.additionalNotes && (
-                        <div className="mb-1">
-                            <h3 className="font-bold text-xs">Additional Notes</h3>
-                            <p>{opdSummary.additionalNotes}</p>
-                        </div>
-                        )}
+                    <div className='mb-1'>
+                        <h3 className="font-bold text-xs">Provisional Diagnosis</h3>
+                        <p>{opdSummary.provisionalDiagnosis}</p>
                     </div>
 
-                    <div className="flex justify-between items-end pt-1">
-                        <div>
-                            {opdSummary.followUpDate && (
-                                <p><strong>Follow-up:</strong> {opdSummary.followUpDate}</p>
-                            )}
-                        </div>
-                        <div className="text-center">
-                             <div className="h-8"></div>
-                            <p className="border-t-2 border-black pt-1">Doctor's Signature</p>
-                        </div>
+                    {opdSummary.testsAdvised && (
+                    <div className="mb-1">
+                        <h3 className="font-bold text-xs">Tests Advised</h3>
+                        <p>{opdSummary.testsAdvised}</p>
+                    </div>
+                    )}
+
+                    {prescriptionTableRows.length > 0 && (
+                    <div className="mb-1">
+                        <h3 className="font-bold text-xs">Prescription (Rx)</h3>
+                        <table className="w-full border-collapse">
+                            <thead>
+                                <tr className="border-b">
+                                    <th className="text-left font-semibold py-0 pr-2">Medicine</th>
+                                    <th className="text-left font-semibold py-0 px-2">Dosage</th>
+                                    <th className="text-left font-semibold py-0 px-2">Frequency</th>
+                                    <th className="text-left font-semibold py-0 px-2">Duration</th>
+                                    <th className="text-left font-semibold py-0 pl-2">Instructions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {prescriptionTableRows.map((row, i) => (
+                                    <tr key={i} className="border-b">
+                                        {row.map((cell, j) => (
+                                            <td key={j} className={`py-0.5 ${j === 0 ? 'pr-2' : 'px-2'}`}>{cell}</td>
+                                        ))}
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                    )}
+
+                    {opdSummary.additionalNotes && (
+                    <div className="mb-1">
+                        <h3 className="font-bold text-xs">Additional Notes</h3>
+                        <p>{opdSummary.additionalNotes}</p>
+                    </div>
+                    )}
+                </div>
+
+                <div className="flex justify-between items-end pt-1">
+                    <div>
+                        {opdSummary.followUpDate && (
+                            <p><strong>Follow-up:</strong> {opdSummary.followUpDate}</p>
+                        )}
+                    </div>
+                    <div className="text-center">
+                            <div className="h-8"></div>
+                        <p className="border-t-2 border-black pt-1">Doctor's Signature</p>
                     </div>
                 </div>
             </div>
@@ -440,3 +452,5 @@ export function PrescriptionGenerator() {
     </div>
   );
 }
+
+    
