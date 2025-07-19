@@ -226,7 +226,7 @@ export function DentalPrescriptionGenerator() {
                     <FormItem><FormLabel>Patient Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
                 <FormField control={form.control} name="patientAge" render={({ field }) => (
-                    <FormItem><FormLabel>Age</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                    <FormItem><FormLabel>Age</FormLabel><FormControl><Input type="text" {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
                 <FormField control={form.control} name="patientGender" render={({ field }) => (
                   <FormItem>
@@ -579,8 +579,8 @@ export function DentalPrescriptionGenerator() {
                         <p><strong>Follow-up:</strong> {opdSummary.followUpDate}</p>
                       )}
                     </div>
-                    <div className="text-center">
-                        <p className="border-t-2 border-black pt-1 mt-8">Doctor's Signature</p>
+                    <div className="text-center mt-16">
+                        <p className="border-t-2 border-black pt-1">Doctor's Signature</p>
                         <p>{new Date().toLocaleString('en-IN')}</p>
                     </div>
                 </div>
@@ -590,5 +590,7 @@ export function DentalPrescriptionGenerator() {
     </div>
   );
 }
+
+    
 
     
