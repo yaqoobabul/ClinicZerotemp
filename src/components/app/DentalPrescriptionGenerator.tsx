@@ -33,14 +33,14 @@ type GeneratedSummary = {
 };
 
 const medicineSchema = z.object({
-  name: z.string().optional(),
-  dosageValue: z.string().optional(),
-  dosageUnit: z.string().optional(),
-  frequencyValue: z.string().optional(),
-  frequencyUnit: z.string().optional(),
-  durationValue: z.string().optional(),
-  durationUnit: z.string().optional(),
-  instructions: z.string().optional(),
+  name: z.string(),
+  dosageValue: z.string(),
+  dosageUnit: z.string(),
+  frequencyValue: z.string(),
+  frequencyUnit: z.string(),
+  durationValue: z.string(),
+  durationUnit: z.string(),
+  instructions: z.string(),
 }).refine(
     (data) => {
       if (data.name && data.name.trim() !== '') {
@@ -65,18 +65,18 @@ const toothNoteSchema = z.object({
 });
 
 const radiographSchema = z.object({
-  type: z.string().optional(),
+  type: z.string(),
   toothNumber: z.string().optional(),
 });
 
 const testAdvisedSchema = z.object({
-  value: z.string().optional()
+  value: z.string()
 });
 
 
 const formSchema = z.object({
   patientName: z.string().min(1, 'Patient name is required.'),
-  patientAge: z.string().min(1, 'Patient age is required.'),
+  patientAge: z.string().min(1, 'Patient age is required.').regex(/^\d+$/, 'Age must be a number.'),
   patientGender: z.string().min(1, 'Patient gender is required.'),
   medicalHistory: z.string().optional(),
   toothNotes: z.array(toothNoteSchema).optional(),
@@ -226,7 +226,7 @@ export function DentalPrescriptionGenerator() {
                     <FormItem><FormLabel>Patient Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
                 <FormField control={form.control} name="patientAge" render={({ field }) => (
-                    <FormItem><FormLabel>Age</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                    <FormItem><FormLabel>Age</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
                 <FormField control={form.control} name="patientGender" render={({ field }) => (
                   <FormItem>
@@ -403,7 +403,7 @@ export function DentalPrescriptionGenerator() {
                                 <FormItem><FormLabel>Dosage</FormLabel>
                                     <div className="flex gap-2">
                                     <FormField control={form.control} name={`medicines.${index}.dosageValue`} render={({ field }) => (
-                                        <FormItem className="flex-grow"><FormControl><Input type="number" {...field} className="w-full" /></FormControl><FormMessage /></FormItem>
+                                        <FormItem className="flex-grow"><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
                                     )} />
                                     <FormField control={form.control} name={`medicines.${index}.dosageUnit`} render={({ field }) => (
                                         <FormItem className="w-28 shrink-0"><Select onValueChange={field.onChange} value={field.value}>
@@ -416,7 +416,7 @@ export function DentalPrescriptionGenerator() {
                                 <FormItem><FormLabel>Frequency</FormLabel>
                                     <div className="flex gap-2">
                                     <FormField control={form.control} name={`medicines.${index}.frequencyValue`} render={({ field }) => (
-                                        <FormItem className="flex-grow"><FormControl><Input type="number" {...field} className="w-full"/></FormControl><FormMessage /></FormItem>
+                                        <FormItem className="flex-grow"><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
                                     )} />
                                     <FormField control={form.control} name={`medicines.${index}.frequencyUnit`} render={({ field }) => (
                                         <FormItem className="w-28 shrink-0"><Select onValueChange={field.onChange} value={field.value}>
@@ -429,7 +429,7 @@ export function DentalPrescriptionGenerator() {
                                 <FormItem><FormLabel>Duration</FormLabel>
                                     <div className="flex gap-2">
                                     <FormField control={form.control} name={`medicines.${index}.durationValue`} render={({ field }) => (
-                                        <FormItem className="flex-grow"><FormControl><Input type="number" {...field} className="w-full"/></FormControl><FormMessage /></FormItem>
+                                        <FormItem className="flex-grow"><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
                                     )} />
                                     <FormField control={form.control} name={`medicines.${index}.durationUnit`} render={({ field }) => (
                                         <FormItem className="w-28 shrink-0"><Select onValueChange={field.onChange} value={field.value}>

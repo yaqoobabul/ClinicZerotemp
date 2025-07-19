@@ -30,14 +30,14 @@ type GeneratedSummary = {
 };
 
 const medicineSchema = z.object({
-  name: z.string().optional(),
-  dosageValue: z.string().optional(),
-  dosageUnit: z.string().optional(),
-  frequencyValue: z.string().optional(),
-  frequencyUnit: z.string().optional(),
-  durationValue: z.string().optional(),
-  durationUnit: z.string().optional(),
-  instructions: z.string().optional(),
+  name: z.string(),
+  dosageValue: z.string(),
+  dosageUnit: z.string(),
+  frequencyValue: z.string(),
+  frequencyUnit: z.string(),
+  durationValue: z.string(),
+  durationUnit: z.string(),
+  instructions: z.string(),
 }).refine(
     (data) => {
       if (data.name && data.name.trim() !== '') {
@@ -56,12 +56,12 @@ const medicineSchema = z.object({
 );
 
 const testAdvisedSchema = z.object({ 
-  value: z.string().optional()
+  value: z.string()
 });
 
 const formSchema = z.object({
   patientName: z.string().min(1, 'Patient name is required.'),
-  patientAge: z.string().min(1, 'Patient age is required.'),
+  patientAge: z.string().min(1, 'Patient age is required.').regex(/^\d+$/, 'Age must be a number.'),
   patientGender: z.string().min(1, 'Patient gender is required.'),
   medicalHistory: z.string().optional(),
   provisionalDiagnosis: z.string().min(1, 'Diagnosis is required.'),
@@ -185,7 +185,7 @@ export function PrescriptionGenerator() {
                     <FormItem><FormLabel>Patient Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
                 <FormField control={form.control} name="patientAge" render={({ field }) => (
-                    <FormItem><FormLabel>Age</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                    <FormItem><FormLabel>Age</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
                 <FormField control={form.control} name="patientGender" render={({ field }) => (
                   <FormItem>
