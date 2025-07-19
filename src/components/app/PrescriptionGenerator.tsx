@@ -117,8 +117,13 @@ const medicineSchema = z.object({
   durationUnit: z.string(),
   instructions: z.string().optional(),
 }).partial().refine(data => {
-    return Object.values(data).some(val => val !== '' && val !== undefined);
-}, { message: "At least one field must be filled.", path: ['name']});
+    // This allows a row to be "empty" if all its fields are empty.
+    const hasValue = Object.values(data).some(val => val !== '' && val !== undefined);
+    if (!hasValue) return true;
+    
+    // If there is a value, name is required
+    return !!data.name;
+}, { message: "Drug name is required if other fields are filled.", path: ['name']});
 
 
 const formSchema = z.object({
@@ -381,11 +386,11 @@ export function PrescriptionGenerator() {
                           </FormControl>
                        </div>
                     </div>
-                   {medicineFields.length > 0 && (
-                     <Button type="button" variant="ghost" size="icon" className="shrink-0 text-muted-foreground hover:text-destructive mt-[29px]" onClick={() => removeMedicine(index)}>
-                        <Trash2 className="h-4 w-4" />
-                     </Button>
-                   )}
+                    <div className="flex-shrink-0 mt-[29px]">
+                        <Button type="button" variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive" onClick={() => removeMedicine(index)}>
+                            <Trash2 className="h-4 w-4" />
+                        </Button>
+                    </div>
                    </div>
                 </div>
               ))}
@@ -423,82 +428,80 @@ export function PrescriptionGenerator() {
          </div>
       )}
 
-      <div id="printable-prescription-container">
       {opdSummary && (
         <div id="printable-prescription">
-        <Card className="mt-6 printable-area">
-          <CardHeader>
-            <div className="flex items-center justify-between no-print">
-                <CardTitle>Generated OPD Summary</CardTitle>
-                <div className="flex gap-2">
-                    <Button variant="outline" size="icon" onClick={handlePrint}><Printer className="h-4 w-4" /></Button>
-                    <Button variant="outline" size="icon" onClick={handleDownload}><Download className="h-4 w-4" /></Button>
+            <Card className="mt-6 printable-area">
+            <CardHeader>
+                <div className="flex items-center justify-between no-print">
+                    <CardTitle>Generated OPD Summary</CardTitle>
+                    <div className="flex gap-2">
+                        <Button variant="outline" size="icon" onClick={handlePrint}><Printer className="h-4 w-4" /></Button>
+                        <Button variant="outline" size="icon" onClick={handleDownload}><Download className="h-4 w-4" /></Button>
+                    </div>
                 </div>
-            </div>
-            <Separator className="my-4 no-print"/>
-            <div className="text-center space-y-1">
-                <h2 className="font-headline text-2xl font-bold text-primary">ClinicEase Clinic</h2>
-                <p className="font-semibold text-lg">Dr. Rajesh Kumar, MBBS, MD (General Medicine)</p>
-                <p className="text-sm text-muted-foreground">Reg. No. 12345</p>
-                <Separator className="my-2"/>
-                <p className="text-sm">123 Health St, Wellness City, India | Phone: +91 98765 43210 | Date: {new Date().toLocaleDateString('en-IN')}</p>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="rounded-md border p-4">
-                <h3 className="font-bold mb-2">Patient Details</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-2 text-sm">
-                  <div><strong>Name:</strong> {opdSummary.patientDetails.name}</div>
-                  <div><strong>Age:</strong> {opdSummary.patientDetails.age}</div>
-                  <div><strong>Gender:</strong> {opdSummary.patientDetails.gender}</div>
+                <Separator className="my-4 no-print"/>
+                <div className="text-center space-y-1">
+                    <h2 className="font-headline text-2xl font-bold text-primary">ClinicEase Clinic</h2>
+                    <p className="font-semibold text-lg">Dr. Rajesh Kumar, MBBS, MD (General Medicine)</p>
+                    <p className="text-sm text-muted-foreground">Reg. No. 12345</p>
+                    <Separator className="my-2"/>
+                    <p className="text-sm">123 Health St, Wellness City, India | Phone: +91 98765 43210 | Date: {new Date().toLocaleDateString('en-IN')}</p>
                 </div>
-            </div>
-            
-            <div className="rounded-md border p-4">
-                <h3 className="font-bold mb-2">Provisional Diagnosis</h3>
-                <p>{opdSummary.provisionalDiagnosis}</p>
-            </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                <div className="rounded-md border p-4">
+                    <h3 className="font-bold mb-2">Patient Details</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-2 text-sm">
+                    <div><strong>Name:</strong> {opdSummary.patientDetails.name}</div>
+                    <div><strong>Age:</strong> {opdSummary.patientDetails.age}</div>
+                    <div><strong>Gender:</strong> {opdSummary.patientDetails.gender}</div>
+                    </div>
+                </div>
+                
+                <div className="rounded-md border p-4">
+                    <h3 className="font-bold mb-2">Provisional Diagnosis</h3>
+                    <p>{opdSummary.provisionalDiagnosis}</p>
+                </div>
 
-            {opdSummary.testsAdvised && (
-              <div className="rounded-md border p-4">
-                  <h3 className="font-bold mb-2">Tests Advised</h3>
-                  <p>{opdSummary.testsAdvised}</p>
-              </div>
-            )}
+                {opdSummary.testsAdvised && (
+                <div className="rounded-md border p-4">
+                    <h3 className="font-bold mb-2">Tests Advised</h3>
+                    <p>{opdSummary.testsAdvised}</p>
+                </div>
+                )}
 
-            {opdSummary.prescriptionTable && (
-              <div>
-                  <h3 className="font-bold mb-2">Prescription</h3>
-                  <MarkdownTable content={opdSummary.prescriptionTable} />
-              </div>
-            )}
-
-            {opdSummary.additionalNotes && (
-              <div className="rounded-md border p-4">
-                  <h3 className="font-bold mb-2">Additional Notes</h3>
-                  <p>{opdSummary.additionalNotes}</p>
-              </div>
-            )}
-
-            <Separator className="my-6" />
-
-            <div className="flex justify-between items-end">
+                {opdSummary.prescriptionTable && (
                 <div>
-                  {opdSummary.followUpDate && (
-                    <p><strong>Follow-up:</strong> {opdSummary.followUpDate}</p>
-                  )}
+                    <h3 className="font-bold mb-2">Prescription</h3>
+                    <MarkdownTable content={opdSummary.prescriptionTable} />
                 </div>
-                <div className="text-center">
-                    <div className="h-12"></div>
-                    <p className="border-t-2 pt-1">Doctor's Signature</p>
-                </div>
-            </div>
+                )}
 
-          </CardContent>
-        </Card>
+                {opdSummary.additionalNotes && (
+                <div className="rounded-md border p-4">
+                    <h3 className="font-bold mb-2">Additional Notes</h3>
+                    <p>{opdSummary.additionalNotes}</p>
+                </div>
+                )}
+
+                <Separator className="my-6" />
+
+                <div className="flex justify-between items-end">
+                    <div>
+                    {opdSummary.followUpDate && (
+                        <p><strong>Follow-up:</strong> {opdSummary.followUpDate}</p>
+                    )}
+                    </div>
+                    <div className="text-center">
+                        <div className="h-12"></div>
+                        <p className="border-t-2 pt-1">Doctor's Signature</p>
+                    </div>
+                </div>
+
+            </CardContent>
+            </Card>
         </div>
       )}
-      </div>
     </div>
   );
 }
