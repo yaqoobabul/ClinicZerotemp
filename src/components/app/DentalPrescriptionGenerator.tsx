@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { generatePrescription, type GeneratePrescriptionOutput } from '@/ai/flows/generate-prescription';
 import { Loader2, Printer, Download, Plus, Trash2, Check, ChevronsUpDown } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { MarkdownTable } from './MarkdownTable';
 import { Separator } from '../ui/separator';
 import { Textarea } from '../ui/textarea';
