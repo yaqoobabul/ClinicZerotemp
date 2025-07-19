@@ -1,17 +1,22 @@
-
 import type { SVGProps } from 'react';
 
 export function ToothIconSimple(props: SVGProps<SVGSVGElement>) {
   return (
     <svg
       {...props}
-      xmlns="http://www.w3.org/2000/svg"
       width="24"
       height="24"
-      viewBox="0 0 24 24"
-      fill="currentColor"
+      viewBox="0 0 64 64"
+      xmlns="http://www.w3.org/2000/svg"
     >
-      <path d="M6 2c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2h-3.5c-.828 0-1.5.672-1.5 1.5s.672 1.5 1.5 1.5h2v3h-7v-3h2c.828 0 1.5-.672 1.5-1.5S10.328 2 9.5 2H6zm0 9h12v9H6v-9z" />
+      <path
+        d="M32 4 C24 4, 16 12, 16 26 C16 40, 22 60, 28 60 C30 60, 30 48, 32 48 C34 48, 34 60, 36 60 C42 60, 48 40, 48 26 C48 12, 40 4, 32 4 Z"
+        fill="currentColor"
+        stroke="currentColor"
+        strokeWidth="3"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }
