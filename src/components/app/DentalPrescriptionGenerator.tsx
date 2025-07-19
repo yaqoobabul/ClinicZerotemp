@@ -573,7 +573,7 @@ export function DentalPrescriptionGenerator() {
                     )}
                 </div>
 
-                <div className="flex justify-between items-end pt-1">
+                <div className="flex justify-between pt-1">
                     <div>
                       {opdSummary.followUpDate && (
                         <p><strong>Follow-up:</strong> {opdSummary.followUpDate}</p>
@@ -590,7 +590,5 @@ export function DentalPrescriptionGenerator() {
     </div>
   );
 }
-
-    
 
     
