@@ -10,12 +10,8 @@ export function ToothIconSimple(props: SVGProps<SVGSVGElement>) {
       height="24"
       viewBox="0 0 24 24"
       fill="currentColor"
-      stroke="currentColor"
-      strokeWidth="1"
-      strokeLinecap="round"
-      strokeLinejoin="round"
     >
-      <path d="M6 20h12c1.1 0 2-2.239 2-5V9c0-2.761-2.9-5-2-5-1.563 0-2.03.737-2.5 1.5C14.737 4.737 14.1 4 12 4s-2.737.737-3.5 1.5C8.03 4.737 7.563 4 6 4c.9 0 2 2.239 2 5v6c0 2.761-.9 5-2 5z" />
+      <path d="M6 2c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2h-3.5c-.828 0-1.5.672-1.5 1.5s.672 1.5 1.5 1.5h2v3h-7v-3h2c.828 0 1.5-.672 1.5-1.5S10.328 2 9.5 2H6zm0 9h12v9H6v-9z" />
     </svg>
   );
 }
