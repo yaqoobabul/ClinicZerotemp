@@ -381,7 +381,7 @@ export function PrescriptionGenerator() {
 
       {opdSummary && (
         <div id="printable-prescription" className="p-2">
-            <div className="text-[10px]">
+            <div className="text-xs">
                 <div className="flex items-start justify-between mb-1">
                     <div>
                         <h2 className="text-sm font-bold text-primary">ClinicEase Clinic</h2>
@@ -397,9 +397,9 @@ export function PrescriptionGenerator() {
                     <Button variant="outline" size="icon" onClick={handlePrint}><Printer className="h-4 w-4" /></Button>
                 </div>
                 <Separator className="my-1 bg-black"/>
-                <div className="px-1 space-y-1">
+                <div className="px-1">
                     <div className="mb-1">
-                        <h3 className="font-bold text-xs">Patient Details</h3>
+                        <h3 className="font-bold">Patient Details</h3>
                         <div className="grid grid-cols-3 gap-x-4">
                             <div><strong>Name:</strong> {opdSummary.patientDetails.name}</div>
                             <div><strong>Age:</strong> {opdSummary.patientDetails.age}</div>
@@ -409,34 +409,34 @@ export function PrescriptionGenerator() {
                     
                     {opdSummary.medicalHistory && (
                       <div className='mb-1'>
-                          <h3 className="font-bold text-xs text-red-600">Medical History</h3>
+                          <h3 className="font-bold text-red-600">Medical History</h3>
                           <p className="text-red-600">{opdSummary.medicalHistory}</p>
                       </div>
                     )}
 
                     <div className='mb-1'>
-                        <h3 className="font-bold text-xs">Provisional Diagnosis</h3>
+                        <h3 className="font-bold">Provisional Diagnosis</h3>
                         <p>{opdSummary.provisionalDiagnosis}</p>
                     </div>
 
                     {opdSummary.testsAdvised && (
                     <div className="mb-1">
-                        <h3 className="font-bold text-xs">Tests Advised</h3>
+                        <h3 className="font-bold">Tests Advised</h3>
                         <p>{opdSummary.testsAdvised}</p>
                     </div>
                     )}
 
                     {prescriptionTableRows.length > 0 && (
                     <div className="mb-1">
-                        <h3 className="font-bold text-xs">Prescription (Rx)</h3>
+                        <h3 className="font-bold">Prescription (Rx)</h3>
                         <table className="w-full border-collapse">
                             <thead>
                                 <tr className="border-b">
-                                    <th className="text-left font-semibold py-0 pr-2">Medicine</th>
-                                    <th className="text-left font-semibold py-0 px-2">Dosage</th>
-                                    <th className="text-left font-semibold py-0 px-2">Frequency</th>
-                                    <th className="text-left font-semibold py-0 px-2">Duration</th>
-                                    <th className="text-left font-semibold py-0 pl-2">Instructions</th>
+                                    <th className="text-left font-semibold py-0.5 pr-2">Medicine</th>
+                                    <th className="text-left font-semibold py-0.5 px-2">Dosage</th>
+                                    <th className="text-left font-semibold py-0.5 px-2">Frequency</th>
+                                    <th className="text-left font-semibold py-0.5 px-2">Duration</th>
+                                    <th className="text-left font-semibold py-0.5 pl-2">Instructions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -454,7 +454,7 @@ export function PrescriptionGenerator() {
 
                     {opdSummary.additionalNotes && (
                     <div className="mb-1">
-                        <h3 className="font-bold text-xs">Additional Notes</h3>
+                        <h3 className="font-bold">Additional Notes</h3>
                         <p>{opdSummary.additionalNotes}</p>
                     </div>
                     )}
@@ -467,8 +467,7 @@ export function PrescriptionGenerator() {
                         )}
                     </div>
                     <div className="text-center">
-                        <div className="h-8"></div>
-                        <p className="border-t-2 border-black pt-1">Doctor's Signature</p>
+                        <p className="border-t-2 border-black pt-1 mt-8">Doctor's Signature</p>
                         <p>{new Date().toLocaleString('en-IN')}</p>
                     </div>
                 </div>
