@@ -23,7 +23,7 @@ const GeneratePrescriptionInputSchema = z.object({
       duration: z.string().describe('How long to take the drug for (e.g., 5 days).'),
       instructions: z.string().optional().describe('Additional instructions (e.g., After food).'),
   })),
-  testsAdvised: z.string().optional().describe('Any diagnostic tests that are advised.'),
+  testsAdvised: z.array(z.string()).optional().describe('Any diagnostic tests that are advised.'),
   additionalNotes: z.string().optional().describe('Any additional notes for the patient.'),
   followUpDate: z.string().optional().describe('The recommended follow-up date.'),
 });
@@ -43,7 +43,7 @@ const GeneratePrescriptionOutputSchema = z.object({
       .describe(
         'A structured table (using markdown) representing the prescription, with columns for Medicine, Dosage, Frequency, Duration, and Instructions.'
       ),
-    testsAdvised: z.string().optional(),
+    testsAdvised: z.string().optional().describe('A comma-separated string of all tests advised.'),
     additionalNotes: z.string().optional(),
     followUpDate: z.string().optional(),
   })
@@ -70,7 +70,7 @@ Patient Name: {{patientName}}
 Patient Age: {{patientAge}}
 Patient Gender: {{patientGender}}
 Provisional Diagnosis: {{provisionalDiagnosis}}
-Tests Advised: {{testsAdvised}}
+Tests Advised: {{#if testsAdvised}} {{#each testsAdvised}} {{this}}{{#unless @last}}, {{/unless}}{{/each}}{{/if}}
 Additional Notes: {{additionalNotes}}
 Follow-up Date: {{followUpDate}}
 
@@ -80,6 +80,7 @@ Medicines:
 {{/each}}
 
 Generate the final OPD summary object.
+If tests are advised, list them in a single comma-separated string.
 `,
 });
 
