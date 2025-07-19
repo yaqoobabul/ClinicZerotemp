@@ -349,9 +349,9 @@ export function DentalPrescriptionGenerator() {
           <Card>
             <CardHeader><CardTitle>Investigations Advised</CardTitle></CardHeader>
             <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
+                <div className="space-y-4">
                     <h4 className="font-semibold mb-2">Radiograph Advised</h4>
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                         {radiographFields.map((field, index) => (
                         <div key={field.id} className="flex items-start gap-2">
                             <FormField
@@ -385,7 +385,7 @@ export function DentalPrescriptionGenerator() {
                                 </FormItem>
                             )}
                             />
-                            <Button type="button" variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive" onClick={() => removeRadiograph(index)}>
+                            <Button type="button" variant="ghost" size="icon" className="shrink-0 text-muted-foreground hover:text-destructive" onClick={() => removeRadiograph(index)}>
                             <Trash2 className="h-4 w-4" />
                             </Button>
                         </div>
@@ -396,9 +396,9 @@ export function DentalPrescriptionGenerator() {
                     </div>
                 </div>
 
-                <div>
+                <div className="space-y-4">
                     <h4 className="font-semibold mb-2">Other Tests Advised</h4>
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                         {testFields.map((field, index) => (
                         <div key={field.id} className="flex items-center gap-2">
                             <FormField
@@ -413,7 +413,7 @@ export function DentalPrescriptionGenerator() {
                                 </FormItem>
                             )}
                             />
-                            <Button type="button" variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive" onClick={() => removeTest(index)}>
+                            <Button type="button" variant="ghost" size="icon" className="shrink-0 text-muted-foreground hover:text-destructive" onClick={() => removeTest(index)}>
                             <Trash2 className="h-4 w-4" />
                             </Button>
                         </div>
@@ -470,8 +470,10 @@ export function DentalPrescriptionGenerator() {
                           )} />
                       </div>
                        <div className="lg:col-span-3">
-                          <FormLabel>Instructions</FormLabel>
-                          <ComboboxField form={form} name={`medicines.${index}.instructions`} suggestions={instructionSuggestions} placeholder="Instructions" />
+                          <FormItem>
+                            <FormLabel>Instructions</FormLabel>
+                            <ComboboxField form={form} name={`medicines.${index}.instructions`} suggestions={instructionSuggestions} placeholder="Instructions" />
+                          </FormItem>
                       </div>
                     </div>
                    {medicineFields.length > 0 && (
