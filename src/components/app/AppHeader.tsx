@@ -10,7 +10,6 @@ import {
   Settings,
   PanelLeft,
   Search,
-  Tooth,
 } from 'lucide-react';
 import {
   Breadcrumb,
@@ -33,13 +32,14 @@ import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import Image from 'next/image';
 import { StethoscopeIcon } from '@/components/icons/StethoscopeIcon';
+import { ToothIcon } from '../icons/ToothIcon';
 
 const navItems = [
     { href: '/dashboard', icon: Home, label: 'Dashboard' },
     { href: '/appointments', icon: Calendar, label: 'Appointments' },
     { href: '/patients', icon: Users, label: 'Patients' },
     { href: '/prescriptions', icon: FileText, label: 'OPD Visit' },
-    { href: '/dental', icon: Tooth, label: 'Dental OPD' },
+    { href: '/dental', icon: ToothIcon, label: 'Dental OPD' },
     { href: '/settings', icon: Settings, label: 'Settings' },
 ];
 
