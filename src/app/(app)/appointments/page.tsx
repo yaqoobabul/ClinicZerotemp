@@ -16,6 +16,8 @@ import { useToast } from '@/hooks/use-toast';
 type Doctor = {
   id: string;
   name: string;
+  color: string;
+  colorDark: string;
 };
 
 type Appointment = {
@@ -44,8 +46,8 @@ type SelectedSlotInfo = {
 } | null;
 
 const initialDoctors: Doctor[] = [
-  { id: 'doc1', name: 'Dr. Priya Sharma' },
-  { id: 'doc2', name: 'Dr. Rohan Mehra' },
+  { id: 'doc1', name: 'Dr. Priya Sharma', color: 'hsl(var(--chart-1))', colorDark: 'hsl(var(--chart-1))' },
+  { id: 'doc2', name: 'Dr. Rohan Mehra', color: 'hsl(var(--chart-2))', colorDark: 'hsl(var(--chart-2))' },
 ];
 
 const initialPatients: Patient[] = [
@@ -190,7 +192,7 @@ export default function AppointmentsPage() {
     });
   };
 
-  const renderAppointmentCard = (app: Appointment) => {
+  const renderAppointmentCard = (app: Appointment, doctorColor: string) => {
     const startMinutes = app.dateTime.getHours() * 60 + app.dateTime.getMinutes();
     const durationMinutes = app.durationMinutes || 30;
     
@@ -201,8 +203,11 @@ export default function AppointmentsPage() {
     return (
       <div
         key={app.id}
-        className="relative flex flex-col overflow-hidden rounded-lg bg-primary/80 p-2 text-primary-foreground shadow-md"
-        style={{ gridRow: `${gridRowStart} / ${gridRowEnd}` }}
+        className="relative flex flex-col overflow-hidden rounded-lg p-2 text-white shadow-md"
+        style={{ 
+            gridRow: `${gridRowStart} / ${gridRowEnd}`,
+            backgroundColor: doctorColor,
+        }}
       >
         <p className="font-semibold text-sm">{app.patientName}</p>
         <p className="text-xs opacity-90">{format(app.dateTime, 'p')}</p>
@@ -304,7 +309,11 @@ export default function AppointmentsPage() {
                 </div>
                 <div className="sticky top-0 z-10 bg-card border-b grid" style={{ gridTemplateColumns: `repeat(${doctors.length}, 1fr)` }}>
                     {doctors.map(doctor => (
-                        <div key={doctor.id} className="h-12 flex items-center justify-center p-2 text-center font-semibold border-l first:border-l-0">
+                        <div 
+                            key={doctor.id} 
+                            className="h-12 flex items-center justify-center p-2 text-center font-semibold border-l first:border-l-0 text-white"
+                            style={{ backgroundColor: doctor.color }}
+                        >
                             <h3>{doctor.name}</h3>
                         </div>
                     ))}
@@ -331,13 +340,14 @@ export default function AppointmentsPage() {
                                     aria-label={`Book appointment with ${doctor.name} at ${format(time, 'p')}`}
                                     onClick={() => handleSlotClick(doctor.id, time)}
                                     className={cn(
-                                        "h-8 border-b text-left hover:bg-primary/10 transition-colors", 
-                                        index % 2 !== 0 && "border-dashed border-border/50"
+                                        "h-8 border-b text-left transition-colors", 
+                                        index % 2 !== 0 && "border-dashed border-border/50",
+                                        `hover:bg-[${doctor.color}]/20`
                                     )}
                                 ></button>
                             ))}
                              {/* Appointments */}
-                            {getAppointmentsForDoctorAndDate(doctor.id, selectedDate).map(renderAppointmentCard)}
+                            {getAppointmentsForDoctorAndDate(doctor.id, selectedDate).map(app => renderAppointmentCard(app, doctor.color))}
                         </div>
                     ))}
                 </div>
@@ -346,4 +356,3 @@ export default function AppointmentsPage() {
     </div>
   );
 }
-
