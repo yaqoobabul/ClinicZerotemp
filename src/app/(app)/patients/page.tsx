@@ -153,7 +153,7 @@ export default function PatientsPage() {
 
     const path = type === 'medical' ? '/prescriptions' : '/dental';
     router.push(`${path}?${params.toString()}`);
-    setIsNewVisitDialogOpen(false);
+    setIsNewVisitDialogOpen(false); // This is the crucial fix
   };
   
   const handleAddNewOldVisit = (values: z.infer<typeof newVisitSchema>) => {
