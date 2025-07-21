@@ -3,7 +3,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -18,6 +17,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ToothChart } from './ToothChart';
 import { Card, CardHeader, CardContent, CardTitle, CardDescription } from '../ui/card';
 import { Switch } from '@/components/ui/switch';
+
+interface DentalPrescriptionGeneratorProps {
+  patientId?: string;
+  patientName?: string;
+  patientAge?: string;
+  patientGender?: string;
+  patientContact?: string;
+  patientAddress?: string;
+  govtId?: string;
+}
 
 type GeneratedSummary = {
   patientDetails: {
@@ -136,11 +145,18 @@ const radiographTypes = ["OPG", "IOPA", "CBCT", "Bitewing"];
 const toTitleCase = (str: string) => str ? str.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()) : '';
 const capitalizeFirstLetter = (str: string) => str ? str.charAt(0).toUpperCase() + str.slice(1) : '';
 
-export function DentalPrescriptionGenerator() {
+export function DentalPrescriptionGenerator({
+  patientId,
+  patientName,
+  patientAge,
+  patientGender,
+  patientContact,
+  patientAddress,
+  govtId
+}: DentalPrescriptionGeneratorProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [opdSummary, setOpdSummary] = useState<GeneratedSummary | null>(null);
   const { toast } = useToast();
-  const searchParams = useSearchParams();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -172,33 +188,23 @@ export function DentalPrescriptionGenerator() {
       followUpDate: '',
     },
   });
-
-  const isFinalDiagnosis = form.watch('isFinalDiagnosis');
-
+  
   useEffect(() => {
-    // Pre-fill from query params if available
-    const patientId = searchParams.get('patientId');
     if (patientId) {
         form.setValue('patientId', patientId);
     } else if (!form.getValues('patientId')) {
-        // Auto-generate a patient ID for new patients
         const newPatientId = `CZ-${Date.now().toString().slice(-6)}`;
         form.setValue('patientId', newPatientId);
     }
-    
-    form.setValue('patientName', toTitleCase(searchParams.get('patientName') || ''));
-    form.setValue('patientAge', searchParams.get('patientAge') || '');
-    const gender = searchParams.get('patientGender');
-    if (gender) {
-      form.setValue('patientGender', gender);
-    }
-    form.setValue('patientContact', searchParams.get('patientContact') || '');
-    form.setValue('patientAddress', toTitleCase(searchParams.get('patientAddress') || ''));
-    form.setValue('govtId', searchParams.get('govtId') || '');
-    
-  // Using searchParams.toString() as a key ensures this effect re-runs on navigation
-  }, [searchParams, form]);
+    if (patientName) form.setValue('patientName', toTitleCase(decodeURIComponent(patientName)));
+    if (patientAge) form.setValue('patientAge', patientAge);
+    if (patientGender) form.setValue('patientGender', patientGender);
+    if (patientContact) form.setValue('patientContact', patientContact);
+    if (patientAddress) form.setValue('patientAddress', toTitleCase(decodeURIComponent(patientAddress)));
+    if (govtId) form.setValue('govtId', govtId);
+  }, [patientId, patientName, patientAge, patientGender, patientContact, patientAddress, govtId, form]);
 
+  const isFinalDiagnosis = form.watch('isFinalDiagnosis');
 
   const handleFetchPatient = () => {
     const patientId = form.getValues('patientId');

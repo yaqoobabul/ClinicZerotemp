@@ -8,8 +8,16 @@ import { CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 
 function DentalPageContent() {
   const searchParams = useSearchParams();
-  // Using searchParams.toString() as a key forces a re-render when the query params change.
-  const key = searchParams.toString();
+  
+  const patientProps = {
+    patientId: searchParams.get('patientId') || undefined,
+    patientName: searchParams.get('patientName') || undefined,
+    patientAge: searchParams.get('patientAge') || undefined,
+    patientGender: searchParams.get('patientGender') || undefined,
+    patientContact: searchParams.get('patientContact') || undefined,
+    patientAddress: searchParams.get('patientAddress') || undefined,
+    govtId: searchParams.get('govtId') || undefined,
+  };
 
   return (
     <div className="grid flex-1 items-start gap-4">
@@ -19,7 +27,7 @@ function DentalPageContent() {
             Enter patient visit details to generate a printable OPD summary for dental consultations.
           </CardDescription>
         </CardHeader>
-        <DentalPrescriptionGenerator key={key} />
+        <DentalPrescriptionGenerator key={searchParams.toString()} {...patientProps} />
     </div>
   );
 }
