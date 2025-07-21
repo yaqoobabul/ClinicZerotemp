@@ -32,7 +32,6 @@ type Patient = {
   id: string;
   name: string;
   age: number;
-  gender: 'Male' | 'Female' | 'Other';
   avatarUrl: string;
   email: string;
   phone: string;
@@ -44,7 +43,6 @@ type Patient = {
 const newPatientSchema = z.object({
     name: z.string().min(1, 'Name is required'),
     age: z.coerce.number().min(1, 'Age is required'),
-    gender: z.enum(['Male', 'Female', 'Other']),
     email: z.string().email('Invalid email address').optional().or(z.literal('')),
     phone: z.string().min(10, 'Invalid phone number'),
     address: z.string().min(1, 'Address is required'),
@@ -69,7 +67,6 @@ export default function PatientsPage() {
     defaultValues: {
       name: '',
       age: '' as any, // Initialize with empty string to avoid uncontrolled to controlled error
-      gender: 'Male',
       email: '',
       phone: '',
       address: '',
@@ -101,7 +98,6 @@ export default function PatientsPage() {
     form.reset({
       name: '',
       age: '' as any,
-      gender: 'Male',
       email: '',
       phone: '',
       address: '',
@@ -119,7 +115,6 @@ export default function PatientsPage() {
         patientId: selectedPatient.id,
         patientName: selectedPatient.name,
         patientAge: selectedPatient.age.toString(),
-        patientGender: selectedPatient.gender,
         patientContact: selectedPatient.phone,
         patientAddress: selectedPatient.address,
         govtId: selectedPatient.govtId,
@@ -147,7 +142,7 @@ export default function PatientsPage() {
               </Avatar>
               <div>
                 <CardTitle className="text-3xl">{selectedPatient.name}</CardTitle>
-                <CardDescription className="text-base">ID: {selectedPatient.id} &bull; {selectedPatient.age} years old &bull; {selectedPatient.gender}</CardDescription>
+                <CardDescription className="text-base">ID: {selectedPatient.id} &bull; {selectedPatient.age} years old</CardDescription>
               </div>
             </div>
           </CardHeader>
@@ -243,7 +238,6 @@ export default function PatientsPage() {
                               <div><strong>Patient ID:</strong> {selectedPatient.id}</div>
                               <div><strong>Name:</strong> {selectedPatient.name}</div>
                               <div><strong>Age:</strong> {selectedPatient.age}</div>
-                              <div><strong>Gender:</strong> {selectedPatient.gender}</div>
                               <div className="col-span-2"><strong>Address:</strong> {selectedPatient.address}</div>
                             </div>
                           </div>
@@ -390,20 +384,6 @@ export default function PatientsPage() {
                     <div className="grid grid-cols-2 gap-4">
                         <FormField control={form.control} name="age" render={({ field }) => (
                             <FormItem><FormLabel>Age</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>
-                        )} />
-                        <FormField control={form.control} name="gender" render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Gender</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                    <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
-                                    <SelectContent>
-                                        <SelectItem value="Male">Male</SelectItem>
-                                        <SelectItem value="Female">Female</SelectItem>
-                                        <SelectItem value="Other">Other</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                                <FormMessage />
-                            </FormItem>
                         )} />
                     </div>
                      <FormField control={form.control} name="phone" render={({ field }) => (

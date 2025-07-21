@@ -15,7 +15,6 @@ import {z} from 'zod';
 const GeneratePrescriptionInputSchema = z.object({
   patientName: z.string().describe("The patient's full name."),
   patientAge: z.string().describe("The patient's age."),
-  patientGender: z.string().describe("The patient's gender."),
   provisionalDiagnosis: z.string().describe('The provisional diagnosis for the patient.'),
   toothChartNotes: z.string().optional().describe('Notes related to specific teeth, e.g., "#16-Caries, #24-RCT".'),
   medicines: z.array(z.object({
@@ -41,7 +40,6 @@ const GeneratePrescriptionOutputSchema = z.object({
     patientDetails: z.object({
       name: z.string(),
       age: z.string(),
-      gender: z.string(),
     }),
     provisionalDiagnosis: z.string(),
     toothChartNotes: z.string().optional(),
@@ -78,7 +76,6 @@ The prescription table should be in Markdown format with a header and one row fo
 User Input:
 Patient Name: {{patientName}}
 Patient Age: {{patientAge}}
-Patient Gender: {{patientGender}}
 Provisional Diagnosis: {{provisionalDiagnosis}}
 {{#if toothChartNotes}}Tooth Chart Notes: {{toothChartNotes}}{{/if}}
 {{#if radiographsAdvised}}
