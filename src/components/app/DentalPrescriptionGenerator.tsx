@@ -191,7 +191,8 @@ export function DentalPrescriptionGenerator(props: DentalPrescriptionGeneratorPr
   
   useEffect(() => {
     const normalizedGender = normalizeGender(props.patientGender);
-    form.reset({
+    
+    const newFormValues = {
       ...form.getValues(),
       patientId: props.patientId || `CZ-${Date.now().toString().slice(-6)}`,
       patientName: props.patientName ? toTitleCase(decodeURIComponent(props.patientName)) : '',
@@ -200,8 +201,10 @@ export function DentalPrescriptionGenerator(props: DentalPrescriptionGeneratorPr
       patientContact: props.patientContact || '',
       patientAddress: props.patientAddress ? toTitleCase(decodeURIComponent(props.patientAddress)) : '',
       govtId: props.govtId || '',
-    });
-  }, [props, form]);
+    };
+    
+    form.reset(newFormValues);
+  }, [props.patientId, props.patientName, props.patientAge, props.patientGender, props.patientContact, props.patientAddress, props.govtId]);
 
   const isFinalDiagnosis = form.watch('isFinalDiagnosis');
 
