@@ -121,7 +121,7 @@ export default function AppointmentsPage() {
       dateTime: values.dateTime,
       reason: values.reason,
       status: 'upcoming',
-      durationMinutes: 30, // Default duration
+      durationMinutes: values.durationMinutes || 30,
     };
     setAppointments(prev => [...prev, newAppointment]);
     closeAndResetDialog();
@@ -200,7 +200,7 @@ export default function AppointmentsPage() {
     const startMinutes = app.dateTime.getHours() * 60 + app.dateTime.getMinutes();
     const durationMinutes = app.durationMinutes || 30;
     
-    // Each 30-minute slot is a row, so 2 rows per hour. Grid rows are 1-indexed.
+    // Each 15-minute slot is a row, so 4 rows per hour. Grid rows are 1-indexed.
     const gridRowStart = (startMinutes / 15) + 1;
     const gridRowEnd = gridRowStart + (durationMinutes / 15);
 
@@ -339,7 +339,7 @@ export default function AppointmentsPage() {
                 <div className="col-start-1 row-start-2 border-r relative">
                     {timeSlots.map((time, index) => (
                         (time.getMinutes() === 0) &&
-                        <div key={index} className="relative text-right pr-2" style={{ height: `calc(${slotHeight} * 2)` }}>
+                        <div key={index} className="relative text-right pr-2" style={{ height: `calc(${slotHeight} * 4)` }}>
                              <span className="text-xs text-muted-foreground absolute -top-2 right-2 bg-card px-1">{format(time, 'h a')}</span>
                         </div>
                     ))}
@@ -347,7 +347,7 @@ export default function AppointmentsPage() {
                 
                 <div className="col-start-2 row-start-2 grid" style={{ gridTemplateColumns: `repeat(${doctors.length}, 1fr)` }}>
                      {doctors.map(doctor => (
-                        <div key={doctor.id} className="relative grid border-l first:border-l-0" style={{ gridTemplateRows: `repeat(${timeSlots.length * 2}, ${slotHeight})` }}>
+                        <div key={doctor.id} className="relative grid border-l first:border-l-0" style={{ gridTemplateRows: `repeat(${timeSlots.length * 4}, ${slotHeight})` }}>
                             {/* Background Lines & Clickable slots */}
                             {timeSlots.map((time, index) => (
                                 <React.Fragment key={`${doctor.id}-${index}`}>
@@ -355,13 +355,13 @@ export default function AppointmentsPage() {
                                       aria-label={`Book with ${doctor.name} at ${format(time, 'p')}`}
                                       onClick={() => handleSlotClick(doctor.id, time)}
                                       className="w-full border-b border-dotted border-border/75 transition-colors hover:bg-accent/50"
-                                      style={{ height: slotHeight }}
+                                      style={{ height: `calc(${slotHeight} * 2)` }}
                                   ></button>
                                   <button
                                       aria-label={`Book with ${doctor.name} at ${format(new Date(time.getTime() + 15 * 60000), 'p')}`}
                                       onClick={() => handleSlotClick(doctor.id, new Date(time.getTime() + 15 * 60000))}
                                       className="w-full border-b border-dashed border-border transition-colors hover:bg-accent/50"
-                                      style={{ height: slotHeight }}
+                                      style={{ height: `calc(${slotHeight} * 2)` }}
                                   ></button>
                                 </React.Fragment>
                             ))}

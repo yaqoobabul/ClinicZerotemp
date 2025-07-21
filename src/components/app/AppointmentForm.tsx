@@ -31,6 +31,7 @@ const appointmentFormSchema = z.object({
     required_error: 'An appointment date is required.',
   }),
   appointmentTime: z.string().min(1, 'An appointment time is required.'),
+  durationMinutes: z.coerce.number().min(1, 'Duration must be at least 1 minute.'),
   reason: z.string().min(1, 'Reason for appointment is required.'),
 });
 
@@ -56,6 +57,7 @@ export function AppointmentForm({ onSubmit, onCancel, doctors, initialData, show
       doctorId: initialData?.doctorId || '',
       dateTime: initialData?.dateTime || new Date(),
       appointmentTime: initialData?.dateTime ? format(initialData.dateTime, 'HH:mm') : '09:00',
+      durationMinutes: initialData?.durationMinutes || 30,
       reason: initialData?.reason || '',
     },
   });
@@ -150,13 +152,12 @@ export function AppointmentForm({ onSubmit, onCancel, doctors, initialData, show
             )}
         />
 
-
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <FormField
             control={form.control}
             name="dateTime"
             render={({ field }) => (
-              <FormItem className="flex flex-col">
+              <FormItem className="flex flex-col justify-end">
                 <FormLabel>Appointment Date</FormLabel>
                 <Popover>
                   <PopoverTrigger asChild>
@@ -196,10 +197,23 @@ export function AppointmentForm({ onSubmit, onCancel, doctors, initialData, show
             control={form.control}
             name="appointmentTime"
             render={({ field }) => (
-              <FormItem>
+              <FormItem className="flex flex-col justify-end">
                 <FormLabel>Appointment Time</FormLabel>
                 <FormControl>
                   <Input type="time" {...field} step="900" disabled={isSlotSelected} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+           <FormField
+            control={form.control}
+            name="durationMinutes"
+            render={({ field }) => (
+              <FormItem className="flex flex-col justify-end">
+                <FormLabel>Duration (min)</FormLabel>
+                <FormControl>
+                  <Input type="number" {...field} step="15" />
                 </FormControl>
                 <FormMessage />
               </FormItem>
