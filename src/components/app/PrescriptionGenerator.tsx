@@ -699,3 +699,5 @@ export function PrescriptionGenerator() {
     </div>
   );
 }
+
+    
