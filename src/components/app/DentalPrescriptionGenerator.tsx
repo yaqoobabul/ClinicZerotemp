@@ -103,6 +103,10 @@ const frequencyUnits = ["daily", "weekly", "monthly"];
 const instructionSuggestions = ["Before food", "After food", "With meals", "Empty stomach"];
 const radiographTypes = ["OPG", "IOPA", "CBCT", "Bitewing"];
 
+// Helper functions for capitalization
+const toTitleCase = (str: string) => str.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
+const capitalizeFirstLetter = (str: string) => str.charAt(0).toUpperCase() + str.slice(1);
+
 export function DentalPrescriptionGenerator() {
   const [isLoading, setIsLoading] = useState(false);
   const [opdSummary, setOpdSummary] = useState<GeneratedSummary | null>(null);
@@ -178,7 +182,7 @@ export function DentalPrescriptionGenerator() {
                 const dosage = `${m.dosageValue || ''} ${m.dosageUnit || ''}`.trim();
                 const frequency = `${m.frequencyValue || ''} time(s) ${m.frequencyUnit || ''}`.trim();
                 const duration = `${m.durationValue || ''} ${m.durationUnit || ''}`.trim();
-                return `| ${m.name || ''} | ${dosage} | ${frequency} | ${duration} | ${m.instructions || ''} |`;
+                return `| ${m.name.toUpperCase() || ''} | ${dosage} | ${frequency} | ${duration} | ${m.instructions || ''} |`;
             })
         ].join('\n') : undefined;
 
@@ -193,15 +197,15 @@ export function DentalPrescriptionGenerator() {
         const summary: GeneratedSummary = {
             patientDetails: {
                 id: values.patientId || undefined,
-                name: values.patientName,
+                name: toTitleCase(values.patientName),
                 age: values.patientAge,
                 gender: values.patientGender,
                 contact: values.patientContact || undefined,
                 address: values.patientAddress || undefined,
             },
-            chiefComplaint: values.chiefComplaint || undefined,
-            medicalHistory: values.medicalHistory || undefined,
-            provisionalDiagnosis: values.provisionalDiagnosis,
+            chiefComplaint: values.chiefComplaint ? capitalizeFirstLetter(values.chiefComplaint) : undefined,
+            medicalHistory: values.medicalHistory ? capitalizeFirstLetter(values.medicalHistory) : undefined,
+            provisionalDiagnosis: capitalizeFirstLetter(values.provisionalDiagnosis),
             toothChartNotes: values.toothNotes
                 ?.filter(tn => tn.note && tn.note.trim() !== '')
                 .map(tn => `#${tn.tooth}: ${tn.note}`)
@@ -209,7 +213,7 @@ export function DentalPrescriptionGenerator() {
             radiographsAdvised: radiographs,
             testsAdvised: otherTests,
             prescriptionTable,
-            additionalNotes: values.additionalNotes || undefined,
+            additionalNotes: values.additionalNotes ? capitalizeFirstLetter(values.additionalNotes) : undefined,
             followUpDate: values.followUpDate || undefined,
         };
 
