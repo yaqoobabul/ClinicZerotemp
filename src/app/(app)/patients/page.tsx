@@ -103,7 +103,15 @@ export default function PatientsPage() {
       phone: '7654321098',
       address: '789, Brigade Road, Bangalore, India',
       govtId: 'LMNOP1234Q',
-      visits: [],
+      visits: [
+        {
+          date: '2023-10-15',
+          doctor: 'Dr. Verma',
+          complaint: 'Fever and body ache',
+          diagnosis: 'Viral Fever',
+          prescription: ['Paracetamol 500mg', 'Rest for 3 days'],
+        },
+      ],
     },
     {
       id: 'CZ-901234',
@@ -225,12 +233,6 @@ export default function PatientsPage() {
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <h1 className="text-2xl font-semibold">Patient Profile</h1>
-          <div className="ml-auto">
-             <Button variant="outline" onClick={() => setIsNewVisitDialogOpen(true)}>
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Add New Entry
-            </Button>
-          </div>
         </div>
         <Card>
           <CardHeader>
@@ -272,9 +274,9 @@ export default function PatientsPage() {
             <div>
               <div className="flex justify-between items-center mb-2">
                 <h3 className="text-xl font-semibold">Visit History</h3>
-                <Button variant="outline" size="sm" onClick={() => setIsNewOldVisitDialogOpen(true)}>
+                <Button variant="outline" onClick={() => setIsNewVisitDialogOpen(true)}>
                     <PlusCircle className="mr-2 h-4 w-4" />
-                    Add Historical Entry
+                    Add New Entry
                 </Button>
               </div>
               {selectedPatient.visits.length === 0 ? (
@@ -576,4 +578,3 @@ export default function PatientsPage() {
     </>
   );
 }
-
