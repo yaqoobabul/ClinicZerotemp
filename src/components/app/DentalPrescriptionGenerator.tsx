@@ -166,24 +166,17 @@ function DentalPrescriptionGeneratorInternal() {
   });
 
   useEffect(() => {
-    const patientData = {
-        patientId: searchParams.get('patientId') || `CZ-${Date.now().toString().slice(-6)}`,
-        patientName: searchParams.get('patientName') || '',
-        patientAge: searchParams.get('patientAge') || '',
-        patientSex: searchParams.get('patientSex') || '',
-        patientContact: searchParams.get('patientContact') || '',
-        patientAddress: searchParams.get('patientAddress') || '',
-        govtId: searchParams.get('govtId') || '',
-    };
-    if (patientData.patientName) {
-         form.reset({
-            ...form.getValues(),
-            ...patientData,
-            patientName: patientData.patientName ? toTitleCase(decodeURIComponent(patientData.patientName)) : '',
-            patientAddress: patientData.patientAddress ? toTitleCase(decodeURIComponent(patientData.patientAddress)) : '',
-        });
+    const patientName = searchParams.get('patientName');
+    if (patientName) {
+      form.setValue('patientId', searchParams.get('patientId') || `CZ-${Date.now().toString().slice(-6)}`);
+      form.setValue('patientName', toTitleCase(decodeURIComponent(patientName)));
+      form.setValue('patientAge', searchParams.get('patientAge') || '');
+      form.setValue('patientSex', searchParams.get('patientSex') || '');
+      form.setValue('patientContact', searchParams.get('patientContact') || '');
+      form.setValue('patientAddress', toTitleCase(decodeURIComponent(searchParams.get('patientAddress') || '')));
+      form.setValue('govtId', searchParams.get('govtId') || '');
     }
-  }, [searchParams.get('patientId')]);
+  }, [searchParams, form.setValue]);
 
 
   const isFinalDiagnosis = form.watch('isFinalDiagnosis');
@@ -823,5 +816,7 @@ export function DentalPrescriptionGenerator() {
         </Suspense>
     )
 }
+
+    
 
     
