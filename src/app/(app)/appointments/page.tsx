@@ -65,11 +65,8 @@ const initialAppointments: Appointment[] = [
 ];
 
 const START_HOUR = 8;
-const END_HOUR = 22; // Extended to 10 PM to render up to 9 PM slot
-const timeSlots = Array.from({ length: (END_HOUR - START_HOUR) * 4 }, (_, i) => {
-    const baseDate = startOfDay(new Date());
-    return addMinutes(baseDate, START_HOUR * 60 + i * 15);
-});
+const END_HOUR = 22; // Renders slots up to 10 PM
+const SLOT_INTERVAL = 15; // in minutes
 
 export default function AppointmentsPage() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -80,12 +77,21 @@ export default function AppointmentsPage() {
   const [appointmentFlowStep, setAppointmentFlowStep] = useState<'choose' | 'new' | 'existing'>('choose');
   const [selectedPatientForAppointment, setSelectedPatientForAppointment] = useState<Patient | null>(null);
   const [selectedSlotInfo, setSelectedSlotInfo] = useState<SelectedSlotInfo>(null);
-  const [zoomLevel, setZoomLevel] = useState(2);
+  const [zoomLevel, setZoomLevel] = useState(4); // 1 = 15min, 2=30min, 4=1hr slot height
   const { toast } = useToast();
 
   useEffect(() => {
     setSelectedDate(new Date());
   }, []);
+  
+  const totalMinutes = (END_HOUR - START_HOUR) * 60;
+  const totalSlots = totalMinutes / SLOT_INTERVAL;
+  const timeSlots = Array.from({ length: totalSlots }, (_, i) => {
+    const baseDate = startOfDay(new Date());
+    return addMinutes(baseDate, START_HOUR * 60 + i * SLOT_INTERVAL);
+  });
+  
+  const slotHeight = `${zoomLevel * 0.25}rem`; // e.g., zoomLevel 4 * 0.25rem = 1rem per 15min slot
 
   const handleAddAppointment = (values: AppointmentFormValues) => {
     let patientId = selectedPatientForAppointment?.id;
@@ -195,21 +201,19 @@ export default function AppointmentsPage() {
     });
   };
   
-  const slotHeight = `${zoomLevel * 0.5 + 0.5}rem`;
-
   const renderAppointmentCard = (app: Appointment) => {
     const startMinutes = (app.dateTime.getHours() * 60 + app.dateTime.getMinutes()) - (START_HOUR * 60);
     const durationMinutes = app.durationMinutes || 30;
     
-    const gridRowStart = (startMinutes / 15) + 1;
-    const gridRowEnd = gridRowStart + (durationMinutes / 15);
+    const gridRowStart = (startMinutes / SLOT_INTERVAL) + 1;
+    const gridRowEnd = gridRowStart + (durationMinutes / SLOT_INTERVAL);
 
     return (
       <div
         key={app.id}
         className="relative flex flex-col overflow-hidden rounded-lg p-2 text-primary-foreground shadow-md bg-primary/90 border-l-4 border-primary"
         style={{ 
-            gridRow: `${gridRowStart} / ${gridRowEnd}`,
+            gridRow: `${gridRowStart} / span ${Math.round(durationMinutes / SLOT_INTERVAL)}`,
             gridColumn: 1,
         }}
       >
@@ -319,54 +323,51 @@ export default function AppointmentsPage() {
 
         <div className="flex-grow overflow-auto rounded-lg border bg-card">
             <div className="grid h-full" style={{ gridTemplateColumns: 'auto 1fr' }}>
-                {/* Headers */}
-                <div className="sticky top-0 z-10 bg-card border-b border-r">
-                    <div className="h-12 flex items-center justify-center p-2 text-sm font-semibold text-muted-foreground">Time</div>
-                </div>
-                <div className="sticky top-0 z-10 bg-card border-b grid" style={{ gridTemplateColumns: `repeat(${doctors.length}, 1fr)` }}>
-                    {doctors.map(doctor => (
-                        <div 
-                            key={doctor.id} 
-                            className="h-12 flex items-center justify-center p-2 text-center font-semibold border-l first:border-l-0 bg-muted"
-                        >
-                            <h3>{doctor.name}</h3>
-                        </div>
-                    ))}
-                </div>
-
-                {/* Timeline Grid */}
-                <div className="col-start-1 row-start-2 border-r relative">
-                    {timeSlots.map((time, index) => (
-                        <div key={index} className="relative text-right" style={{ height: slotHeight }}>
-                             {time.getMinutes() === 0 && (
-                                <span className="text-xs text-muted-foreground absolute -top-2 right-2 bg-card px-1">{format(time, 'h a')}</span>
-                             )}
-                        </div>
-                    ))}
+                <div className="sticky top-0 z-10 grid bg-card border-b" style={{ gridTemplateRows: `48px repeat(${totalSlots}, minmax(0, 1fr))`, gridTemplateColumns: '50px' }}>
+                    {/* Top-left empty cell */}
+                    <div className="border-b border-r"></div>
+                    {/* Time Gutter */}
+                    {timeSlots.map((time, index) => {
+                        const isHour = time.getMinutes() === 0;
+                        const isFirstSlot = index === 0;
+                        return (
+                            <div key={index} className="relative border-r" style={{ height: slotHeight }}>
+                                {isHour && (
+                                    <span className="text-xs text-muted-foreground absolute -top-2.5 right-2 bg-card px-1">
+                                        {format(time, 'h a')}
+                                    </span>
+                                )}
+                            </div>
+                        )
+                    })}
                 </div>
                 
-                <div className="col-start-2 row-start-2 grid" style={{ gridTemplateColumns: `repeat(${doctors.length}, 1fr)` }}>
-                     {doctors.map(doctor => (
-                        <div key={doctor.id} className="relative grid border-l first:border-l-0" style={{ gridTemplateRows: `repeat(${timeSlots.length}, ${slotHeight})` }}>
-                            {timeSlots.map((time, index) => {
-                                const isHour = time.getMinutes() === 0;
-                                return (
-                                    <button
-                                        key={`${doctor.id}-${index}`}
-                                        aria-label={`Book with ${doctor.name} at ${format(time, 'p')}`}
-                                        onClick={() => handleSlotClick(doctor.id, time)}
-                                        className={cn(
-                                            "w-full transition-colors hover:bg-accent/50",
-                                            isHour ? "border-t border-dashed border-border" : "border-t border-dotted border-border/75"
-                                        )}
-                                        style={{ height: slotHeight }}
-                                    ></button>
-                                );
-                            })}
-                             {/* Appointments */}
-                            {getAppointmentsForDoctorAndDate(doctor.id, selectedDate).map(app => renderAppointmentCard(app))}
-                        </div>
-                    ))}
+                <div className="overflow-x-auto">
+                    <div className="grid" style={{ gridTemplateColumns: `repeat(${doctors.length}, minmax(200px, 1fr))` }}>
+                        {/* Doctor Headers */}
+                        {doctors.map(doctor => (
+                            <div key={doctor.id} className="sticky top-0 z-10 h-12 flex items-center justify-center p-2 text-center font-semibold border-b border-l bg-muted first:border-l-0">
+                                <h3>{doctor.name}</h3>
+                            </div>
+                        ))}
+                         {/* Grid and Appointments */}
+                        {doctors.map(doctor => (
+                            <div key={doctor.id} className="relative grid border-l first:border-l-0" style={{ gridTemplateRows: `repeat(${totalSlots}, minmax(0, 1fr))` }}>
+                                {/* Background grid */}
+                                {timeSlots.map((time, index) => (
+                                    <div key={index} style={{ height: slotHeight }} className={cn("border-t border-dotted border-border", time.getMinutes() === 0 && "border-dashed")}>
+                                        <button
+                                            aria-label={`Book with ${doctor.name} at ${format(time, 'p')}`}
+                                            onClick={() => handleSlotClick(doctor.id, time)}
+                                            className="w-full h-full transition-colors hover:bg-accent/50"
+                                        />
+                                    </div>
+                                ))}
+                                {/* Appointments */}
+                                {getAppointmentsForDoctorAndDate(doctor.id, selectedDate).map(app => renderAppointmentCard(app))}
+                            </div>
+                        ))}
+                    </div>
                 </div>
             </div>
         </div>
