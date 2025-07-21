@@ -178,7 +178,7 @@ export default function PatientsPage() {
              {viewingVisit && (
                 <>
                 <DialogHeader className="sr-only">
-                    <DialogTitle>Visit Report</DialogTitle>
+                    <DialogTitle>Visit Report for {selectedPatient.name}</DialogTitle>
                     <DialogDescription>
                         A printable summary of the patient's visit on {new Date(viewingVisit.date).toLocaleDateString()}.
                     </DialogDescription>
@@ -203,11 +203,10 @@ export default function PatientsPage() {
                       <div className="px-1 space-y-2">
                           <div className="mb-1">
                             <h3 className="font-bold">Patient Details</h3>
-                            <div className="grid grid-cols-2 gap-x-4">
-                              <div><strong>Patient ID:</strong> {selectedPatient.id}</div>
+                            <div className="grid grid-cols-3 gap-x-4">
+                              <div><strong>ID:</strong> {selectedPatient.id}</div>
                               <div><strong>Name:</strong> {selectedPatient.name}</div>
-                              <div><strong>Age:</strong> {selectedPatient.age}</div>
-                              <div><strong>Gender:</strong> {selectedPatient.gender}</div>
+                              <div><strong>Age/Gender:</strong> {selectedPatient.age} / {selectedPatient.gender}</div>
                             </div>
                           </div>
 
