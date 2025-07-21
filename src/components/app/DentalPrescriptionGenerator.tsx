@@ -15,6 +15,7 @@ import { Textarea } from '../ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ToothChart } from './ToothChart';
 import { Card, CardHeader, CardContent, CardTitle, CardDescription } from '../ui/card';
+import { Switch } from '@/components/ui/switch';
 
 type GeneratedSummary = {
   patientDetails: {
@@ -27,6 +28,7 @@ type GeneratedSummary = {
   };
   chiefComplaint?: string;
   medicalHistory?: string;
+  diagnosisLabel: string;
   provisionalDiagnosis: string;
   toothChartNotes?: string;
   prescriptionTable?: string;
@@ -87,6 +89,7 @@ const formSchema = z.object({
   patientAddress: z.string().optional(),
   chiefComplaint: z.string().optional(),
   medicalHistory: z.string().optional(),
+  isFinalDiagnosis: z.boolean().default(false),
   toothNotes: z.array(toothNoteSchema).optional(),
   provisionalDiagnosis: z.string().min(1, 'Diagnosis is required.'),
   medicines: z.array(medicineSchema).optional(),
@@ -123,6 +126,7 @@ export function DentalPrescriptionGenerator() {
       patientAddress: '',
       chiefComplaint: '',
       medicalHistory: '',
+      isFinalDiagnosis: false,
       toothNotes: [],
       provisionalDiagnosis: '',
       medicines: [],
@@ -132,6 +136,8 @@ export function DentalPrescriptionGenerator() {
       followUpDate: '',
     },
   });
+
+  const isFinalDiagnosis = form.watch('isFinalDiagnosis');
 
   useEffect(() => {
     // Auto-generate a patient ID for new patients
@@ -205,6 +211,7 @@ export function DentalPrescriptionGenerator() {
             },
             chiefComplaint: values.chiefComplaint ? capitalizeFirstLetter(values.chiefComplaint) : undefined,
             medicalHistory: values.medicalHistory ? capitalizeFirstLetter(values.medicalHistory) : undefined,
+            diagnosisLabel: values.isFinalDiagnosis ? 'Final Diagnosis' : 'Provisional Diagnosis',
             provisionalDiagnosis: capitalizeFirstLetter(values.provisionalDiagnosis),
             toothChartNotes: values.toothNotes
                 ?.filter(tn => tn.note && tn.note.trim() !== '')
@@ -350,7 +357,26 @@ export function DentalPrescriptionGenerator() {
             </Card>
 
             <Card>
-              <CardHeader><CardTitle>Provisional Diagnosis</CardTitle></CardHeader>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                    <CardTitle>{isFinalDiagnosis ? 'Final Diagnosis' : 'Provisional Diagnosis'}</CardTitle>
+                    <FormField
+                    control={form.control}
+                    name="isFinalDiagnosis"
+                    render={({ field }) => (
+                        <FormItem className="flex items-center gap-2 space-y-0">
+                        <FormLabel className="text-sm font-normal">Final</FormLabel>
+                        <FormControl>
+                            <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            />
+                        </FormControl>
+                        </FormItem>
+                    )}
+                    />
+                </div>
+              </CardHeader>
               <CardContent>
                   <FormField control={form.control} name="provisionalDiagnosis" render={({ field }) => (
                       <FormItem><FormControl><Input {...field} onBlur={(e) => field.onChange(capitalizeFirstLetter(e.target.value))} /></FormControl><FormMessage /></FormItem>
@@ -609,7 +635,7 @@ export function DentalPrescriptionGenerator() {
                     )}
                     
                     <div className='mb-1'>
-                        <h3 className="font-bold">Provisional Diagnosis</h3>
+                        <h3 className="font-bold">{opdSummary.diagnosisLabel}</h3>
                         <p>{opdSummary.provisionalDiagnosis}</p>
                     </div>
                     
@@ -673,3 +699,5 @@ export function DentalPrescriptionGenerator() {
     </div>
   );
 }
+
+    

@@ -14,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Separator } from '../ui/separator';
 import { Textarea } from '../ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 
 type GeneratedSummary = {
   patientDetails: {
@@ -26,6 +27,7 @@ type GeneratedSummary = {
   };
   chiefComplaint?: string;
   medicalHistory?: string;
+  diagnosisLabel: string;
   provisionalDiagnosis: string;
   prescriptionTable?: string;
   testsAdvised?: string;
@@ -72,6 +74,7 @@ const formSchema = z.object({
   patientAddress: z.string().optional(),
   chiefComplaint: z.string().optional(),
   medicalHistory: z.string().optional(),
+  isFinalDiagnosis: z.boolean().default(false),
   provisionalDiagnosis: z.string().min(1, 'Diagnosis is required.'),
   medicines: z.array(medicineSchema).optional(),
   testsAdvised: z.array(testAdvisedSchema).optional(),
@@ -105,6 +108,7 @@ export function PrescriptionGenerator() {
       patientAddress: '',
       chiefComplaint: '',
       medicalHistory: '',
+      isFinalDiagnosis: false,
       provisionalDiagnosis: '',
       medicines: [],
       testsAdvised: [],
@@ -112,6 +116,8 @@ export function PrescriptionGenerator() {
       followUpDate: '',
     },
   });
+
+  const isFinalDiagnosis = form.watch('isFinalDiagnosis');
 
   useEffect(() => {
     // Auto-generate a patient ID for new patients
@@ -169,6 +175,7 @@ export function PrescriptionGenerator() {
             },
             chiefComplaint: values.chiefComplaint ? capitalizeFirstLetter(values.chiefComplaint) : undefined,
             medicalHistory: values.medicalHistory ? capitalizeFirstLetter(values.medicalHistory) : undefined,
+            diagnosisLabel: values.isFinalDiagnosis ? 'Final Diagnosis' : 'Provisional Diagnosis',
             provisionalDiagnosis: capitalizeFirstLetter(values.provisionalDiagnosis),
             testsAdvised: values.testsAdvised?.filter(t => t.value && t.value.trim() !== '').map(t => t.value).join(', ') || undefined,
             prescriptionTable,
@@ -295,7 +302,26 @@ export function PrescriptionGenerator() {
             </Card>
             
             <Card>
-              <CardHeader><CardTitle>Provisional Diagnosis</CardTitle></CardHeader>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle>{isFinalDiagnosis ? 'Final Diagnosis' : 'Provisional Diagnosis'}</CardTitle>
+                  <FormField
+                    control={form.control}
+                    name="isFinalDiagnosis"
+                    render={({ field }) => (
+                      <FormItem className="flex items-center gap-2 space-y-0">
+                        <FormLabel className="text-sm font-normal">Final</FormLabel>
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </CardHeader>
               <CardContent>
                   <FormField control={form.control} name="provisionalDiagnosis" render={({ field }) => (
                       <FormItem><FormControl><Input {...field} onBlur={(e) => field.onChange(capitalizeFirstLetter(e.target.value))} /></FormControl><FormMessage /></FormItem>
@@ -497,7 +523,7 @@ export function PrescriptionGenerator() {
                     )}
 
                     <div className='mb-1'>
-                        <h3 className="font-bold">Provisional Diagnosis</h3>
+                        <h3 className="font-bold">{opdSummary.diagnosisLabel}</h3>
                         <p>{opdSummary.provisionalDiagnosis}</p>
                     </div>
 
@@ -560,3 +586,5 @@ export function PrescriptionGenerator() {
     </div>
   );
 }
+
+    
