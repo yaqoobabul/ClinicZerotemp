@@ -135,15 +135,7 @@ const normalizeGender = (gender?: string) => {
     return toTitleCase(gender);
 }
 
-export function PrescriptionGenerator({
-  patientId,
-  patientName,
-  patientAge,
-  patientGender,
-  patientContact,
-  patientAddress,
-  govtId
-}: PrescriptionGeneratorProps) {
+export function PrescriptionGenerator(props: PrescriptionGeneratorProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [opdSummary, setOpdSummary] = useState<GeneratedSummary | null>(null);
   const { toast } = useToast();
@@ -178,18 +170,18 @@ export function PrescriptionGenerator({
   });
 
   useEffect(() => {
-    const normalizedGender = normalizeGender(patientGender);
+    const normalizedGender = normalizeGender(props.patientGender);
     form.reset({
       ...form.getValues(),
-      patientId: patientId || `CZ-${Date.now().toString().slice(-6)}`,
-      patientName: patientName ? toTitleCase(decodeURIComponent(patientName)) : '',
-      patientAge: patientAge || '',
+      patientId: props.patientId || `CZ-${Date.now().toString().slice(-6)}`,
+      patientName: props.patientName ? toTitleCase(decodeURIComponent(props.patientName)) : '',
+      patientAge: props.patientAge || '',
       patientGender: normalizedGender || '',
-      patientContact: patientContact || '',
-      patientAddress: patientAddress ? toTitleCase(decodeURIComponent(patientAddress)) : '',
-      govtId: govtId || '',
+      patientContact: props.patientContact || '',
+      patientAddress: props.patientAddress ? toTitleCase(decodeURIComponent(props.patientAddress)) : '',
+      govtId: props.govtId || '',
     });
-  }, [patientId, patientName, patientAge, patientGender, patientContact, patientAddress, govtId, form]);
+  }, [props, form]);
 
 
   const isFinalDiagnosis = form.watch('isFinalDiagnosis');

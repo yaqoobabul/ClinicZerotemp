@@ -286,6 +286,7 @@ export default function PatientsPage() {
     });
     
     router.push(`${path}?${queryParams.toString()}`);
+    setIsNewVisitDialogOpen(false);
   }
 
   if (selectedPatient) {

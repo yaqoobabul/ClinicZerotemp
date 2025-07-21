@@ -81,13 +81,16 @@ body {
   body {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
+    background-color: white !important;
+    color: black !important;
   }
 
   body * {
     visibility: hidden;
   }
-  .no-print {
+  .no-print, .no-print * {
     display: none !important;
+    visibility: hidden !important;
   }
   #printable-prescription, #printable-prescription * {
     visibility: visible;
