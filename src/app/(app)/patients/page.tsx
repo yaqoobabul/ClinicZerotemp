@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Search, User, Phone, Mail, Printer, FileText, PlusCircle, Stethoscope, BriefcaseMedical, Home, VenetianMask } from 'lucide-react';
+import { ArrowLeft, Search, User, Phone, Mail, Printer, FileText, PlusCircle, Stethoscope, BriefcaseMedical, Home } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose, DialogFooter } from '@/components/ui/dialog';
@@ -17,6 +17,7 @@ import { z } from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ToothIcon } from '@/components/icons/ToothIcon';
+import { Textarea } from '@/components/ui/textarea';
 
 type Visit = {
   date: string;
@@ -51,6 +52,17 @@ const newPatientSchema = z.object({
     email: z.string().email('Invalid email address').optional().or(z.literal('')),
 });
 
+const newVisitSchema = z.object({
+    date: z.string().min(1, 'Date is required'),
+    doctor: z.string().min(1, 'Doctor is required'),
+    complaint: z.string().min(1, 'Complaint is required'),
+    diagnosis: z.string().min(1, 'Diagnosis is required'),
+    prescription: z.string().min(1, 'Prescription is required'),
+    testsAdvised: z.string().optional(),
+    notes: z.string().optional(),
+});
+
+
 const toTitleCase = (str: string) => str ? str.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()) : '';
 
 
@@ -80,16 +92,41 @@ export default function PatientsPage() {
       govtId: 'FGHIJ5678K',
       visits: [],
     },
+     {
+      id: 'CZ-345678',
+      name: 'Priya Singh',
+      age: 45,
+      gender: 'Female',
+      avatarUrl: 'https://placehold.co/40x40.png?text=PS',
+      email: 'priya.singh@example.com',
+      phone: '7654321098',
+      address: '789, Brigade Road, Bangalore, India',
+      govtId: 'LMNOP1234Q',
+      visits: [],
+    },
+    {
+      id: 'CZ-901234',
+      name: 'Rajesh Gupta',
+      age: 52,
+      gender: 'Male',
+      avatarUrl: 'https://placehold.co/40x40.png?text=RG',
+      email: 'rajesh.gupta@example.com',
+      phone: '6543210987',
+      address: '101, Civil Lines, Delhi, India',
+      govtId: 'RSTUV5678W',
+      visits: [],
+    },
   ]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [viewingVisit, setViewingVisit] = useState<Visit | null>(null);
   const [isNewPatientDialogOpen, setIsNewPatientDialogOpen] = useState(false);
   const [isNewVisitDialogOpen, setIsNewVisitDialogOpen] = useState(false);
+  const [isNewOldVisitDialogOpen, setIsNewOldVisitDialogOpen] = useState(false);
   const router = useRouter();
 
 
-  const form = useForm<z.infer<typeof newPatientSchema>>({
+  const patientForm = useForm<z.infer<typeof newPatientSchema>>({
     resolver: zodResolver(newPatientSchema),
     defaultValues: {
       name: '',
@@ -100,6 +137,19 @@ export default function PatientsPage() {
       address: '',
       govtId: '',
     },
+  });
+
+  const visitForm = useForm<z.infer<typeof newVisitSchema>>({
+    resolver: zodResolver(newVisitSchema),
+    defaultValues: {
+        date: new Date().toISOString().split('T')[0], // pre-fill with today's date
+        doctor: '',
+        complaint: '',
+        diagnosis: '',
+        prescription: '',
+        testsAdvised: '',
+        notes: '',
+    }
   });
 
   const filteredPatients = patients.filter(patient =>
@@ -123,7 +173,7 @@ export default function PatientsPage() {
         visits: [],
     };
     setPatients(prev => [...prev, newPatient]);
-    form.reset({
+    patientForm.reset({
       name: '',
       age: '' as any,
       gender: '',
@@ -135,6 +185,18 @@ export default function PatientsPage() {
     setIsNewPatientDialogOpen(false);
     setSelectedPatient(newPatient);
   }
+
+  const handleAddNewOldVisit = (values: z.infer<typeof newVisitSchema>) => {
+    if (!selectedPatient) return;
+    const newVisit: Visit = {
+        ...values,
+        prescription: values.prescription.split('\n'),
+    };
+    setSelectedPatient(prev => prev ? { ...prev, visits: [...prev.visits, newVisit] } : null);
+    setPatients(prevPatients => prevPatients.map(p => p.id === selectedPatient.id ? { ...p, visits: [...p.visits, newVisit] } : p));
+    visitForm.reset();
+    setIsNewOldVisitDialogOpen(false);
+  };
 
   const handleNavigateToVisit = (type: 'medical' | 'dental') => {
     if (!selectedPatient) return;
@@ -192,6 +254,10 @@ export default function PatientsPage() {
                     <Phone className="h-4 w-4 text-muted-foreground"/>
                     <span>{selectedPatient.phone}</span>
                 </div>
+                <div className="flex items-center gap-2 text-sm">
+                    <User className="h-4 w-4 text-muted-foreground" />
+                    <span>{selectedPatient.gender}</span>
+                </div>
                  <div className="flex items-center col-span-2 gap-2 text-sm">
                     <Home className="h-4 w-4 text-muted-foreground"/>
                     <span>{selectedPatient.address}</span>
@@ -203,7 +269,13 @@ export default function PatientsPage() {
             </div>
             <Separator/>
             <div>
-              <h3 className="text-xl font-semibold mb-2">Visit History</h3>
+              <div className="flex justify-between items-center mb-2">
+                <h3 className="text-xl font-semibold">Visit History</h3>
+                <Button variant="outline" size="sm" onClick={() => setIsNewOldVisitDialogOpen(true)}>
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Add Old Entry
+                </Button>
+              </div>
               {selectedPatient.visits.length === 0 ? (
                 <div className="text-center text-muted-foreground py-8">
                     <p>No visit history found.</p>
@@ -214,7 +286,7 @@ export default function PatientsPage() {
                     <AccordionItem value={`item-${index}`} key={index}>
                         <AccordionTrigger>
                         <div className="flex justify-between w-full pr-4">
-                            <span>{visit.date}</span>
+                            <span>{new Date(visit.date).toLocaleDateString()}</span>
                             <span className="text-muted-foreground">{visit.diagnosis}</span>
                         </div>
                         </AccordionTrigger>
@@ -321,7 +393,7 @@ export default function PatientsPage() {
             <DialogHeader>
                 <DialogTitle>Create New Visit</DialogTitle>
                 <DialogDescription>
-                    Choose the type of OPD visit for {selectedPatient.name}.
+                    Choose the type of OPD visit for {selectedPatient.name}. This will take you to the full prescription generator page.
                 </DialogDescription>
             </DialogHeader>
             <div className="grid grid-cols-2 gap-4 pt-4">
@@ -335,6 +407,48 @@ export default function PatientsPage() {
                 </Button>
             </div>
         </DialogContent>
+      </Dialog>
+      
+      <Dialog open={isNewOldVisitDialogOpen} onOpenChange={setIsNewOldVisitDialogOpen}>
+          <DialogContent>
+              <DialogHeader>
+                  <DialogTitle>Add Historical Visit Entry</DialogTitle>
+                  <DialogDescription>
+                      Manually enter the details for a past visit for {selectedPatient.name}.
+                  </DialogDescription>
+              </DialogHeader>
+              <Form {...visitForm}>
+                  <form onSubmit={visitForm.handleSubmit(handleAddNewOldVisit)} className="space-y-4">
+                      <FormField control={visitForm.control} name="date" render={({ field }) => (
+                          <FormItem><FormLabel>Visit Date</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem>
+                      )} />
+                      <FormField control={visitForm.control} name="doctor" render={({ field }) => (
+                          <FormItem><FormLabel>Doctor Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                      )} />
+                      <FormField control={visitForm.control} name="complaint" render={({ field }) => (
+                          <FormItem><FormLabel>Chief Complaint</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                      )} />
+                      <FormField control={visitForm.control} name="diagnosis" render={({ field }) => (
+                          <FormItem><FormLabel>Diagnosis</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                      )} />
+                      <FormField control={visitForm.control} name="prescription" render={({ field }) => (
+                          <FormItem><FormLabel>Prescription (one item per line)</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>
+                      )} />
+                      <FormField control={visitForm.control} name="testsAdvised" render={({ field }) => (
+                          <FormItem><FormLabel>Tests Advised (Optional)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                      )} />
+                      <FormField control={visitForm.control} name="notes" render={({ field }) => (
+                          <FormItem><FormLabel>Additional Notes (Optional)</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>
+                      )} />
+                      <DialogFooter>
+                          <DialogClose asChild>
+                              <Button type="button" variant="secondary">Cancel</Button>
+                          </DialogClose>
+                          <Button type="submit">Save Entry</Button>
+                      </DialogFooter>
+                  </form>
+              </Form>
+          </DialogContent>
       </Dialog>
       </>
     );
@@ -408,16 +522,16 @@ export default function PatientsPage() {
                     Enter the details for the new patient.
                 </DialogDescription>
             </DialogHeader>
-            <Form {...form}>
-                <form onSubmit={form.handleSubmit(handleAddNewPatient)} className="space-y-4">
-                    <FormField control={form.control} name="name" render={({ field }) => (
+            <Form {...patientForm}>
+                <form onSubmit={patientForm.handleSubmit(handleAddNewPatient)} className="space-y-4">
+                    <FormField control={patientForm.control} name="name" render={({ field }) => (
                         <FormItem><FormLabel>Name</FormLabel><FormControl><Input {...field} onBlur={(e) => field.onChange(toTitleCase(e.target.value))} /></FormControl><FormMessage /></FormItem>
                     )} />
                     <div className="grid grid-cols-2 gap-4">
-                        <FormField control={form.control} name="age" render={({ field }) => (
+                        <FormField control={patientForm.control} name="age" render={({ field }) => (
                             <FormItem><FormLabel>Age</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>
                         )} />
-                        <FormField control={form.control} name="gender" render={({ field }) => (
+                        <FormField control={patientForm.control} name="gender" render={({ field }) => (
                             <FormItem>
                                 <FormLabel>Gender</FormLabel>
                                 <Select onValueChange={field.onChange} defaultValue={field.value}>
@@ -436,16 +550,16 @@ export default function PatientsPage() {
                             </FormItem>
                         )} />
                     </div>
-                     <FormField control={form.control} name="phone" render={({ field }) => (
+                     <FormField control={patientForm.control} name="phone" render={({ field }) => (
                         <FormItem><FormLabel>Phone</FormLabel><FormControl><Input type="tel" {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
-                     <FormField control={form.control} name="address" render={({ field }) => (
+                     <FormField control={patientForm.control} name="address" render={({ field }) => (
                         <FormItem><FormLabel>Address</FormLabel><FormControl><Input {...field} onBlur={(e) => field.onChange(toTitleCase(e.target.value))} /></FormControl><FormMessage /></FormItem>
                     )} />
-                    <FormField control={form.control} name="govtId" render={({ field }) => (
+                    <FormField control={patientForm.control} name="govtId" render={({ field }) => (
                         <FormItem><FormLabel>Govt. ID (Optional)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
-                    <FormField control={form.control} name="email" render={({ field }) => (
+                    <FormField control={patientForm.control} name="email" render={({ field }) => (
                         <FormItem><FormLabel>Email (Optional)</FormLabel><FormControl><Input type="email" {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
                     <DialogFooter>
