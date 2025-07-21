@@ -201,7 +201,14 @@ export function DentalPrescriptionGenerator({
     form.setValue('patientId', patientId || `CZ-${Date.now().toString().slice(-6)}`);
     if (patientName) form.setValue('patientName', toTitleCase(decodeURIComponent(patientName)));
     if (patientAge) form.setValue('patientAge', patientAge);
-    if (patientGender) form.setValue('patientGender', normalizeGender(patientGender));
+    
+    const normalized = normalizeGender(patientGender);
+    if (normalized) {
+      form.setValue('patientGender', normalized);
+    } else {
+      form.setValue('patientGender', '');
+    }
+
     if (patientContact) form.setValue('patientContact', patientContact);
     if (patientAddress) form.setValue('patientAddress', toTitleCase(decodeURIComponent(patientAddress)));
     if (govtId) form.setValue('govtId', govtId);
