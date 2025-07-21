@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CalendarIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
-import { format } from 'date-fns';
+import { format, setHours, setMinutes, parse } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Textarea } from '../ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
@@ -24,10 +24,12 @@ const appointmentFormSchema = z.object({
   dateTime: z.date({
     required_error: 'An appointment date is required.',
   }),
+  appointmentTime: z.string().min(1, 'An appointment time is required.'),
   reason: z.string().min(1, 'Reason for appointment is required.'),
 });
 
-export type AppointmentFormValues = z.infer<typeof appointmentFormSchema>;
+// We only use a subset of the schema for the final submission
+export type AppointmentFormValues = Omit<z.infer<typeof appointmentFormSchema>, 'appointmentTime'>;
 
 interface AppointmentFormProps {
   onSubmit: (values: AppointmentFormValues) => void;
@@ -37,22 +39,35 @@ interface AppointmentFormProps {
 }
 
 export function AppointmentForm({ onSubmit, onCancel, initialData, showPatientDetails = false }: AppointmentFormProps) {
-  const form = useForm<AppointmentFormValues>({
+  const form = useForm<z.infer<typeof appointmentFormSchema>>({
     resolver: zodResolver(appointmentFormSchema),
-    defaultValues: initialData || {
-      patientName: '',
-      age: undefined,
-      sex: undefined,
-      phone: '',
-      address: '',
-      dateTime: new Date(),
-      reason: '',
+    defaultValues: {
+      patientName: initialData?.patientName || '',
+      age: initialData?.age,
+      sex: initialData?.sex,
+      phone: initialData?.phone,
+      address: initialData?.address,
+      dateTime: initialData?.dateTime || new Date(),
+      appointmentTime: initialData?.dateTime ? format(initialData.dateTime, 'HH:mm') : '09:00',
+      reason: initialData?.reason || '',
     },
   });
 
+  const handleFormSubmit = (values: z.infer<typeof appointmentFormSchema>) => {
+    const time = parse(values.appointmentTime, 'HH:mm', new Date());
+    const combinedDateTime = setMinutes(setHours(values.dateTime, time.getHours()), time.getMinutes());
+    
+    const finalValues: AppointmentFormValues = {
+        ...values,
+        dateTime: combinedDateTime,
+    };
+
+    onSubmit(finalValues);
+  }
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 pt-4">
+      <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6 pt-4">
         <FormField
           control={form.control}
           name="patientName"
@@ -71,7 +86,7 @@ export function AppointmentForm({ onSubmit, onCancel, initialData, showPatientDe
           <>
             <div className="grid grid-cols-2 gap-4">
                 <FormField control={form.control} name="age" render={({ field }) => (
-                    <FormItem><FormLabel>Age</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+                    <FormItem><FormLabel>Age</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>
                 )} />
                 <FormField control={form.control} name="sex" render={({ field }) => (
                     <FormItem>
@@ -89,53 +104,68 @@ export function AppointmentForm({ onSubmit, onCancel, initialData, showPatientDe
                 )} />
             </div>
              <FormField control={form.control} name="phone" render={({ field }) => (
-                <FormItem><FormLabel>Phone</FormLabel><FormControl><Input type="tel" {...field} /></FormControl><FormMessage /></FormItem>
+                <FormItem><FormLabel>Phone</FormLabel><FormControl><Input type="tel" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>
             )} />
              <FormField control={form.control} name="address" render={({ field }) => (
-                <FormItem><FormLabel>Address</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                <FormItem><FormLabel>Address</FormLabel><FormControl><Input {...field} value={field.value ?? ''}/></FormControl><FormMessage /></FormItem>
             )} />
           </>
         )}
 
-        <FormField
-          control={form.control}
-          name="dateTime"
-          render={({ field }) => (
-            <FormItem className="flex flex-col">
-              <FormLabel>Appointment Date & Time</FormLabel>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <FormControl>
-                    <Button
-                      variant={'outline'}
-                      className={cn(
-                        'w-full pl-3 text-left font-normal',
-                        !field.value && 'text-muted-foreground'
-                      )}
-                    >
-                      {field.value ? (
-                        format(field.value, 'PPP')
-                      ) : (
-                        <span>Pick a date</span>
-                      )}
-                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                    </Button>
-                  </FormControl>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={field.value}
-                    onSelect={field.onChange}
-                    disabled={(date) => date < new Date(new Date().setDate(new Date().getDate() -1))}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="grid grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="dateTime"
+            render={({ field }) => (
+              <FormItem className="flex flex-col">
+                <FormLabel>Appointment Date</FormLabel>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <FormControl>
+                      <Button
+                        variant={'outline'}
+                        className={cn(
+                          'w-full pl-3 text-left font-normal',
+                          !field.value && 'text-muted-foreground'
+                        )}
+                      >
+                        {field.value ? (
+                          format(field.value, 'PPP')
+                        ) : (
+                          <span>Pick a date</span>
+                        )}
+                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                      </Button>
+                    </FormControl>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={field.value}
+                      onSelect={field.onChange}
+                      disabled={(date) => date < new Date(new Date().setDate(new Date().getDate() -1))}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="appointmentTime"
+            render={({ field }) => (
+                <FormItem>
+                    <FormLabel>Appointment Time</FormLabel>
+                    <FormControl>
+                        <Input type="time" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                </FormItem>
+            )}
+            />
+        </div>
         <FormField
           control={form.control}
           name="reason"

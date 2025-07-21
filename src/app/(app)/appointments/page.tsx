@@ -45,8 +45,8 @@ const initialPatients: Patient[] = [
 
 
 const initialAppointments: Appointment[] = [
-  { id: '1', patientName: 'Aarav Patel', patientId: 'CZ-12345', avatarUrl: 'https://placehold.co/40x40.png', dateTime: new Date(new Date().setDate(new Date().getDate() + 1)), reason: 'Routine Checkup', status: 'upcoming' },
-  { id: '2', patientName: 'Priya Singh', patientId: 'CZ-67890', avatarUrl: 'https://placehold.co/40x40.png', dateTime: new Date(new Date().setDate(new Date().getDate() + 2)), reason: 'Follow-up', status: 'upcoming' },
+  { id: '1', patientName: 'Aarav Patel', patientId: 'CZ-12345', avatarUrl: 'https://placehold.co/40x40.png', dateTime: new Date(new Date().setHours(10,0,0,0)), reason: 'Routine Checkup', status: 'upcoming' },
+  { id: '2', patientName: 'Priya Singh', patientId: 'CZ-67890', avatarUrl: 'https://placehold.co/40x40.png', dateTime: new Date(new Date().setDate(new Date().getDate() + 1)), reason: 'Follow-up', status: 'upcoming' },
   { id: '3', patientName: 'Rohan Gupta', patientId: 'CZ-54321', avatarUrl: 'https://placehold.co/40x40.png', dateTime: new Date(new Date().setDate(new Date().getDate() - 1)), reason: 'Dental Cleaning', status: 'finished' },
   { id: '4', patientName: 'Saanvi Sharma', patientId: 'CZ-09876', avatarUrl: 'https://placehold.co/40x40.png', dateTime: new Date(new Date().setDate(new Date().getDate() - 3)), reason: 'Root Canal', status: 'finished' },
 ];
@@ -71,6 +71,9 @@ export default function AppointmentsPage() {
 
   const handleAddAppointment = (values: AppointmentFormValues) => {
     
+    let patientId = selectedPatientForAppointment?.id;
+    let patientAvatarUrl = selectedPatientForAppointment?.avatarUrl;
+
     // If it's a new patient, create a new patient record first
     if (appointmentFlowStep === 'new') {
         const newPatient: Patient = {
@@ -83,17 +86,16 @@ export default function AppointmentsPage() {
             avatarUrl: `https://placehold.co/40x40.png?text=${values.patientName[0]}`
         };
         setPatients(prev => [...prev, newPatient]);
+        patientId = newPatient.id;
+        patientAvatarUrl = newPatient.avatarUrl;
     }
 
-    const patientForAppointment = appointmentFlowStep === 'new' 
-        ? { id: `CZ-${Date.now().toString().slice(-6)}`, avatarUrl: `https://placehold.co/40x40.png?text=${values.patientName[0]}` } 
-        : selectedPatientForAppointment;
 
-    if (!patientForAppointment) {
+    if (!patientId || !patientAvatarUrl) {
         toast({
             variant: 'destructive',
             title: 'Error',
-            description: 'No patient selected for the appointment.',
+            description: 'Could not determine patient for the appointment.',
         });
         return;
     }
@@ -101,8 +103,8 @@ export default function AppointmentsPage() {
     const newAppointment: Appointment = {
         id: `APP-${Date.now().toString().slice(-6)}`,
         patientName: values.patientName,
-        patientId: patientForAppointment.id,
-        avatarUrl: patientForAppointment.avatarUrl,
+        patientId: patientId,
+        avatarUrl: patientAvatarUrl,
         dateTime: values.dateTime,
         reason: values.reason,
         status: 'upcoming',
