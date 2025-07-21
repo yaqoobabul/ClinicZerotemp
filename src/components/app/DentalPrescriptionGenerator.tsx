@@ -180,17 +180,23 @@ export function DentalPrescriptionGenerator() {
     const patientId = searchParams.get('patientId');
     if (patientId) {
         form.setValue('patientId', patientId);
-        form.setValue('patientName', toTitleCase(searchParams.get('patientName') || ''));
-        form.setValue('patientAge', searchParams.get('patientAge') || '');
-        form.setValue('patientGender', searchParams.get('patientGender') || '');
-        form.setValue('patientContact', searchParams.get('patientContact') || '');
-        form.setValue('patientAddress', toTitleCase(searchParams.get('patientAddress') || ''));
-        form.setValue('govtId', searchParams.get('govtId') || '');
     } else if (!form.getValues('patientId')) {
         // Auto-generate a patient ID for new patients
         const newPatientId = `CZ-${Date.now().toString().slice(-6)}`;
         form.setValue('patientId', newPatientId);
     }
+    
+    form.setValue('patientName', toTitleCase(searchParams.get('patientName') || ''));
+    form.setValue('patientAge', searchParams.get('patientAge') || '');
+    const gender = searchParams.get('patientGender');
+    if (gender) {
+      form.setValue('patientGender', gender);
+    }
+    form.setValue('patientContact', searchParams.get('patientContact') || '');
+    form.setValue('patientAddress', toTitleCase(searchParams.get('patientAddress') || ''));
+    form.setValue('govtId', searchParams.get('govtId') || '');
+    
+  // Using searchParams.toString() as a key ensures this effect re-runs on navigation
   }, [searchParams, form]);
 
 
@@ -868,5 +874,7 @@ export function DentalPrescriptionGenerator() {
     </div>
   );
 }
+
+    
 
     
