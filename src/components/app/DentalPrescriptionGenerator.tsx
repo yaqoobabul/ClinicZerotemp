@@ -814,7 +814,3 @@ export function DentalPrescriptionGenerator() {
     </div>
   );
 }
-
-    
-
-    
