@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -489,7 +490,7 @@ export function DentalPrescriptionGenerator() {
                               name={`radiographsAdvised.${index}.type`}
                               render={({ field }) => (
                                   <FormItem className="flex-grow">
-                                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                      <Select onValueChange={field.onChange} value={field.value}>
                                           <FormControl>
                                               <SelectTrigger>
                                                   <SelectValue placeholder="Select type" />
@@ -813,5 +814,7 @@ export function DentalPrescriptionGenerator() {
     </div>
   );
 }
+
+    
 
     
