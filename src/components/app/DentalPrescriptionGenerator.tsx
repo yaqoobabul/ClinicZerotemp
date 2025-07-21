@@ -26,6 +26,15 @@ type GeneratedSummary = {
     contact?: string;
     address?: string;
   };
+  vitals?: {
+    height?: string;
+    weight?: string;
+    bp?: string;
+    pulse?: string;
+    spo2?: string;
+    temp?: string;
+  };
+  examinationFindings?: string;
   chiefComplaint?: string;
   medicalHistory?: string;
   diagnosisLabel: string;
@@ -87,6 +96,13 @@ const formSchema = z.object({
   patientGender: z.string().min(1, 'Patient gender is required.'),
   patientContact: z.string().optional(),
   patientAddress: z.string().optional(),
+  height: z.string().optional(),
+  weight: z.string().optional(),
+  bp: z.string().optional(),
+  pulse: z.string().optional(),
+  spo2: z.string().optional(),
+  temp: z.string().optional(),
+  examinationFindings: z.string().optional(),
   chiefComplaint: z.string().optional(),
   medicalHistory: z.string().optional(),
   isFinalDiagnosis: z.boolean().default(false),
@@ -124,6 +140,13 @@ export function DentalPrescriptionGenerator() {
       patientGender: '',
       patientContact: '',
       patientAddress: '',
+      height: '',
+      weight: '',
+      bp: '',
+      pulse: '',
+      spo2: '',
+      temp: '',
+      examinationFindings: '',
       chiefComplaint: '',
       medicalHistory: '',
       isFinalDiagnosis: false,
@@ -199,6 +222,16 @@ export function DentalPrescriptionGenerator() {
         const otherTests = filteredTests
             ?.map(t => t.value)
             .join(', ') || undefined;
+        
+        const vitals = {
+            height: values.height || undefined,
+            weight: values.weight || undefined,
+            bp: values.bp || undefined,
+            pulse: values.pulse || undefined,
+            spo2: values.spo2 || undefined,
+            temp: values.temp || undefined,
+        };
+        const hasVitals = Object.values(vitals).some(v => v !== undefined);
 
         const summary: GeneratedSummary = {
             patientDetails: {
@@ -209,6 +242,8 @@ export function DentalPrescriptionGenerator() {
                 contact: values.patientContact || undefined,
                 address: values.patientAddress || undefined,
             },
+            vitals: hasVitals ? vitals : undefined,
+            examinationFindings: values.examinationFindings ? capitalizeFirstLetter(values.examinationFindings) : undefined,
             chiefComplaint: values.chiefComplaint ? capitalizeFirstLetter(values.chiefComplaint) : undefined,
             medicalHistory: values.medicalHistory ? capitalizeFirstLetter(values.medicalHistory) : undefined,
             diagnosisLabel: values.isFinalDiagnosis ? 'Final Diagnosis' : 'Provisional Diagnosis',
@@ -342,6 +377,43 @@ export function DentalPrescriptionGenerator() {
               </CardContent>
             </Card>
             
+            <Card>
+                <CardHeader>
+                    <CardTitle>Vitals &amp; Examination</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                        <FormField control={form.control} name="height" render={({ field }) => (
+                            <FormItem><FormLabel>Height (cm)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                        )} />
+                        <FormField control={form.control} name="weight" render={({ field }) => (
+                            <FormItem><FormLabel>Weight (kg)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                        )} />
+                        <FormField control={form.control} name="bp" render={({ field }) => (
+                            <FormItem><FormLabel>BP (mmHg)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                        )} />
+                        <FormField control={form.control} name="pulse" render={({ field }) => (
+                            <FormItem><FormLabel>Pulse (/min)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                        )} />
+                        <FormField control={form.control} name="spo2" render={({ field }) => (
+                            <FormItem><FormLabel>SpO2 (%)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                        )} />
+                        <FormField control={form.control} name="temp" render={({ field }) => (
+                            <FormItem><FormLabel>Temp (°F)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                        )} />
+                    </div>
+                     <FormField control={form.control} name="examinationFindings" render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>General Examination Findings</FormLabel>
+                            <FormControl>
+                                <Textarea {...field} onBlur={(e) => field.onChange(capitalizeFirstLetter(e.target.value))} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )} />
+                </CardContent>
+            </Card>
+
             <Card>
               <CardHeader>
                 <CardTitle>Tooth Chart & Notes</CardTitle>
@@ -627,6 +699,27 @@ export function DentalPrescriptionGenerator() {
                       </div>
                     )}
 
+                    {opdSummary.vitals && (
+                    <div className='mb-1'>
+                        <h3 className="font-bold">Vitals</h3>
+                        <div className="flex flex-wrap gap-x-4">
+                            {opdSummary.vitals.height && <p><strong>Height:</strong> {opdSummary.vitals.height} cm</p>}
+                            {opdSummary.vitals.weight && <p><strong>Weight:</strong> {opdSummary.vitals.weight} kg</p>}
+                            {opdSummary.vitals.bp && <p><strong>BP:</strong> {opdSummary.vitals.bp} mmHg</p>}
+                            {opdSummary.vitals.pulse && <p><strong>Pulse:</strong> {opdSummary.vitals.pulse} /min</p>}
+                            {opdSummary.vitals.spo2 && <p><strong>SpO2:</strong> {opdSummary.vitals.spo2} %</p>}
+                            {opdSummary.vitals.temp && <p><strong>Temp:</strong> {opdSummary.vitals.temp} °F</p>}
+                        </div>
+                    </div>
+                    )}
+
+                    {opdSummary.examinationFindings && (
+                        <div className='mb-1'>
+                            <h3 className="font-bold">Examination Findings</h3>
+                            <p>{opdSummary.examinationFindings}</p>
+                        </div>
+                    )}
+
                     {opdSummary.toothChartNotes && (
                     <div className='mb-1'>
                         <h3 className="font-bold">Dental Notes</h3>
@@ -699,5 +792,3 @@ export function DentalPrescriptionGenerator() {
     </div>
   );
 }
-
-    
