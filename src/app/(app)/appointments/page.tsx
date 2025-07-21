@@ -38,6 +38,11 @@ type Patient = {
   address?: string;
 };
 
+type SelectedSlotInfo = {
+    doctorId: string;
+    dateTime: Date;
+} | null;
+
 const initialDoctors: Doctor[] = [
   { id: 'doc1', name: 'Dr. Priya Sharma' },
   { id: 'doc2', name: 'Dr. Rohan Mehra' },
@@ -73,6 +78,7 @@ export default function AppointmentsPage() {
   const [isNewAppointmentDialogOpen, setIsNewAppointmentDialogOpen] = useState(false);
   const [appointmentFlowStep, setAppointmentFlowStep] = useState<'choose' | 'new' | 'existing'>('choose');
   const [selectedPatientForAppointment, setSelectedPatientForAppointment] = useState<Patient | null>(null);
+  const [selectedSlotInfo, setSelectedSlotInfo] = useState<SelectedSlotInfo>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -118,11 +124,23 @@ export default function AppointmentsPage() {
     closeAndResetDialog();
   };
 
+  const handleSlotClick = (doctorId: string, time: Date) => {
+    const combinedDateTime = set(selectedDate || new Date(), {
+        hours: time.getHours(),
+        minutes: time.getMinutes(),
+        seconds: 0,
+        milliseconds: 0,
+    });
+    setSelectedSlotInfo({ doctorId, dateTime: combinedDateTime });
+    setIsNewAppointmentDialogOpen(true);
+  };
+
   const closeAndResetDialog = () => {
     setIsNewAppointmentDialogOpen(false);
     setTimeout(() => {
       setAppointmentFlowStep('choose');
       setSelectedPatientForAppointment(null);
+      setSelectedSlotInfo(null);
     }, 300);
   };
 
@@ -197,6 +215,20 @@ export default function AppointmentsPage() {
     return null; // Or a loading indicator
   }
 
+  const getDialogInitialData = () => {
+    if (selectedSlotInfo) {
+      return {
+        doctorId: selectedSlotInfo.doctorId,
+        dateTime: selectedSlotInfo.dateTime,
+        patientName: selectedPatientForAppointment?.name || '',
+      };
+    }
+    if (selectedPatientForAppointment) {
+      return { patientName: selectedPatientForAppointment.name };
+    }
+    return {};
+  };
+
   return (
     <div className="flex flex-col h-[calc(100vh-8rem)]">
         <header className="flex items-center justify-between pb-4">
@@ -215,7 +247,7 @@ export default function AppointmentsPage() {
             </div>
             <Dialog open={isNewAppointmentDialogOpen} onOpenChange={setIsNewAppointmentDialogOpen}>
               <DialogTrigger asChild>
-                <Button>
+                <Button onClick={() => setSelectedSlotInfo(null)}>
                   <PlusCircle className="mr-2" />
                   Add Appointment
                 </Button>
@@ -241,6 +273,7 @@ export default function AppointmentsPage() {
                         onSubmit={handleAddAppointment}
                         onCancel={closeAndResetDialog}
                         doctors={doctors}
+                        initialData={getDialogInitialData()}
                         showPatientDetails={true}
                     />
                 )}
@@ -253,7 +286,7 @@ export default function AppointmentsPage() {
                                 onSubmit={handleAddAppointment}
                                 onCancel={closeAndResetDialog}
                                 doctors={doctors}
-                                initialData={{ patientName: selectedPatientForAppointment.name }}
+                                initialData={getDialogInitialData()}
                                 showPatientDetails={false}
                             />
                         )}
@@ -291,9 +324,17 @@ export default function AppointmentsPage() {
                     {/* Background Grid & Appointments */}
                     {doctors.map(doctor => (
                         <div key={doctor.id} className="relative grid grid-flow-row border-l first:border-l-0" style={{ gridTemplateRows: 'repeat(48, 2rem)' }}>
-                            {/* Background Lines */}
-                            {timeSlots.map((_, index) => (
-                                <div key={index} className={cn("h-8 border-b", index % 2 !== 0 && "border-dashed border-border/50")}></div>
+                            {/* Background Lines / Clickable slots */}
+                            {timeSlots.map((time, index) => (
+                                <button 
+                                    key={index} 
+                                    aria-label={`Book appointment with ${doctor.name} at ${format(time, 'p')}`}
+                                    onClick={() => handleSlotClick(doctor.id, time)}
+                                    className={cn(
+                                        "h-8 border-b text-left hover:bg-primary/10 transition-colors", 
+                                        index % 2 !== 0 && "border-dashed border-border/50"
+                                    )}
+                                ></button>
                             ))}
                              {/* Appointments */}
                             {getAppointmentsForDoctorAndDate(doctor.id, selectedDate).map(renderAppointmentCard)}

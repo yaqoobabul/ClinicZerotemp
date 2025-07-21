@@ -49,10 +49,10 @@ export function AppointmentForm({ onSubmit, onCancel, doctors, initialData, show
     resolver: zodResolver(appointmentFormSchema),
     defaultValues: {
       patientName: initialData?.patientName || '',
-      patientPhone: initialData?.patientPhone || '',
-      age: initialData?.age,
-      sex: initialData?.sex,
-      address: initialData?.address || '',
+      patientPhone: '',
+      age: undefined,
+      sex: undefined,
+      address: '',
       doctorId: initialData?.doctorId || '',
       dateTime: initialData?.dateTime || new Date(),
       appointmentTime: initialData?.dateTime ? format(initialData.dateTime, 'HH:mm') : '09:00',
@@ -71,6 +71,8 @@ export function AppointmentForm({ onSubmit, onCancel, doctors, initialData, show
 
     onSubmit(finalValues);
   };
+  
+  const isSlotSelected = !!initialData?.dateTime;
 
   return (
     <Form {...form}>
@@ -135,7 +137,7 @@ export function AppointmentForm({ onSubmit, onCancel, doctors, initialData, show
             render={({ field }) => (
                 <FormItem>
                     <FormLabel>Doctor</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isSlotSelected}>
                         <FormControl><SelectTrigger><SelectValue placeholder="Assign a doctor" /></SelectTrigger></FormControl>
                         <SelectContent>
                             {doctors.map(doc => (
@@ -165,6 +167,7 @@ export function AppointmentForm({ onSubmit, onCancel, doctors, initialData, show
                           'w-full pl-3 text-left font-normal',
                           !field.value && 'text-muted-foreground'
                         )}
+                        disabled={isSlotSelected}
                       >
                         {field.value ? (
                           format(field.value, 'PPP')
@@ -196,7 +199,7 @@ export function AppointmentForm({ onSubmit, onCancel, doctors, initialData, show
               <FormItem>
                 <FormLabel>Appointment Time</FormLabel>
                 <FormControl>
-                  <Input type="time" {...field} step="900" />
+                  <Input type="time" {...field} step="900" disabled={isSlotSelected} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
