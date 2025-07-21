@@ -176,9 +176,14 @@ function DentalPrescriptionGeneratorInternal() {
         govtId: searchParams.get('govtId') || '',
     };
     if (patientData.patientName) {
-        form.reset(patientData);
+         form.reset({
+            ...form.getValues(),
+            ...patientData,
+            patientName: patientData.patientName ? toTitleCase(decodeURIComponent(patientData.patientName)) : '',
+            patientAddress: patientData.patientAddress ? toTitleCase(decodeURIComponent(patientData.patientAddress)) : '',
+        });
     }
-  }, [searchParams, form]);
+  }, [searchParams.get('patientId')]);
 
 
   const isFinalDiagnosis = form.watch('isFinalDiagnosis');
@@ -818,3 +823,5 @@ export function DentalPrescriptionGenerator() {
         </Suspense>
     )
 }
+
+    

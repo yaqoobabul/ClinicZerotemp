@@ -156,9 +156,14 @@ function PrescriptionGeneratorInternal() {
         govtId: searchParams.get('govtId') || '',
     };
     if (patientData.patientName) {
-        form.reset(patientData);
+        form.reset({
+            ...form.getValues(),
+            ...patientData,
+            patientName: patientData.patientName ? toTitleCase(decodeURIComponent(patientData.patientName)) : '',
+            patientAddress: patientData.patientAddress ? toTitleCase(decodeURIComponent(patientData.patientAddress)) : '',
+        });
     }
-  }, [searchParams, form]);
+  }, [searchParams.get('patientId')]);
 
 
   const isFinalDiagnosis = form.watch('isFinalDiagnosis');
@@ -274,17 +279,19 @@ function PrescriptionGeneratorInternal() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                   <FormField
+                  <FormField
                     control={form.control}
                     name="patientId"
                     render={({ field }) => (
-                      <FormItem className="md:col-span-2">
+                      <FormItem>
                         <FormLabel>Patient ID</FormLabel>
                         <div className="flex gap-2">
-                          <FormControl>
-                            <Input {...field} />
-                          </FormControl>
-                          <Button type="button" variant="outline" onClick={handleFetchPatient}><Search className="mr-2 h-4 w-4" /> Fetch</Button>
+                           <div className="relative flex-grow">
+                             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                             <FormControl>
+                                <Input {...field} className="pl-8"/>
+                             </FormControl>
+                           </div>
                         </div>
                         <FormMessage />
                       </FormItem>
@@ -322,8 +329,10 @@ function PrescriptionGeneratorInternal() {
                     <FormField control={form.control} name="patientContact" render={({ field }) => (
                         <FormItem className="md:col-span-2"><FormLabel>Contact Number</FormLabel><FormControl><Input type="tel" {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
+                 </div>
+                 <div className="grid grid-cols-1">
                     <FormField control={form.control} name="patientAddress" render={({ field }) => (
-                        <FormItem className="md:col-span-2"><FormLabel>Address</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                        <FormItem><FormLabel>Address</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
                  </div>
               </CardContent>
@@ -705,3 +714,5 @@ export function PrescriptionGenerator() {
         </Suspense>
     )
 }
+
+    
