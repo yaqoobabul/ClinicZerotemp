@@ -6,10 +6,15 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Search, User, Phone, Mail, Printer, FileText } from 'lucide-react';
+import { ArrowLeft, Search, User, Phone, Mail, Printer, FileText, PlusCircle } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Separator } from '@/components/ui/separator';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose, DialogFooter } from '@/components/ui/dialog';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 type Visit = {
   date: string;
@@ -33,79 +38,56 @@ type Patient = {
   visits: Visit[];
 };
 
-const mockPatients: Patient[] = [
-  {
-    id: 'CZ-123456',
-    name: 'Sneha Sharma',
-    age: 34,
-    gender: 'Female',
-    avatarUrl: 'https://placehold.co/40x40.png',
-    email: 'sneha.sharma@example.com',
-    phone: '+91 98765 43210',
-    address: 'A-123, Rosewood Apartments, Mumbai',
-    visits: [
-      { date: '2024-07-15', doctor: 'Dr. Rajesh Kumar', complaint: 'Fever and body ache', diagnosis: 'Viral Fever', prescription: ['Tab. Paracetamol 500mg (1-1-1) for 3 days.', 'Syp. Cough Syrup (2 tsp SOS)'] },
-      { date: '2024-05-02', doctor: 'Dr. Rajesh Kumar', complaint: 'Runny nose and sneezing', diagnosis: 'Common Cold', prescription: ['Tab. Cetirizine 10mg (0-0-1) for 5 days.'] },
-    ],
-  },
-  {
-    id: 'CZ-654321',
-    name: 'Rohan Roy',
-    age: 45,
-    gender: 'Male',
-    avatarUrl: 'https://placehold.co/40x40.png',
-    email: 'rohan.roy@example.com',
-    phone: '+91 91234 56789',
-    address: 'B-45, Sunshine Colony, Delhi',
-    visits: [
-      { date: '2024-06-20', doctor: 'Dr. Priya Singh', complaint: 'Pain in upper right tooth', diagnosis: 'Dental Caries (#16)', prescription: ['Dental filling advised.', 'Tab. Ketorolac DT for pain.'], testsAdvised: 'IOPA w.r.t #16' },
-    ],
-  },
-  {
-    id: 'CZ-789012',
-    name: 'Anjali Kumari',
-    age: 28,
-    gender: 'Female',
-    avatarUrl: 'https://placehold.co/40x40.png',
-    email: 'anjali.kumari@example.com',
-    phone: '+91 99887 76655',
-    address: '7, Lotus Lane, Bengaluru',
-    visits: [
-      { date: '2024-07-22', doctor: 'Dr. Rajesh Kumar', complaint: 'Stomach pain', diagnosis: 'Acute Gastritis', prescription: ['Syp. Digene (2 tsp SOS).'], notes: 'Avoid spicy food.' },
-      { date: '2023-11-10', doctor: 'Dr. Rajesh Kumar', complaint: 'Headache', diagnosis: 'Migraine', prescription: ['Tab. Sumatriptan 50mg (SOS).'] },
-      { date: '2023-01-30', doctor: 'Dr. Rajesh Kumar', complaint: 'Routine checkup', diagnosis: 'Routine Checkup', prescription: ['All vitals normal. Advised multivitamins.'] },
-    ],
-  },
-   {
-    id: 'CZ-345678',
-    name: 'Vikram Mehra',
-    age: 52,
-    gender: 'Male',
-    avatarUrl: 'https://placehold.co/40x40.png',
-    email: 'vikram.mehra@example.com',
-    phone: '+91 87654 32109',
-    address: 'Flat 501, Heritage Heights, Pune',
-    visits: [
-      { date: '2024-07-05', doctor: 'Dr. Rajesh Kumar', complaint: 'High BP reading at home', diagnosis: 'Hypertension', prescription: ['Tab. Amlodipine 5mg (1-0-0).'], notes: 'Monitor BP weekly.' },
-    ],
-  },
-];
+const newPatientSchema = z.object({
+    name: z.string().min(1, 'Name is required'),
+    age: z.coerce.number().min(1, 'Age is required'),
+    gender: z.enum(['Male', 'Female', 'Other']),
+    email: z.string().email('Invalid email address'),
+    phone: z.string().min(10, 'Invalid phone number'),
+    address: z.string().min(1, 'Address is required'),
+});
 
 
 export default function PatientsPage() {
+  const [patients, setPatients] = useState<Patient[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [viewingVisit, setViewingVisit] = useState<Visit | null>(null);
+  const [isNewPatientDialogOpen, setIsNewPatientDialogOpen] = useState(false);
 
-  const filteredPatients = mockPatients.filter(patient =>
+  const form = useForm<z.infer<typeof newPatientSchema>>({
+    resolver: zodResolver(newPatientSchema),
+    defaultValues: {
+      name: '',
+      age: undefined,
+      gender: 'Male',
+      email: '',
+      phone: '',
+      address: '',
+    },
+  });
+
+  const filteredPatients = patients.filter(patient =>
     patient.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     patient.id.toLowerCase().includes(searchQuery.toLowerCase())
   );
   
   const handlePrint = () => {
-    // This uses the browser's print functionality
     window.print();
   };
+
+  const handleAddNewPatient = (values: z.infer<typeof newPatientSchema>) => {
+    const newPatient: Patient = {
+        id: `CZ-${Date.now().toString().slice(-6)}`,
+        ...values,
+        avatarUrl: `https://placehold.co/40x40.png?text=${values.name[0]}`,
+        visits: [],
+    };
+    setPatients(prev => [...prev, newPatient]);
+    form.reset();
+    setIsNewPatientDialogOpen(false);
+    setSelectedPatient(newPatient);
+  }
 
   if (selectedPatient) {
     return (
@@ -147,28 +129,35 @@ export default function PatientsPage() {
             <Separator/>
             <div>
               <h3 className="text-xl font-semibold mb-2">Visit History</h3>
-              <Accordion type="single" collapsible className="w-full">
-                {selectedPatient.visits.map((visit, index) => (
-                  <AccordionItem value={`item-${index}`} key={index}>
-                    <AccordionTrigger>
-                      <div className="flex justify-between w-full pr-4">
-                        <span>{visit.date}</span>
-                        <span className="text-muted-foreground">{visit.diagnosis}</span>
-                      </div>
-                    </AccordionTrigger>
-                    <AccordionContent className="space-y-4 pl-2">
-                      <p><strong>Doctor:</strong> {visit.doctor}</p>
-                      <p><strong>Chief Complaint:</strong> {visit.complaint}</p>
-                      <p><strong>Diagnosis:</strong> {visit.diagnosis}</p>
-                      <p><strong>Prescription:</strong> {visit.prescription.join(' ')}</p>
-                      <Button variant="secondary" size="sm" onClick={() => setViewingVisit(visit)}>
-                        <FileText className="mr-2 h-4 w-4"/>
-                        View Report
-                      </Button>
-                    </AccordionContent>
-                  </AccordionItem>
-                ))}
-              </Accordion>
+              {selectedPatient.visits.length === 0 ? (
+                <div className="text-center text-muted-foreground py-8">
+                    <p>No visit history found.</p>
+                    <Button className="mt-4" variant="outline">Add New Visit Record</Button>
+                </div>
+              ) : (
+                <Accordion type="single" collapsible className="w-full">
+                    {selectedPatient.visits.map((visit, index) => (
+                    <AccordionItem value={`item-${index}`} key={index}>
+                        <AccordionTrigger>
+                        <div className="flex justify-between w-full pr-4">
+                            <span>{visit.date}</span>
+                            <span className="text-muted-foreground">{visit.diagnosis}</span>
+                        </div>
+                        </AccordionTrigger>
+                        <AccordionContent className="space-y-4 pl-2">
+                        <p><strong>Doctor:</strong> {visit.doctor}</p>
+                        <p><strong>Chief Complaint:</strong> {visit.complaint}</p>
+                        <p><strong>Diagnosis:</strong> {visit.diagnosis}</p>
+                        <p><strong>Prescription:</strong> {visit.prescription.join(' ')}</p>
+                        <Button variant="secondary" size="sm" onClick={() => setViewingVisit(visit)}>
+                            <FileText className="mr-2 h-4 w-4"/>
+                            View Report
+                        </Button>
+                        </AccordionContent>
+                    </AccordionItem>
+                    ))}
+                </Accordion>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -257,12 +246,19 @@ export default function PatientsPage() {
   }
 
   return (
+    <>
     <div className="grid flex-1 items-start gap-4">
-        <CardHeader className="px-0">
-            <CardTitle className="text-2xl">Patient Management</CardTitle>
-            <CardDescription>
-                Search for patients or view their profiles and visit history.
-            </CardDescription>
+        <CardHeader className="px-0 flex-row justify-between items-center">
+            <div>
+                <CardTitle className="text-2xl">Patient Management</CardTitle>
+                <CardDescription>
+                    Search for patients or add a new one.
+                </CardDescription>
+            </div>
+            <Button onClick={() => setIsNewPatientDialogOpen(true)}>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                New Patient
+            </Button>
         </CardHeader>
         <div className="relative">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -296,11 +292,70 @@ export default function PatientsPage() {
                 </Card>
             ))}
         </div>
-        {filteredPatients.length === 0 && (
+        {patients.length > 0 && filteredPatients.length === 0 && (
             <div className="text-center text-muted-foreground py-12">
-                <p>No patients found.</p>
+                <p>No patients found for your search.</p>
+            </div>
+        )}
+        {patients.length === 0 && (
+            <div className="text-center text-muted-foreground py-12 border border-dashed rounded-lg">
+                <p className="mb-2 font-semibold">No Patients Yet</p>
+                <p>Click "New Patient" to add your first patient record.</p>
             </div>
         )}
     </div>
+    
+    <Dialog open={isNewPatientDialogOpen} onOpenChange={setIsNewPatientDialogOpen}>
+        <DialogContent>
+            <DialogHeader>
+                <DialogTitle>Add New Patient</DialogTitle>
+                <DialogDescription>
+                    Enter the details for the new patient.
+                </DialogDescription>
+            </DialogHeader>
+            <Form {...form}>
+                <form onSubmit={form.handleSubmit(handleAddNewPatient)} className="space-y-4">
+                    <FormField control={form.control} name="name" render={({ field }) => (
+                        <FormItem><FormLabel>Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                    <div className="grid grid-cols-2 gap-4">
+                        <FormField control={form.control} name="age" render={({ field }) => (
+                            <FormItem><FormLabel>Age</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+                        )} />
+                        <FormField control={form.control} name="gender" render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Gender</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                                    <SelectContent>
+                                        <SelectItem value="Male">Male</SelectItem>
+                                        <SelectItem value="Female">Female</SelectItem>
+                                        <SelectItem value="Other">Other</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                <FormMessage />
+                            </FormItem>
+                        )} />
+                    </div>
+                     <FormField control={form.control} name="email" render={({ field }) => (
+                        <FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                     <FormField control={form.control} name="phone" render={({ field }) => (
+                        <FormItem><FormLabel>Phone</FormLabel><FormControl><Input type="tel" {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                     <FormField control={form.control} name="address" render={({ field }) => (
+                        <FormItem><FormLabel>Address</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                    <DialogFooter>
+                        <DialogClose asChild>
+                            <Button type="button" variant="secondary">Cancel</Button>
+                        </DialogClose>
+                        <Button type="submit">Save Patient</Button>
+                    </DialogFooter>
+                </form>
+            </Form>
+        </DialogContent>
+    </Dialog>
+    </>
   );
 }
