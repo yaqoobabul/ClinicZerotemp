@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
-import { PlusCircle, ChevronsUpDown, Check, Calendar as CalendarIcon } from 'lucide-react';
+import { PlusCircle, ChevronsUpDown, Check, Calendar as CalendarIcon, ZoomIn, ZoomOut } from 'lucide-react';
 import { AppointmentForm, AppointmentFormValues } from '@/components/app/AppointmentForm';
 import { format, set } from 'date-fns';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -12,12 +12,13 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { Slider } from '@/components/ui/slider';
+
 
 type Doctor = {
   id: string;
   name: string;
   color: string;
-  colorDark: string;
 };
 
 type Appointment = {
@@ -46,8 +47,8 @@ type SelectedSlotInfo = {
 } | null;
 
 const initialDoctors: Doctor[] = [
-  { id: 'doc1', name: 'Dr. Priya Sharma', color: 'hsl(var(--chart-1))', colorDark: 'hsl(var(--chart-1))' },
-  { id: 'doc2', name: 'Dr. Rohan Mehra', color: 'hsl(var(--chart-2))', colorDark: 'hsl(var(--chart-2))' },
+  { id: 'doc1', name: 'Dr. Priya Sharma', color: 'hsl(var(--chart-1))' },
+  { id: 'doc2', name: 'Dr. Rohan Mehra', color: 'hsl(var(--chart-2))' },
 ];
 
 const initialPatients: Patient[] = [
@@ -81,6 +82,7 @@ export default function AppointmentsPage() {
   const [appointmentFlowStep, setAppointmentFlowStep] = useState<'choose' | 'new' | 'existing'>('choose');
   const [selectedPatientForAppointment, setSelectedPatientForAppointment] = useState<Patient | null>(null);
   const [selectedSlotInfo, setSelectedSlotInfo] = useState<SelectedSlotInfo>(null);
+  const [zoomLevel, setZoomLevel] = useState(2);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -127,13 +129,16 @@ export default function AppointmentsPage() {
   };
 
   const handleSlotClick = (doctorId: string, time: Date) => {
-    const combinedDateTime = set(selectedDate || new Date(), {
+    if (!selectedDate) return;
+    const combinedDateTime = set(selectedDate, {
         hours: time.getHours(),
         minutes: time.getMinutes(),
         seconds: 0,
         milliseconds: 0,
     });
     setSelectedSlotInfo({ doctorId, dateTime: combinedDateTime });
+    setAppointmentFlowStep('choose');
+    setSelectedPatientForAppointment(null);
     setIsNewAppointmentDialogOpen(true);
   };
 
@@ -197,13 +202,13 @@ export default function AppointmentsPage() {
     const durationMinutes = app.durationMinutes || 30;
     
     // Each 30-minute slot is a row, so 2 rows per hour. Grid rows are 1-indexed.
-    const gridRowStart = (startMinutes / 30) + 1;
-    const gridRowEnd = gridRowStart + (durationMinutes / 30);
+    const gridRowStart = (startMinutes / 30) * 2 + 1; // 2 grid lines per 30 mins
+    const gridRowEnd = gridRowStart + (durationMinutes / 30) * 2;
 
     return (
       <div
         key={app.id}
-        className="relative flex flex-col overflow-hidden rounded-lg p-2 text-white shadow-md"
+        className="relative flex flex-col overflow-hidden rounded-lg p-2 text-white shadow-md bg-primary/80"
         style={{ 
             gridRow: `${gridRowStart} / ${gridRowEnd}`,
             backgroundColor: doctorColor,
@@ -234,6 +239,8 @@ export default function AppointmentsPage() {
     return {};
   };
 
+  const slotHeight = `${zoomLevel * 0.5}rem`; // e.g., zoom 2 -> 1rem, zoom 4 -> 2rem
+
   return (
     <div className="flex flex-col h-[calc(100vh-8rem)]">
         <header className="flex items-center justify-between pb-4">
@@ -249,6 +256,18 @@ export default function AppointmentsPage() {
                         <Calendar mode="single" selected={selectedDate} onSelect={(date) => date && setSelectedDate(date)} initialFocus />
                     </PopoverContent>
                 </Popover>
+                 <div className="flex items-center gap-2">
+                    <Button variant="outline" size="icon" onClick={() => setZoomLevel(prev => Math.max(1, prev - 1))}><ZoomOut/></Button>
+                    <Slider
+                        value={[zoomLevel]}
+                        onValueChange={(value) => setZoomLevel(value[0])}
+                        min={1}
+                        max={8}
+                        step={1}
+                        className="w-32"
+                    />
+                    <Button variant="outline" size="icon" onClick={() => setZoomLevel(prev => Math.min(8, prev + 1))}><ZoomIn/></Button>
+                </div>
             </div>
             <Dialog open={isNewAppointmentDialogOpen} onOpenChange={setIsNewAppointmentDialogOpen}>
               <DialogTrigger asChild>
@@ -312,7 +331,7 @@ export default function AppointmentsPage() {
                         <div 
                             key={doctor.id} 
                             className="h-12 flex items-center justify-center p-2 text-center font-semibold border-l first:border-l-0 text-white"
-                            style={{ backgroundColor: doctor.color }}
+                             style={{ backgroundColor: doctor.color }}
                         >
                             <h3>{doctor.name}</h3>
                         </div>
@@ -320,31 +339,40 @@ export default function AppointmentsPage() {
                 </div>
 
                 {/* Timeline Grid */}
-                <div className="col-start-1 row-start-2 border-r">
+                <div className="col-start-1 row-start-2 border-r relative">
                     {timeSlots.map((time, index) => (
                         (time.getMinutes() === 0) &&
-                        <div key={index} className="h-16 flex justify-end pr-2 relative -top-3">
-                            <span className="text-xs text-muted-foreground bg-card px-1">{format(time, 'h a')}</span>
+                        <div key={index} className="relative text-right pr-2" style={{ height: `calc(${slotHeight} * 2)` }}>
+                             <span className="text-xs text-muted-foreground absolute -top-2 right-2 bg-card px-1">{format(time, 'h a')}</span>
                         </div>
                     ))}
                 </div>
-
-                <div className="col-start-2 row-start-2 grid" style={{ gridTemplateColumns: `repeat(${doctors.length}, 1fr)`, gridTemplateRows: `repeat(48, 2rem)` }}>
-                    {/* Background Grid & Appointments */}
-                    {doctors.map(doctor => (
-                        <div key={doctor.id} className="relative grid grid-flow-row border-l first:border-l-0" style={{ gridTemplateRows: 'repeat(48, 2rem)' }}>
-                            {/* Background Lines / Clickable slots */}
+                
+                <div className="col-start-2 row-start-2 grid" style={{ gridTemplateColumns: `repeat(${doctors.length}, 1fr)` }}>
+                     {doctors.map(doctor => (
+                        <div key={doctor.id} className="relative grid border-l first:border-l-0" style={{ gridTemplateRows: `repeat(${timeSlots.length * 2}, ${slotHeight})` }}>
+                            {/* Background Lines & Clickable slots */}
                             {timeSlots.map((time, index) => (
-                                <button 
-                                    key={index} 
-                                    aria-label={`Book appointment with ${doctor.name} at ${format(time, 'p')}`}
-                                    onClick={() => handleSlotClick(doctor.id, time)}
-                                    className={cn(
-                                        "h-8 border-b text-left transition-colors", 
-                                        index % 2 !== 0 && "border-dashed border-border/50",
-                                        `hover:bg-[${doctor.color}]/20`
-                                    )}
-                                ></button>
+                                <React.Fragment key={`${doctor.id}-${index}`}>
+                                  <button
+                                      aria-label={`Book with ${doctor.name} at ${format(time, 'p')}`}
+                                      onClick={() => handleSlotClick(doctor.id, time)}
+                                      className={cn(
+                                          "w-full border-b border-dotted border-border/75 transition-colors",
+                                          `hover:bg-[${doctor.color}]/20`
+                                      )}
+                                      style={{ height: slotHeight }}
+                                  ></button>
+                                  <button
+                                      aria-label={`Book with ${doctor.name} at ${format(new Date(time.getTime() + 15 * 60000), 'p')}`}
+                                      onClick={() => handleSlotClick(doctor.id, new Date(time.getTime() + 15 * 60000))}
+                                      className={cn(
+                                          "w-full border-b border-dashed border-border transition-colors",
+                                          `hover:bg-[${doctor.color}]/20`
+                                      )}
+                                      style={{ height: slotHeight }}
+                                  ></button>
+                                </React.Fragment>
                             ))}
                              {/* Appointments */}
                             {getAppointmentsForDoctorAndDate(doctor.id, selectedDate).map(app => renderAppointmentCard(app, doctor.color))}
@@ -356,3 +384,5 @@ export default function AppointmentsPage() {
     </div>
   );
 }
+
+    
