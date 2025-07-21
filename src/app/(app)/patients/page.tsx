@@ -35,6 +35,7 @@ type Patient = {
   email: string;
   phone: string;
   address: string;
+  govtId: string;
   visits: Visit[];
 };
 
@@ -42,9 +43,10 @@ const newPatientSchema = z.object({
     name: z.string().min(1, 'Name is required'),
     age: z.coerce.number().min(1, 'Age is required'),
     gender: z.enum(['Male', 'Female', 'Other']),
-    email: z.string().email('Invalid email address'),
+    email: z.string().email('Invalid email address').optional().or(z.literal('')),
     phone: z.string().min(10, 'Invalid phone number'),
     address: z.string().min(1, 'Address is required'),
+    govtId: z.string().optional(),
 });
 
 
@@ -64,6 +66,7 @@ export default function PatientsPage() {
       email: '',
       phone: '',
       address: '',
+      govtId: '',
     },
   });
 
@@ -80,6 +83,8 @@ export default function PatientsPage() {
     const newPatient: Patient = {
         id: `CZ-${Date.now().toString().slice(-6)}`,
         ...values,
+        email: values.email || '',
+        govtId: values.govtId || '',
         avatarUrl: `https://placehold.co/40x40.png?text=${values.name[0]}`,
         visits: [],
     };
@@ -342,6 +347,9 @@ export default function PatientsPage() {
                     )} />
                      <FormField control={form.control} name="phone" render={({ field }) => (
                         <FormItem><FormLabel>Phone</FormLabel><FormControl><Input type="tel" {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                    <FormField control={form.control} name="govtId" render={({ field }) => (
+                        <FormItem><FormLabel>Govt. ID</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
                      <FormField control={form.control} name="address" render={({ field }) => (
                         <FormItem><FormLabel>Address</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
