@@ -204,10 +204,11 @@ export default function PatientsPage() {
                           <div className="mb-1">
                             <h3 className="font-bold">Patient Details</h3>
                             <div className="grid grid-cols-3 gap-x-4">
-                              <div><strong>ID:</strong> {selectedPatient.id}</div>
+                              <div><strong>Patient ID:</strong> {selectedPatient.id}</div>
                               <div><strong>Name:</strong> {selectedPatient.name}</div>
-                              <div><strong>Age/Gender:</strong> {selectedPatient.age} / {selectedPatient.gender}</div>
-                              <div className="col-span-3"><strong>Address:</strong> {selectedPatient.address}</div>
+                              <div><strong>Age:</strong> {selectedPatient.age}</div>
+                              <div><strong>Gender:</strong> {selectedPatient.gender}</div>
+                              <div className="col-span-2"><strong>Address:</strong> {selectedPatient.address}</div>
                             </div>
                           </div>
 
@@ -242,7 +243,7 @@ export default function PatientsPage() {
                           </div>
                           )}
                       </div>
-                      <div className="text-right mt-24">
+                      <div className="text-right mt-16">
                           <p className="border-t-2 border-black pt-1 font-semibold inline-block">Dr. {viewingVisit.doctor}</p>
                       </div>
                   </div>
