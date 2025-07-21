@@ -409,11 +409,11 @@ export default function PatientsPage() {
                      <FormField control={form.control} name="phone" render={({ field }) => (
                         <FormItem><FormLabel>Phone</FormLabel><FormControl><Input type="tel" {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
-                    <FormField control={form.control} name="govtId" render={({ field }) => (
-                        <FormItem><FormLabel>Govt. ID</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                    )} />
                      <FormField control={form.control} name="address" render={({ field }) => (
                         <FormItem><FormLabel>Address</FormLabel><FormControl><Input {...field} onBlur={(e) => field.onChange(toTitleCase(e.target.value))} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                    <FormField control={form.control} name="govtId" render={({ field }) => (
+                        <FormItem><FormLabel>Govt. ID</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
                     <FormField control={form.control} name="email" render={({ field }) => (
                         <FormItem><FormLabel>Email (Optional)</FormLabel><FormControl><Input type="email" {...field} /></FormControl><FormMessage /></FormItem>
@@ -431,5 +431,3 @@ export default function PatientsPage() {
     </>
   );
 }
-
-    
