@@ -23,6 +23,7 @@ type GeneratedSummary = {
     id?: string;
     name: string;
     age: string;
+    gender?: string;
     contact?: string;
     address?: string;
     govtId?: string;
@@ -99,6 +100,7 @@ const formSchema = z.object({
   patientId: z.string().optional(),
   patientName: z.string().min(1, 'Patient name is required.'),
   patientAge: z.string().min(1, 'Patient age is required.'),
+  patientGender: z.string().optional(),
   patientContact: z.string().optional(),
   patientAddress: z.string().optional(),
   govtId: z.string().optional(),
@@ -145,6 +147,7 @@ export function DentalPrescriptionGenerator() {
       patientId: '',
       patientName: '',
       patientAge: '',
+      patientGender: '',
       patientContact: '',
       patientAddress: '',
       govtId: '',
@@ -178,6 +181,7 @@ export function DentalPrescriptionGenerator() {
         form.setValue('patientId', patientId);
         form.setValue('patientName', toTitleCase(searchParams.get('patientName') || ''));
         form.setValue('patientAge', searchParams.get('patientAge') || '');
+        form.setValue('patientGender', searchParams.get('patientGender') || '');
         form.setValue('patientContact', searchParams.get('patientContact') || '');
         form.setValue('patientAddress', toTitleCase(searchParams.get('patientAddress') || ''));
         form.setValue('govtId', searchParams.get('govtId') || '');
@@ -267,6 +271,7 @@ export function DentalPrescriptionGenerator() {
                 id: values.patientId || undefined,
                 name: toTitleCase(values.patientName),
                 age: values.patientAge,
+                gender: values.patientGender || undefined,
                 contact: values.patientContact || undefined,
                 address: toTitleCase(values.patientAddress || ''),
                 govtId: values.govtId || undefined,
@@ -351,12 +356,30 @@ export function DentalPrescriptionGenerator() {
                     <FormItem><FormLabel>Govt. ID Number</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                   )} />
                 </div>
-                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <FormField control={form.control} name="patientName" render={({ field }) => (
                         <FormItem><FormLabel>Patient Name</FormLabel><FormControl><Input {...field} onBlur={(e) => field.onChange(toTitleCase(e.target.value))} /></FormControl><FormMessage /></FormItem>
                     )} />
                     <FormField control={form.control} name="patientAge" render={({ field }) => (
                         <FormItem><FormLabel>Age</FormLabel><FormControl><Input type="text" {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                    <FormField control={form.control} name="patientGender" render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Gender</FormLabel>
+                             <Select onValueChange={field.onChange} value={field.value}>
+                                <FormControl>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select gender" />
+                                    </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                    <SelectItem value="Male">Male</SelectItem>
+                                    <SelectItem value="Female">Female</SelectItem>
+                                    <SelectItem value="Other">Other</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <FormMessage />
+                        </FormItem>
                     )} />
                     <FormField control={form.control} name="patientContact" render={({ field }) => (
                         <FormItem><FormLabel>Contact Number</FormLabel><FormControl><Input type="tel" {...field} /></FormControl><FormMessage /></FormItem>
@@ -723,7 +746,7 @@ export function DentalPrescriptionGenerator() {
                         <div className="grid grid-cols-3 gap-x-4">
                           <div><strong>Patient ID:</strong> {opdSummary.patientDetails.id || 'N/A'}</div>
                           <div><strong>Name:</strong> {opdSummary.patientDetails.name}</div>
-                          <div><strong>Age:</strong> {opdSummary.patientDetails.age}</div>
+                          <div><strong>Age/Gender:</strong> {opdSummary.patientDetails.age} / {opdSummary.patientDetails.gender}</div>
                           <div><strong>Contact:</strong> {opdSummary.patientDetails.contact || 'N/A'}</div>
                           <div><strong>Govt. ID:</strong> {opdSummary.patientDetails.govtId || 'N/A'}</div>
                           <div className="col-span-2"><strong>Address:</strong> {opdSummary.patientDetails.address || 'N/A'}</div>

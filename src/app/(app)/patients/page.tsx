@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Search, User, Phone, Mail, Printer, FileText, PlusCircle, Stethoscope, BriefcaseMedical, Home } from 'lucide-react';
+import { ArrowLeft, Search, User, Phone, Mail, Printer, FileText, PlusCircle, Stethoscope, BriefcaseMedical, Home, VenetianMask } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose, DialogFooter } from '@/components/ui/dialog';
@@ -32,6 +32,7 @@ type Patient = {
   id: string;
   name: string;
   age: number;
+  gender: string;
   avatarUrl: string;
   email: string;
   phone: string;
@@ -43,10 +44,11 @@ type Patient = {
 const newPatientSchema = z.object({
     name: z.string().min(1, 'Name is required'),
     age: z.coerce.number().min(1, 'Age is required'),
-    email: z.string().email('Invalid email address').optional().or(z.literal('')),
+    gender: z.string().min(1, 'Gender is required'),
     phone: z.string().min(10, 'Invalid phone number'),
     address: z.string().min(1, 'Address is required'),
     govtId: z.string().optional(),
+    email: z.string().email('Invalid email address').optional().or(z.literal('')),
 });
 
 const toTitleCase = (str: string) => str ? str.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()) : '';
@@ -67,6 +69,7 @@ export default function PatientsPage() {
     defaultValues: {
       name: '',
       age: '' as any, // Initialize with empty string to avoid uncontrolled to controlled error
+      gender: '',
       email: '',
       phone: '',
       address: '',
@@ -98,6 +101,7 @@ export default function PatientsPage() {
     form.reset({
       name: '',
       age: '' as any,
+      gender: '',
       email: '',
       phone: '',
       address: '',
@@ -115,6 +119,7 @@ export default function PatientsPage() {
         patientId: selectedPatient.id,
         patientName: selectedPatient.name,
         patientAge: selectedPatient.age.toString(),
+        patientGender: selectedPatient.gender,
         patientContact: selectedPatient.phone,
         patientAddress: selectedPatient.address,
         govtId: selectedPatient.govtId,
@@ -142,7 +147,7 @@ export default function PatientsPage() {
               </Avatar>
               <div>
                 <CardTitle className="text-3xl">{selectedPatient.name}</CardTitle>
-                <CardDescription className="text-base">ID: {selectedPatient.id} &bull; {selectedPatient.age} years old</CardDescription>
+                <CardDescription className="text-base">ID: {selectedPatient.id} &bull; {selectedPatient.age} years old &bull; {selectedPatient.gender}</CardDescription>
               </div>
             </div>
           </CardHeader>
@@ -237,7 +242,7 @@ export default function PatientsPage() {
                             <div className="grid grid-cols-3 gap-x-4">
                               <div><strong>Patient ID:</strong> {selectedPatient.id}</div>
                               <div><strong>Name:</strong> {selectedPatient.name}</div>
-                              <div><strong>Age:</strong> {selectedPatient.age}</div>
+                              <div><strong>Age/Gender:</strong> {selectedPatient.age} / {selectedPatient.gender}</div>
                               <div className="col-span-2"><strong>Address:</strong> {selectedPatient.address}</div>
                             </div>
                           </div>
@@ -385,6 +390,24 @@ export default function PatientsPage() {
                         <FormField control={form.control} name="age" render={({ field }) => (
                             <FormItem><FormLabel>Age</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>
                         )} />
+                        <FormField control={form.control} name="gender" render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Gender</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <FormControl>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select gender" />
+                                        </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                        <SelectItem value="Male">Male</SelectItem>
+                                        <SelectItem value="Female">Female</SelectItem>
+                                        <SelectItem value="Other">Other</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                <FormMessage />
+                            </FormItem>
+                        )} />
                     </div>
                      <FormField control={form.control} name="phone" render={({ field }) => (
                         <FormItem><FormLabel>Phone</FormLabel><FormControl><Input type="tel" {...field} /></FormControl><FormMessage /></FormItem>
@@ -393,7 +416,7 @@ export default function PatientsPage() {
                         <FormItem><FormLabel>Address</FormLabel><FormControl><Input {...field} onBlur={(e) => field.onChange(toTitleCase(e.target.value))} /></FormControl><FormMessage /></FormItem>
                     )} />
                     <FormField control={form.control} name="govtId" render={({ field }) => (
-                        <FormItem><FormLabel>Govt. ID</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                        <FormItem><FormLabel>Govt. ID (Optional)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
                     <FormField control={form.control} name="email" render={({ field }) => (
                         <FormItem><FormLabel>Email (Optional)</FormLabel><FormControl><Input type="email" {...field} /></FormControl><FormMessage /></FormItem>
