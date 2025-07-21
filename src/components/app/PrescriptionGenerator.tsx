@@ -512,7 +512,7 @@ export function PrescriptionGenerator() {
                         )}
                     </div>
                     <div className="text-center mt-16">
-                        <p className="border-t-2 border-black pt-1 font-semibold">Dr. Rajesh Kumar, MBBS, MD (General Medicine)</p>
+                        <p className="border-t-2 border-black pt-1 font-semibold">Dr. Rajesh Kumar</p>
                         <p className="text-xs text-muted-foreground">Reg. No. 12345</p>
                         <p className="text-xs">{new Date().toLocaleString('en-IN')}</p>
                     </div>
@@ -523,5 +523,3 @@ export function PrescriptionGenerator() {
     </div>
   );
 }
-
-    
