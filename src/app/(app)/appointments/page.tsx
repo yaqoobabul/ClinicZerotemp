@@ -18,7 +18,6 @@ import { Slider } from '@/components/ui/slider';
 type Doctor = {
   id: string;
   name: string;
-  color: string;
 };
 
 type Appointment = {
@@ -47,8 +46,8 @@ type SelectedSlotInfo = {
 } | null;
 
 const initialDoctors: Doctor[] = [
-  { id: 'doc1', name: 'Dr. Priya Sharma', color: 'hsl(var(--chart-1))' },
-  { id: 'doc2', name: 'Dr. Rohan Mehra', color: 'hsl(var(--chart-2))' },
+  { id: 'doc1', name: 'Dr. Priya Sharma' },
+  { id: 'doc2', name: 'Dr. Rohan Mehra' },
 ];
 
 const initialPatients: Patient[] = [
@@ -197,13 +196,13 @@ export default function AppointmentsPage() {
     });
   };
 
-  const renderAppointmentCard = (app: Appointment, doctorColor: string) => {
+  const renderAppointmentCard = (app: Appointment) => {
     const startMinutes = app.dateTime.getHours() * 60 + app.dateTime.getMinutes();
     const durationMinutes = app.durationMinutes || 30;
     
     // Each 30-minute slot is a row, so 2 rows per hour. Grid rows are 1-indexed.
-    const gridRowStart = (startMinutes / 30) * 2 + 1; // 2 grid lines per 30 mins
-    const gridRowEnd = gridRowStart + (durationMinutes / 30) * 2;
+    const gridRowStart = (startMinutes / 15) + 1;
+    const gridRowEnd = gridRowStart + (durationMinutes / 15);
 
     return (
       <div
@@ -211,7 +210,6 @@ export default function AppointmentsPage() {
         className="relative flex flex-col overflow-hidden rounded-lg p-2 text-white shadow-md bg-primary/80"
         style={{ 
             gridRow: `${gridRowStart} / ${gridRowEnd}`,
-            backgroundColor: doctorColor,
         }}
       >
         <p className="font-semibold text-sm">{app.patientName}</p>
@@ -330,8 +328,7 @@ export default function AppointmentsPage() {
                     {doctors.map(doctor => (
                         <div 
                             key={doctor.id} 
-                            className="h-12 flex items-center justify-center p-2 text-center font-semibold border-l first:border-l-0 text-white"
-                             style={{ backgroundColor: doctor.color }}
+                            className="h-12 flex items-center justify-center p-2 text-center font-semibold border-l first:border-l-0 bg-muted"
                         >
                             <h3>{doctor.name}</h3>
                         </div>
@@ -357,25 +354,19 @@ export default function AppointmentsPage() {
                                   <button
                                       aria-label={`Book with ${doctor.name} at ${format(time, 'p')}`}
                                       onClick={() => handleSlotClick(doctor.id, time)}
-                                      className={cn(
-                                          "w-full border-b border-dotted border-border/75 transition-colors",
-                                          `hover:bg-[${doctor.color}]/20`
-                                      )}
+                                      className="w-full border-b border-dotted border-border/75 transition-colors hover:bg-accent/50"
                                       style={{ height: slotHeight }}
                                   ></button>
                                   <button
                                       aria-label={`Book with ${doctor.name} at ${format(new Date(time.getTime() + 15 * 60000), 'p')}`}
                                       onClick={() => handleSlotClick(doctor.id, new Date(time.getTime() + 15 * 60000))}
-                                      className={cn(
-                                          "w-full border-b border-dashed border-border transition-colors",
-                                          `hover:bg-[${doctor.color}]/20`
-                                      )}
+                                      className="w-full border-b border-dashed border-border transition-colors hover:bg-accent/50"
                                       style={{ height: slotHeight }}
                                   ></button>
                                 </React.Fragment>
                             ))}
                              {/* Appointments */}
-                            {getAppointmentsForDoctorAndDate(doctor.id, selectedDate).map(app => renderAppointmentCard(app, doctor.color))}
+                            {getAppointmentsForDoctorAndDate(doctor.id, selectedDate).map(app => renderAppointmentCard(app))}
                         </div>
                     ))}
                 </div>
