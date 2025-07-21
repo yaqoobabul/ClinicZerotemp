@@ -126,8 +126,8 @@ const instructionSuggestions = ["Before food", "After food", "With meals", "Empt
 const radiographTypes = ["OPG", "IOPA", "CBCT", "Bitewing"];
 
 // Helper functions for capitalization
-const toTitleCase = (str: string) => str.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
-const capitalizeFirstLetter = (str: string) => str.charAt(0).toUpperCase() + str.slice(1);
+const toTitleCase = (str: string) => str ? str.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()) : '';
+const capitalizeFirstLetter = (str: string) => str ? str.charAt(0).toUpperCase() + str.slice(1) : '';
 
 export function DentalPrescriptionGenerator() {
   const [isLoading, setIsLoading] = useState(false);

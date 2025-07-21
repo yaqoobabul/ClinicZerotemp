@@ -51,6 +51,8 @@ const newPatientSchema = z.object({
     govtId: z.string().optional(),
 });
 
+const toTitleCase = (str: string) => str.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
+
 
 export default function PatientsPage() {
   const [patients, setPatients] = useState<Patient[]>([]);
@@ -88,6 +90,7 @@ export default function PatientsPage() {
     const newPatient: Patient = {
         id: `CZ-${Date.now().toString().slice(-6)}`,
         ...values,
+        name: toTitleCase(values.name),
         email: values.email || '',
         govtId: values.govtId || '',
         avatarUrl: `https://placehold.co/40x40.png?text=${values.name[0]}`,
@@ -152,6 +155,10 @@ export default function PatientsPage() {
                  <div className="flex items-center col-span-2 gap-2 text-sm">
                     <User className="h-4 w-4 text-muted-foreground"/>
                     <span>{selectedPatient.address}</span>
+                </div>
+                <div className="flex items-center col-span-2 gap-2 text-sm">
+                    <BriefcaseMedical className="h-4 w-4 text-muted-foreground"/>
+                    <span>Govt. ID: {selectedPatient.govtId || 'N/A'}</span>
                 </div>
             </div>
             <Separator/>
@@ -369,11 +376,11 @@ export default function PatientsPage() {
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(handleAddNewPatient)} className="space-y-4">
                     <FormField control={form.control} name="name" render={({ field }) => (
-                        <FormItem><FormLabel>Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                        <FormItem><FormLabel>Name</FormLabel><FormControl><Input {...field} onBlur={(e) => field.onChange(toTitleCase(e.target.value))} /></FormControl><FormMessage /></FormItem>
                     )} />
                     <div className="grid grid-cols-2 gap-4">
                         <FormField control={form.control} name="age" render={({ field }) => (
-                            <FormItem><FormLabel>Age</FormLabel><FormControl><Input type="number" {...field} value={field.value === undefined ? '' : field.value} /></FormControl><FormMessage /></FormItem>
+                            <FormItem><FormLabel>Age</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>
                         )} />
                         <FormField control={form.control} name="gender" render={({ field }) => (
                             <FormItem>
