@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState } from 'react';
@@ -227,7 +228,7 @@ export default function PatientsPage() {
           <div className="ml-auto">
              <Button variant="outline" onClick={() => setIsNewVisitDialogOpen(true)}>
                 <PlusCircle className="mr-2 h-4 w-4" />
-                Add New Visit
+                Add New Entry
             </Button>
           </div>
         </div>
@@ -273,7 +274,7 @@ export default function PatientsPage() {
                 <h3 className="text-xl font-semibold">Visit History</h3>
                 <Button variant="outline" size="sm" onClick={() => setIsNewOldVisitDialogOpen(true)}>
                     <PlusCircle className="mr-2 h-4 w-4" />
-                    Add Old Entry
+                    Add Historical Entry
                 </Button>
               </div>
               {selectedPatient.visits.length === 0 ? (
@@ -575,3 +576,4 @@ export default function PatientsPage() {
     </>
   );
 }
+
