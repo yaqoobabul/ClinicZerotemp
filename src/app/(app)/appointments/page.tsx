@@ -3,11 +3,10 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import { PlusCircle, ChevronsUpDown, Check, Calendar as CalendarIcon } from 'lucide-react';
 import { AppointmentForm, AppointmentFormValues } from '@/components/app/AppointmentForm';
-import { format } from 'date-fns';
+import { format, set } from 'date-fns';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
 import { Calendar } from '@/components/ui/calendar';
@@ -27,6 +26,7 @@ type Appointment = {
   dateTime: Date;
   reason: string;
   status: 'upcoming' | 'finished' | 'cancelled';
+  durationMinutes: number;
 };
 
 type Patient = {
@@ -51,15 +51,13 @@ const initialPatients: Patient[] = [
 ];
 
 const initialAppointments: Appointment[] = [
-  { id: '1', patientName: 'Aarav Patel', patientId: '1', doctorId: 'doc1', dateTime: new Date(new Date().setHours(10, 0, 0, 0)), reason: 'Routine Checkup', status: 'upcoming' },
-  { id: '2', patientName: 'Priya Singh', patientId: '2', doctorId: 'doc2', dateTime: new Date(new Date().setHours(11, 30, 0, 0)), reason: 'Follow-up', status: 'upcoming' },
-  { id: '3', patientName: 'Rohan Gupta', patientId: '3', doctorId: 'doc1', dateTime: new Date(new Date().setHours(14, 0, 0, 0)), reason: 'Dental Cleaning', status: 'upcoming' },
-  { id: '4', patientName: 'Saanvi Sharma', patientId: '4', doctorId: 'doc1', dateTime: new Date(new Date().setDate(new Date().getDate() - 1)), reason: 'Root Canal', status: 'finished' },
+  { id: '1', patientName: 'Aarav Patel', patientId: '1', doctorId: 'doc1', dateTime: new Date(new Date().setHours(10, 0, 0, 0)), reason: 'Routine Checkup', status: 'upcoming', durationMinutes: 30 },
+  { id: '2', patientName: 'Priya Singh', patientId: '2', doctorId: 'doc2', dateTime: new Date(new Date().setHours(11, 30, 0, 0)), reason: 'Follow-up', status: 'upcoming', durationMinutes: 30 },
+  { id: '3', patientName: 'Rohan Gupta', patientId: '3', doctorId: 'doc1', dateTime: new Date(new Date().setHours(14, 0, 0, 0)), reason: 'Dental Cleaning', status: 'upcoming', durationMinutes: 60 },
+  { id: '4', patientName: 'Saanvi Sharma', patientId: '4', doctorId: 'doc1', dateTime: new Date(new Date().setDate(new Date().getDate() - 1)), reason: 'Root Canal', status: 'finished', durationMinutes: 90 },
 ];
 
-
-// Generate time slots for all 24 hours
-const timeSlots = Array.from({ length: 24 * 2 }, (_, i) => {
+const timeSlots = Array.from({ length: 48 }, (_, i) => {
     const hour = Math.floor(i / 2);
     const minute = (i % 2) * 30;
     const date = new Date();
@@ -68,7 +66,7 @@ const timeSlots = Array.from({ length: 24 * 2 }, (_, i) => {
 });
 
 export default function AppointmentsPage() {
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [appointments, setAppointments] = useState<Appointment[]>(initialAppointments);
   const [patients, setPatients] = useState<Patient[]>(initialPatients);
   const [doctors] = useState<Doctor[]>(initialDoctors);
@@ -76,6 +74,10 @@ export default function AppointmentsPage() {
   const [appointmentFlowStep, setAppointmentFlowStep] = useState<'choose' | 'new' | 'existing'>('choose');
   const [selectedPatientForAppointment, setSelectedPatientForAppointment] = useState<Patient | null>(null);
   const { toast } = useToast();
+
+  useEffect(() => {
+    setSelectedDate(new Date());
+  }, []);
 
   const handleAddAppointment = (values: AppointmentFormValues) => {
     let patientId = selectedPatientForAppointment?.id;
@@ -110,6 +112,7 @@ export default function AppointmentsPage() {
       dateTime: values.dateTime,
       reason: values.reason,
       status: 'upcoming',
+      durationMinutes: 30, // Default duration
     };
     setAppointments(prev => [...prev, newAppointment]);
     closeAndResetDialog();
@@ -162,29 +165,38 @@ export default function AppointmentsPage() {
     );
   };
 
-  const getAppointmentsForDoctorAndDate = (doctorId: string, date: Date) => {
+  const getAppointmentsForDoctorAndDate = (doctorId: string, date: Date | null) => {
+    if (!date) return [];
     return appointments.filter(app => {
       return app.doctorId === doctorId && format(app.dateTime, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd');
     });
   };
 
   const renderAppointmentCard = (app: Appointment) => {
-    const top = app.dateTime.getHours() * 60 + app.dateTime.getMinutes();
-    const duration = 30; // Assuming 30 minute slots for now
+    const startMinutes = app.dateTime.getHours() * 60 + app.dateTime.getMinutes();
+    const durationMinutes = app.durationMinutes || 30;
+    
+    // Each 30-minute slot is a row, so 2 rows per hour. Grid rows are 1-indexed.
+    const gridRowStart = (startMinutes / 30) + 1;
+    const gridRowEnd = gridRowStart + (durationMinutes / 30);
 
     return (
       <div
         key={app.id}
-        className="absolute w-full p-2 rounded-lg bg-red-100 border border-red-300 shadow-sm"
-        style={{ top: `${(top / (24 * 60)) * 100}%`, height: `${(duration / (24 * 60)) * 100}%` }}
+        className="relative flex flex-col overflow-hidden rounded-lg bg-primary/80 p-2 text-primary-foreground shadow-md"
+        style={{ gridRow: `${gridRowStart} / ${gridRowEnd}` }}
       >
-        <p className="font-semibold text-sm text-red-800">{app.patientName}</p>
-        <p className="text-xs text-red-600">{format(app.dateTime, 'p')}</p>
-        <p className="text-xs text-red-600 truncate">{app.reason}</p>
+        <p className="font-semibold text-sm">{app.patientName}</p>
+        <p className="text-xs opacity-90">{format(app.dateTime, 'p')}</p>
+        <p className="text-xs opacity-90 truncate mt-1">{app.reason}</p>
       </div>
     );
   };
   
+  if (!selectedDate) {
+    return null; // Or a loading indicator
+  }
+
   return (
     <div className="flex flex-col h-[calc(100vh-8rem)]">
         <header className="flex items-center justify-between pb-4">
@@ -192,7 +204,7 @@ export default function AppointmentsPage() {
                 <Popover>
                     <PopoverTrigger asChild>
                         <Button variant="outline">
-                            <CalendarIcon className="mr-2" />
+                            <CalendarIcon className="mr-2 h-4 w-4" />
                             <span>{format(selectedDate, 'PPP')}</span>
                         </Button>
                     </PopoverTrigger>
@@ -200,7 +212,6 @@ export default function AppointmentsPage() {
                         <Calendar mode="single" selected={selectedDate} onSelect={(date) => date && setSelectedDate(date)} initialFocus />
                     </PopoverContent>
                 </Popover>
-                {/* Placeholder for Doctor Filter Dropdown */}
             </div>
             <Dialog open={isNewAppointmentDialogOpen} onOpenChange={setIsNewAppointmentDialogOpen}>
               <DialogTrigger asChild>
@@ -252,33 +263,40 @@ export default function AppointmentsPage() {
             </Dialog>
         </header>
 
-        <div className="flex-grow overflow-auto border rounded-lg bg-card">
-            <div className="flex h-full">
-                {/* Time Gutter */}
-                <div className="w-20 text-center border-r">
-                    {timeSlots.map(time => (
-                        (time.getMinutes() === 0) &&
-                        <div key={time.toISOString()} className="h-16 flex items-center justify-center border-b relative">
-                            <span className="text-xs text-muted-foreground absolute -top-2 bg-card px-1">{format(time, 'h a')}</span>
+        <div className="flex-grow overflow-auto rounded-lg border bg-card">
+            <div className="grid h-full" style={{ gridTemplateColumns: 'auto 1fr' }}>
+                {/* Headers */}
+                <div className="sticky top-0 z-10 bg-card border-b border-r">
+                    <div className="h-12 flex items-center justify-center p-2 text-sm font-semibold text-muted-foreground">Time</div>
+                </div>
+                <div className="sticky top-0 z-10 bg-card border-b grid" style={{ gridTemplateColumns: `repeat(${doctors.length}, 1fr)` }}>
+                    {doctors.map(doctor => (
+                        <div key={doctor.id} className="h-12 flex items-center justify-center p-2 text-center font-semibold border-l first:border-l-0">
+                            <h3>{doctor.name}</h3>
                         </div>
                     ))}
                 </div>
 
-                {/* Doctor Columns */}
-                <div className="flex flex-grow">
+                {/* Timeline Grid */}
+                <div className="col-start-1 row-start-2 border-r">
+                    {timeSlots.map((time, index) => (
+                        (time.getMinutes() === 0) &&
+                        <div key={index} className="h-16 flex justify-end pr-2 relative -top-3">
+                            <span className="text-xs text-muted-foreground bg-card px-1">{format(time, 'h a')}</span>
+                        </div>
+                    ))}
+                </div>
+
+                <div className="col-start-2 row-start-2 grid" style={{ gridTemplateColumns: `repeat(${doctors.length}, 1fr)`, gridTemplateRows: `repeat(48, 2rem)` }}>
+                    {/* Background Grid & Appointments */}
                     {doctors.map(doctor => (
-                        <div key={doctor.id} className="flex-1 border-r last:border-r-0">
-                            <div className="sticky top-0 bg-card p-2 text-center border-b z-10">
-                                <h3 className="font-semibold">{doctor.name}</h3>
-                            </div>
-                            <div className="relative h-full">
-                                {/* Background time slots */}
-                                {timeSlots.map(time => (
-                                    <div key={time.toISOString()} className="h-8 border-b bg-green-50/50 last:border-b-0"></div>
-                                ))}
-                                {/* Appointments */}
-                                {getAppointmentsForDoctorAndDate(doctor.id, selectedDate).map(renderAppointmentCard)}
-                            </div>
+                        <div key={doctor.id} className="relative grid grid-flow-row border-l first:border-l-0" style={{ gridTemplateRows: 'repeat(48, 2rem)' }}>
+                            {/* Background Lines */}
+                            {timeSlots.map((_, index) => (
+                                <div key={index} className={cn("h-8 border-b", index % 2 !== 0 && "border-dashed border-border/50")}></div>
+                            ))}
+                             {/* Appointments */}
+                            {getAppointmentsForDoctorAndDate(doctor.id, selectedDate).map(renderAppointmentCard)}
                         </div>
                     ))}
                 </div>
@@ -287,3 +305,4 @@ export default function AppointmentsPage() {
     </div>
   );
 }
+
