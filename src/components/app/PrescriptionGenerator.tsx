@@ -41,6 +41,7 @@ type GeneratedSummary = {
   provisionalDiagnosis: string;
   prescriptionTable?: string;
   testsAdvised?: string;
+  treatmentsAdvised?: string;
   additionalNotes?: string;
   followUpDate?: string;
 };
@@ -75,6 +76,10 @@ const testAdvisedSchema = z.object({
   value: z.string()
 });
 
+const treatmentAdvisedSchema = z.object({
+  value: z.string()
+});
+
 const formSchema = z.object({
   patientId: z.string().optional(),
   patientName: z.string().min(1, 'Patient name is required.'),
@@ -95,6 +100,7 @@ const formSchema = z.object({
   provisionalDiagnosis: z.string().min(1, 'Diagnosis is required.'),
   medicines: z.array(medicineSchema).optional(),
   testsAdvised: z.array(testAdvisedSchema).optional(),
+  treatmentsAdvised: z.array(treatmentAdvisedSchema).optional(),
   additionalNotes: z.string().optional(),
   followUpDate: z.string().optional(),
 });
@@ -137,6 +143,7 @@ export function PrescriptionGenerator() {
       provisionalDiagnosis: '',
       medicines: [],
       testsAdvised: [],
+      treatmentsAdvised: [],
       additionalNotes: '',
       followUpDate: '',
     },
@@ -176,6 +183,11 @@ export function PrescriptionGenerator() {
   const { fields: testFields, append: appendTest, remove: removeTest } = useFieldArray({
     control: form.control,
     name: "testsAdvised"
+  });
+
+  const { fields: treatmentFields, append: appendTreatment, remove: removeTreatment } = useFieldArray({
+    control: form.control,
+    name: "treatmentsAdvised"
   });
 
 
@@ -224,6 +236,7 @@ export function PrescriptionGenerator() {
             diagnosisLabel: values.isFinalDiagnosis ? 'Final Diagnosis' : 'Provisional Diagnosis',
             provisionalDiagnosis: capitalizeFirstLetter(values.provisionalDiagnosis),
             testsAdvised: values.testsAdvised?.filter(t => t.value && t.value.trim() !== '').map(t => t.value).join(', ') || undefined,
+            treatmentsAdvised: values.treatmentsAdvised?.filter(t => t.value && t.value.trim() !== '').map(t => t.value).join(', ') || undefined,
             prescriptionTable,
             additionalNotes: values.additionalNotes ? capitalizeFirstLetter(values.additionalNotes) : undefined,
             followUpDate: values.followUpDate || undefined,
@@ -467,7 +480,7 @@ export function PrescriptionGenerator() {
                                       <FormItem className="flex-grow"><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
                                   )} />
                                   <FormField control={form.control} name={`medicines.${index}.dosageUnit`} render={({ field }) => (
-                                      <FormItem className="w-28 shrink-0"><Select onValueChange={field.onChange} value={field.value}>
+                                      <FormItem className="w-28 shrink-0"><Select onValueChange={field.onChange} defaultValue={field.value}>
                                           <FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl>
                                           <SelectContent>{dosageUnits.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}</SelectContent>
                                       </Select><FormMessage /></FormItem>
@@ -480,7 +493,7 @@ export function PrescriptionGenerator() {
                                       <FormItem className="flex-grow"><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
                                   )} />
                                   <FormField control={form.control} name={`medicines.${index}.frequencyUnit`} render={({ field }) => (
-                                      <FormItem className="w-28 shrink-0"><Select onValueChange={field.onChange} value={field.value}>
+                                      <FormItem className="w-28 shrink-0"><Select onValueChange={field.onChange} defaultValue={field.value}>
                                           <FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl>
                                           <SelectContent>{frequencyUnits.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}</SelectContent>
                                       </Select><FormMessage /></FormItem>
@@ -493,7 +506,7 @@ export function PrescriptionGenerator() {
                                       <FormItem className="flex-grow"><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
                                   )} />
                                   <FormField control={form.control} name={`medicines.${index}.durationUnit`} render={({ field }) => (
-                                      <FormItem className="w-28 shrink-0"><Select onValueChange={field.onChange} value={field.value}>
+                                      <FormItem className="w-28 shrink-0"><Select onValueChange={field.onChange} defaultValue={field.value}>
                                           <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
                                           <SelectContent>{durationUnits.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}</SelectContent>
                                       </Select><FormMessage /></FormItem>
@@ -513,6 +526,36 @@ export function PrescriptionGenerator() {
                 <Button type="button" variant="outline" size="sm" onClick={() => appendMedicine({name: '', dosageValue: '', dosageUnit: 'mg', frequencyValue: '', frequencyUnit: 'daily', durationValue: '', durationUnit: 'Days', instructions: ''})}>
                   <Plus className="mr-2 h-4 w-4" /> Add Drug
                 </Button>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader><CardTitle>Treatments Advised</CardTitle></CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {treatmentFields.map((field, index) => (
+                    <div key={field.id} className="flex items-center gap-2">
+                      <FormField
+                        control={form.control}
+                        name={`treatmentsAdvised.${index}.value`}
+                        render={({ field }) => (
+                          <FormItem className="flex-grow">
+                              <FormControl>
+                                  <Input {...field} />
+                              </FormControl>
+                              <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <Button type="button" variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive" onClick={() => removeTreatment(index)}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                  <Button type="button" variant="outline" size="sm" onClick={() => appendTreatment({ value: '' })}>
+                    <Plus className="mr-2 h-4 w-4" /> Add Treatment
+                  </Button>
+                </div>
               </CardContent>
             </Card>
             
@@ -646,6 +689,13 @@ export function PrescriptionGenerator() {
                                 ))}
                             </tbody>
                         </table>
+                    </div>
+                    )}
+
+                    {opdSummary.treatmentsAdvised && (
+                    <div className="mb-1">
+                        <h3 className="font-bold">Treatments Advised</h3>
+                        <p>{opdSummary.treatmentsAdvised}</p>
                     </div>
                     )}
 
