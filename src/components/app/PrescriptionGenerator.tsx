@@ -22,7 +22,7 @@ type GeneratedSummary = {
     id?: string;
     name: string;
     age: string;
-    gender?: string;
+    gender: string;
     contact?: string;
     address?: string;
     govtId?: string;
@@ -85,7 +85,7 @@ const formSchema = z.object({
   patientId: z.string().optional(),
   patientName: z.string().min(1, 'Patient name is required.'),
   patientAge: z.string().min(1, 'Patient age is required.'),
-  patientGender: z.string().optional(),
+  patientGender: z.string().min(1, 'Gender is required.'),
   patientContact: z.string().optional(),
   patientAddress: z.string().optional(),
   govtId: z.string().optional(),
@@ -229,7 +229,7 @@ export function PrescriptionGenerator() {
                 id: values.patientId || undefined,
                 name: toTitleCase(values.patientName),
                 age: values.patientAge,
-                gender: values.patientGender || undefined,
+                gender: values.patientGender,
                 contact: values.patientContact || undefined,
                 address: toTitleCase(values.patientAddress || ''),
                 govtId: values.govtId || undefined,
@@ -748,3 +748,5 @@ export function PrescriptionGenerator() {
     </div>
   );
 }
+
+    

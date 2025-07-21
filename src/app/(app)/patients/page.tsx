@@ -68,7 +68,7 @@ export default function PatientsPage() {
     resolver: zodResolver(newPatientSchema),
     defaultValues: {
       name: '',
-      age: '' as any, // Initialize with empty string to avoid uncontrolled to controlled error
+      age: '' as any,
       gender: '',
       email: '',
       phone: '',
@@ -137,6 +137,12 @@ export default function PatientsPage() {
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <h1 className="text-2xl font-semibold">Patient Profile</h1>
+          <div className="ml-auto">
+             <Button variant="outline" onClick={() => setIsNewVisitDialogOpen(true)}>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Add New Visit
+            </Button>
+          </div>
         </div>
         <Card>
           <CardHeader>
@@ -176,10 +182,6 @@ export default function PatientsPage() {
               {selectedPatient.visits.length === 0 ? (
                 <div className="text-center text-muted-foreground py-8">
                     <p>No visit history found.</p>
-                    <Button className="mt-4" variant="outline" onClick={() => setIsNewVisitDialogOpen(true)}>
-                        <BriefcaseMedical className="mr-2 h-4 w-4" />
-                        Add New Visit Record
-                    </Button>
                 </div>
               ) : (
                 <Accordion type="single" collapsible className="w-full">
@@ -434,3 +436,5 @@ export default function PatientsPage() {
     </>
   );
 }
+
+    
