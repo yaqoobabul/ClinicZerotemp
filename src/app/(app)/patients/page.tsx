@@ -55,7 +55,32 @@ const toTitleCase = (str: string) => str ? str.replace(/\w\S*/g, (txt) => txt.ch
 
 
 export default function PatientsPage() {
-  const [patients, setPatients] = useState<Patient[]>([]);
+  const [patients, setPatients] = useState<Patient[]>([
+    {
+      id: 'CZ-123456',
+      name: 'Amit Kumar',
+      age: 34,
+      gender: 'Male',
+      avatarUrl: 'https://placehold.co/40x40.png?text=AK',
+      email: 'amit.kumar@example.com',
+      phone: '9876543210',
+      address: '123, Mg Road, Bangalore, India',
+      govtId: 'ABCDE1234F',
+      visits: [],
+    },
+    {
+      id: 'CZ-789012',
+      name: 'Sunita Sharma',
+      age: 28,
+      gender: 'Female',
+      avatarUrl: 'https://placehold.co/40x40.png?text=SS',
+      email: 'sunita.sharma@example.com',
+      phone: '8765432109',
+      address: '456, Park Street, Kolkata, India',
+      govtId: 'FGHIJ5678K',
+      visits: [],
+    },
+  ]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [viewingVisit, setViewingVisit] = useState<Visit | null>(null);
@@ -436,5 +461,3 @@ export default function PatientsPage() {
     </>
   );
 }
-
-    
