@@ -176,6 +176,13 @@ export default function PatientsPage() {
         <Dialog open={!!viewingVisit} onOpenChange={(isOpen) => !isOpen && setViewingVisit(null)}>
           <DialogContent className="max-w-4xl p-0">
              {viewingVisit && (
+                <>
+                <DialogHeader className="sr-only">
+                    <DialogTitle>Visit Report</DialogTitle>
+                    <DialogDescription>
+                        A printable summary of the patient's visit on {new Date(viewingVisit.date).toLocaleDateString()}.
+                    </DialogDescription>
+                </DialogHeader>
                 <div id="printable-prescription" className="p-8">
                   <div className="text-sm">
                       <div className="flex items-start justify-between">
@@ -240,6 +247,7 @@ export default function PatientsPage() {
                       </div>
                   </div>
                 </div>
+                </>
              )}
           </DialogContent>
         </Dialog>
