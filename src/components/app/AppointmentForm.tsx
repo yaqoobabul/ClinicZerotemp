@@ -15,12 +15,15 @@ import { cn } from '@/lib/utils';
 import { Textarea } from '../ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
+type Doctor = {
+  id: string;
+  name: string;
+};
+
 const appointmentFormSchema = z.object({
   patientName: z.string().min(1, 'Patient name is required.'),
-  age: z.coerce.number().optional(),
-  sex: z.enum(['Male', 'Female', 'Other']).optional(),
-  phone: z.string().optional(),
-  address: z.string().optional(),
+  patientPhone: z.string().optional(),
+  doctorId: z.string().min(1, 'A doctor must be selected.'),
   dateTime: z.date({
     required_error: 'An appointment date is required.',
   }),
@@ -28,25 +31,24 @@ const appointmentFormSchema = z.object({
   reason: z.string().min(1, 'Reason for appointment is required.'),
 });
 
-// We only use a subset of the schema for the final submission
+// Final submission values
 export type AppointmentFormValues = Omit<z.infer<typeof appointmentFormSchema>, 'appointmentTime'>;
 
 interface AppointmentFormProps {
   onSubmit: (values: AppointmentFormValues) => void;
   onCancel: () => void;
+  doctors: Doctor[];
   initialData?: Partial<AppointmentFormValues>;
   showPatientDetails?: boolean;
 }
 
-export function AppointmentForm({ onSubmit, onCancel, initialData, showPatientDetails = false }: AppointmentFormProps) {
+export function AppointmentForm({ onSubmit, onCancel, doctors, initialData, showPatientDetails = false }: AppointmentFormProps) {
   const form = useForm<z.infer<typeof appointmentFormSchema>>({
     resolver: zodResolver(appointmentFormSchema),
     defaultValues: {
       patientName: initialData?.patientName || '',
-      age: initialData?.age,
-      sex: initialData?.sex,
-      phone: initialData?.phone,
-      address: initialData?.address,
+      patientPhone: initialData?.patientPhone || '',
+      doctorId: initialData?.doctorId || '',
       dateTime: initialData?.dateTime || new Date(),
       appointmentTime: initialData?.dateTime ? format(initialData.dateTime, 'HH:mm') : '09:00',
       reason: initialData?.reason || '',
@@ -56,14 +58,14 @@ export function AppointmentForm({ onSubmit, onCancel, initialData, showPatientDe
   const handleFormSubmit = (values: z.infer<typeof appointmentFormSchema>) => {
     const time = parse(values.appointmentTime, 'HH:mm', new Date());
     const combinedDateTime = setMinutes(setHours(values.dateTime, time.getHours()), time.getMinutes());
-    
+
     const finalValues: AppointmentFormValues = {
-        ...values,
-        dateTime: combinedDateTime,
+      ...values,
+      dateTime: combinedDateTime,
     };
 
     onSubmit(finalValues);
-  }
+  };
 
   return (
     <Form {...form}>
@@ -75,7 +77,7 @@ export function AppointmentForm({ onSubmit, onCancel, initialData, showPatientDe
             <FormItem>
               <FormLabel>Patient Name</FormLabel>
               <FormControl>
-                <Input placeholder="Enter patient's full name" {...field} disabled={!!initialData?.patientName} />
+                <Input placeholder="Enter patient's full name" {...field} disabled={!showPatientDetails && !!initialData?.patientName} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -83,34 +85,40 @@ export function AppointmentForm({ onSubmit, onCancel, initialData, showPatientDe
         />
         
         {showPatientDetails && (
-          <>
-            <div className="grid grid-cols-2 gap-4">
-                <FormField control={form.control} name="age" render={({ field }) => (
-                    <FormItem><FormLabel>Age</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>
-                )} />
-                <FormField control={form.control} name="sex" render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Sex</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl><SelectTrigger><SelectValue placeholder="Select sex"/></SelectTrigger></FormControl>
-                            <SelectContent>
-                                <SelectItem value="Male">Male</SelectItem>
-                                <SelectItem value="Female">Female</SelectItem>
-                                <SelectItem value="Other">Other</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <FormMessage />
-                    </FormItem>
-                )} />
-            </div>
-             <FormField control={form.control} name="phone" render={({ field }) => (
-                <FormItem><FormLabel>Phone</FormLabel><FormControl><Input type="tel" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>
-            )} />
-             <FormField control={form.control} name="address" render={({ field }) => (
-                <FormItem><FormLabel>Address</FormLabel><FormControl><Input {...field} value={field.value ?? ''}/></FormControl><FormMessage /></FormItem>
-            )} />
-          </>
+          <FormField
+            control={form.control}
+            name="patientPhone"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Patient Phone</FormLabel>
+                <FormControl>
+                  <Input type="tel" placeholder="Enter patient's phone number" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         )}
+        
+        <FormField
+            control={form.control}
+            name="doctorId"
+            render={({ field }) => (
+                <FormItem>
+                    <FormLabel>Doctor</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl><SelectTrigger><SelectValue placeholder="Assign a doctor" /></SelectTrigger></FormControl>
+                        <SelectContent>
+                            {doctors.map(doc => (
+                                <SelectItem key={doc.id} value={doc.id}>{doc.name}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                </FormItem>
+            )}
+        />
+
 
         <div className="grid grid-cols-2 gap-4">
           <FormField
@@ -143,7 +151,7 @@ export function AppointmentForm({ onSubmit, onCancel, initialData, showPatientDe
                       mode="single"
                       selected={field.value}
                       onSelect={field.onChange}
-                      disabled={(date) => date < new Date(new Date().setDate(new Date().getDate() -1))}
+                      disabled={(date) => date < new Date(new Date().setDate(new Date().getDate() - 1))}
                       initialFocus
                     />
                   </PopoverContent>
@@ -156,15 +164,15 @@ export function AppointmentForm({ onSubmit, onCancel, initialData, showPatientDe
             control={form.control}
             name="appointmentTime"
             render={({ field }) => (
-                <FormItem>
-                    <FormLabel>Appointment Time</FormLabel>
-                    <FormControl>
-                        <Input type="time" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                </FormItem>
+              <FormItem>
+                <FormLabel>Appointment Time</FormLabel>
+                <FormControl>
+                  <Input type="time" {...field} step="900" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
             )}
-            />
+          />
         </div>
         <FormField
           control={form.control}
