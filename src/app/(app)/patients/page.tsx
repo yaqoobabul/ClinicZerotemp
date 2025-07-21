@@ -2,11 +2,12 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Search, User, Phone, Mail, Printer, FileText, PlusCircle } from 'lucide-react';
+import { ArrowLeft, Search, User, Phone, Mail, Printer, FileText, PlusCircle, Pencil } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose, DialogFooter } from '@/components/ui/dialog';
@@ -15,6 +16,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 
 type Visit = {
   date: string;
@@ -30,7 +32,7 @@ type Patient = {
   id: string;
   name: string;
   age: number;
-  gender: 'Male' | 'Female' | 'Other';
+  sex: 'Male' | 'Female' | 'Other';
   avatarUrl: string;
   email: string;
   phone: string;
@@ -39,35 +41,61 @@ type Patient = {
   visits: Visit[];
 };
 
-const newPatientSchema = z.object({
+const patientFormSchema = z.object({
+    id: z.string().optional(),
     name: z.string().min(1, 'Name is required'),
-    age: z.coerce.number().min(1, 'Age is required'),
-    gender: z.enum(['Male', 'Female', 'Other']),
+    age: z.coerce.number().min(0, 'Age must be a positive number'),
+    sex: z.enum(['Male', 'Female', 'Other']),
     email: z.string().email('Invalid email address').optional().or(z.literal('')),
     phone: z.string().min(10, 'Invalid phone number'),
     address: z.string().min(1, 'Address is required'),
     govtId: z.string().optional(),
 });
 
+const newVisitSchema = z.object({
+    doctor: z.string().min(1, 'Doctor name is required'),
+    complaint: z.string().min(1, 'Chief complaint is required'),
+    diagnosis: z.string().min(1, 'Diagnosis is required'),
+    prescription: z.string(),
+    testsAdvised: z.string().optional(),
+    notes: z.string().optional(),
+});
 
 export default function PatientsPage() {
+  const router = useRouter();
   const [patients, setPatients] = useState<Patient[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [viewingVisit, setViewingVisit] = useState<Visit | null>(null);
   const [isNewPatientDialogOpen, setIsNewPatientDialogOpen] = useState(false);
+  const [isEditPatientDialogOpen, setIsEditPatientDialogOpen] = useState(false);
+  const [isNewVisitDialogOpen, setIsNewVisitDialogOpen] = useState(false);
+  const [isNewOldVisitDialogOpen, setIsNewOldVisitDialogOpen] = useState(false);
 
-  const form = useForm<z.infer<typeof newPatientSchema>>({
-    resolver: zodResolver(newPatientSchema),
+
+  const patientForm = useForm<z.infer<typeof patientFormSchema>>({
+    resolver: zodResolver(patientFormSchema),
     defaultValues: {
       name: '',
-      age: '' as any, // Initialize with empty string to avoid uncontrolled to controlled error
-      gender: 'Male',
+      age: '' as any,
+      sex: 'Male',
       email: '',
       phone: '',
       address: '',
       govtId: '',
     },
+  });
+  
+  const visitForm = useForm<z.infer<typeof newVisitSchema>>({
+    resolver: zodResolver(newVisitSchema),
+    defaultValues: {
+      doctor: '',
+      complaint: '',
+      diagnosis: '',
+      prescription: '',
+      testsAdvised: '',
+      notes: '',
+    }
   });
 
   const filteredPatients = patients.filter(patient =>
@@ -79,20 +107,70 @@ export default function PatientsPage() {
     window.print();
   };
 
-  const handleAddNewPatient = (values: z.infer<typeof newPatientSchema>) => {
+  const handleAddNewPatient = (values: z.infer<typeof patientFormSchema>) => {
     const newPatient: Patient = {
         id: `CZ-${Date.now().toString().slice(-6)}`,
         ...values,
+        sex: values.sex,
+        age: values.age,
         email: values.email || '',
         govtId: values.govtId || '',
         avatarUrl: `https://placehold.co/40x40.png?text=${values.name[0]}`,
         visits: [],
     };
     setPatients(prev => [...prev, newPatient]);
-    form.reset();
+    patientForm.reset();
     setIsNewPatientDialogOpen(false);
     setSelectedPatient(newPatient);
   }
+
+  const handleUpdatePatient = (values: z.infer<typeof patientFormSchema>) => {
+      if (!selectedPatient) return;
+      const updatedPatient = { ...selectedPatient, ...values };
+      setPatients(prev => prev.map(p => p.id === updatedPatient.id ? updatedPatient : p));
+      setSelectedPatient(updatedPatient);
+      setIsEditPatientDialogOpen(false);
+  }
+
+  const openEditPatientDialog = () => {
+      if(selectedPatient) {
+          patientForm.reset(selectedPatient);
+          setIsEditPatientDialogOpen(true);
+      }
+  }
+
+  const handleNavigateToVisit = (type: 'medical' | 'dental') => {
+    if (!selectedPatient) return;
+
+    const params = new URLSearchParams();
+    params.set('patientId', selectedPatient.id);
+    params.set('patientName', selectedPatient.name);
+    params.set('patientAge', selectedPatient.age.toString());
+    params.set('patientSex', selectedPatient.sex);
+    params.set('patientContact', selectedPatient.phone);
+    params.set('patientAddress', selectedPatient.address);
+    params.set('govtId', selectedPatient.govtId);
+
+    const path = type === 'medical' ? '/prescriptions' : '/dental';
+    router.push(`${path}?${params.toString()}`);
+    setIsNewVisitDialogOpen(false);
+  };
+  
+  const handleAddNewOldVisit = (values: z.infer<typeof newVisitSchema>) => {
+    if (!selectedPatient) return;
+
+    const newVisit: Visit = {
+        date: new Date().toISOString(),
+        ...values,
+        prescription: values.prescription.split('\n'),
+    };
+    const updatedPatient = { ...selectedPatient, visits: [...selectedPatient.visits, newVisit] };
+    setSelectedPatient(updatedPatient);
+    setPatients(prevPatients => prevPatients.map(p => p.id === selectedPatient.id ? updatedPatient : p));
+    visitForm.reset();
+    setIsNewOldVisitDialogOpen(false);
+  };
+
 
   if (selectedPatient) {
     return (
@@ -102,6 +180,9 @@ export default function PatientsPage() {
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <h1 className="text-2xl font-semibold">Patient Profile</h1>
+          <Button size="sm" variant="outline" className="ml-auto" onClick={openEditPatientDialog}>
+              <Pencil className="mr-2 h-4 w-4" /> Edit Patient
+          </Button>
         </div>
         <Card>
           <CardHeader>
@@ -112,7 +193,7 @@ export default function PatientsPage() {
               </Avatar>
               <div>
                 <CardTitle className="text-3xl">{selectedPatient.name}</CardTitle>
-                <CardDescription className="text-base">ID: {selectedPatient.id} &bull; {selectedPatient.age} years old &bull; {selectedPatient.gender}</CardDescription>
+                <CardDescription className="text-base">ID: {selectedPatient.id} &bull; {selectedPatient.age} years old &bull; {selectedPatient.sex}</CardDescription>
               </div>
             </div>
           </CardHeader>
@@ -137,7 +218,7 @@ export default function PatientsPage() {
               {selectedPatient.visits.length === 0 ? (
                 <div className="text-center text-muted-foreground py-8">
                     <p>No visit history found.</p>
-                    <Button className="mt-4" variant="outline">Add New Visit Record</Button>
+                    <Button className="mt-4" variant="outline" onClick={() => setIsNewVisitDialogOpen(true)}>Add New Visit Record</Button>
                 </div>
               ) : (
                 <Accordion type="single" collapsible className="w-full">
@@ -145,7 +226,7 @@ export default function PatientsPage() {
                     <AccordionItem value={`item-${index}`} key={index}>
                         <AccordionTrigger>
                         <div className="flex justify-between w-full pr-4">
-                            <span>{visit.date}</span>
+                            <span>{new Date(visit.date).toLocaleDateString()}</span>
                             <span className="text-muted-foreground">{visit.diagnosis}</span>
                         </div>
                         </AccordionTrigger>
@@ -163,6 +244,12 @@ export default function PatientsPage() {
                     ))}
                 </Accordion>
               )}
+               {selectedPatient.visits.length > 0 && (
+                <div className="mt-4 flex flex-col items-center">
+                    <Button variant="outline" onClick={() => setIsNewVisitDialogOpen(true)}>Add New Visit Record</Button>
+                    <Button variant="link" size="sm" className="mt-2" onClick={() => setIsNewOldVisitDialogOpen(true)}>Add an old visit record?</Button>
+                </div>
+               )}
             </div>
           </CardContent>
         </Card>
@@ -181,7 +268,7 @@ export default function PatientsPage() {
                   <div className="text-sm">
                       <div className="flex items-start justify-between">
                           <div>
-                              <h2 className="text-base font-bold text-primary">ClinicZero</h2>
+                              <h2 className="text-base font-bold text-primary">ClinicEase</h2>
                               <p>123 Health St, Wellness City, India | Phone: +91 98765 43210</p>
                               <p className="font-semibold">Dr. {viewingVisit.doctor}</p>
                               <p className="text-muted-foreground">Reg. No. 12345</p>
@@ -201,7 +288,7 @@ export default function PatientsPage() {
                               <div><strong>Patient ID:</strong> {selectedPatient.id}</div>
                               <div><strong>Name:</strong> {selectedPatient.name}</div>
                               <div><strong>Age:</strong> {selectedPatient.age}</div>
-                              <div><strong>Gender:</strong> {selectedPatient.gender}</div>
+                              <div><strong>Sex:</strong> {selectedPatient.sex}</div>
                               <div className="col-span-2"><strong>Address:</strong> {selectedPatient.address}</div>
                             </div>
                           </div>
@@ -246,6 +333,56 @@ export default function PatientsPage() {
              )}
           </DialogContent>
         </Dialog>
+        <Dialog open={isNewOldVisitDialogOpen} onOpenChange={setIsNewOldVisitDialogOpen}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Add Old Visit Record</DialogTitle>
+                    <DialogDescription>Enter details for a past visit for {selectedPatient.name}.</DialogDescription>
+                </DialogHeader>
+                <Form {...visitForm}>
+                    <form onSubmit={visitForm.handleSubmit(handleAddNewOldVisit)} className="space-y-4">
+                        <FormField control={visitForm.control} name="doctor" render={({ field }) => (
+                            <FormItem><FormLabel>Doctor Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                        )} />
+                        <FormField control={visitForm.control} name="complaint" render={({ field }) => (
+                            <FormItem><FormLabel>Chief Complaint</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>
+                        )} />
+                        <FormField control={visitForm.control} name="diagnosis" render={({ field }) => (
+                            <FormItem><FormLabel>Diagnosis</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>
+                        )} />
+                        <FormField control={visitForm.control} name="prescription" render={({ field }) => (
+                            <FormItem><FormLabel>Prescription (one per line)</FormLabel><FormControl><Textarea {...field} rows={5} /></FormControl><FormMessage /></FormItem>
+                        )} />
+                        <FormField control={visitForm.control} name="testsAdvised" render={({ field }) => (
+                            <FormItem><FormLabel>Tests Advised</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                        )} />
+                        <FormField control={visitForm.control} name="notes" render={({ field }) => (
+                            <FormItem><FormLabel>Additional Notes</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>
+                        )} />
+                         <DialogFooter>
+                            <DialogClose asChild><Button type="button" variant="secondary">Cancel</Button></DialogClose>
+                            <Button type="submit">Save Visit</Button>
+                        </DialogFooter>
+                    </form>
+                </Form>
+            </DialogContent>
+        </Dialog>
+        <Dialog open={isNewVisitDialogOpen} onOpenChange={setIsNewVisitDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+                <DialogTitle>Create New Visit</DialogTitle>
+                <DialogDescription>Choose the type of OPD visit for {selectedPatient.name}.</DialogDescription>
+            </DialogHeader>
+            <div className="grid grid-cols-2 gap-4 pt-4">
+                <Button variant="outline" onClick={() => handleNavigateToVisit('medical')}>
+                    Medical OPD
+                </Button>
+                <Button onClick={() => handleNavigateToVisit('dental')}>
+                    Dental OPD
+                </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     );
   }
@@ -260,7 +397,18 @@ export default function PatientsPage() {
                     Search for patients or add a new one.
                 </CardDescription>
             </div>
-            <Button onClick={() => setIsNewPatientDialogOpen(true)}>
+            <Button onClick={() => {
+                patientForm.reset({
+                    name: '',
+                    age: '' as any,
+                    sex: 'Male',
+                    email: '',
+                    phone: '',
+                    address: '',
+                    govtId: '',
+                });
+                setIsNewPatientDialogOpen(true)
+            }}>
                 <PlusCircle className="mr-2 h-4 w-4" />
                 New Patient
             </Button>
@@ -318,18 +466,18 @@ export default function PatientsPage() {
                     Enter the details for the new patient.
                 </DialogDescription>
             </DialogHeader>
-            <Form {...form}>
-                <form onSubmit={form.handleSubmit(handleAddNewPatient)} className="space-y-4">
-                    <FormField control={form.control} name="name" render={({ field }) => (
+            <Form {...patientForm}>
+                <form onSubmit={patientForm.handleSubmit(handleAddNewPatient)} className="space-y-4">
+                    <FormField control={patientForm.control} name="name" render={({ field }) => (
                         <FormItem><FormLabel>Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
                     <div className="grid grid-cols-2 gap-4">
-                        <FormField control={form.control} name="age" render={({ field }) => (
+                        <FormField control={patientForm.control} name="age" render={({ field }) => (
                             <FormItem><FormLabel>Age</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
                         )} />
-                        <FormField control={form.control} name="gender" render={({ field }) => (
+                        <FormField control={patientForm.control} name="sex" render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Gender</FormLabel>
+                                <FormLabel>Sex</FormLabel>
                                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                                     <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
                                     <SelectContent>
@@ -342,16 +490,16 @@ export default function PatientsPage() {
                             </FormItem>
                         )} />
                     </div>
-                     <FormField control={form.control} name="phone" render={({ field }) => (
+                     <FormField control={patientForm.control} name="phone" render={({ field }) => (
                         <FormItem><FormLabel>Phone</FormLabel><FormControl><Input type="tel" {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
-                    <FormField control={form.control} name="govtId" render={({ field }) => (
+                    <FormField control={patientForm.control} name="govtId" render={({ field }) => (
                         <FormItem><FormLabel>Govt. ID</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
-                     <FormField control={form.control} name="address" render={({ field }) => (
+                     <FormField control={patientForm.control} name="address" render={({ field }) => (
                         <FormItem><FormLabel>Address</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
-                    <FormField control={form.control} name="email" render={({ field }) => (
+                    <FormField control={patientForm.control} name="email" render={({ field }) => (
                         <FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
                     <DialogFooter>
@@ -359,6 +507,60 @@ export default function PatientsPage() {
                             <Button type="button" variant="secondary">Cancel</Button>
                         </DialogClose>
                         <Button type="submit">Save Patient</Button>
+                    </DialogFooter>
+                </form>
+            </Form>
+        </DialogContent>
+    </Dialog>
+     <Dialog open={isEditPatientDialogOpen} onOpenChange={setIsEditPatientDialogOpen}>
+        <DialogContent>
+            <DialogHeader>
+                <DialogTitle>Edit Patient</DialogTitle>
+                <DialogDescription>
+                   Update the patient's details.
+                </DialogDescription>
+            </DialogHeader>
+            <Form {...patientForm}>
+                <form onSubmit={patientForm.handleSubmit(handleUpdatePatient)} className="space-y-4">
+                    <FormField control={patientForm.control} name="name" render={({ field }) => (
+                        <FormItem><FormLabel>Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                    <div className="grid grid-cols-2 gap-4">
+                        <FormField control={patientForm.control} name="age" render={({ field }) => (
+                            <FormItem><FormLabel>Age</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+                        )} />
+                        <FormField control={patientForm.control} name="sex" render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Sex</FormLabel>
+                                <Select onValueChange={field.onChange} value={field.value}>
+                                    <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                                    <SelectContent>
+                                        <SelectItem value="Male">Male</SelectItem>
+                                        <SelectItem value="Female">Female</SelectItem>
+                                        <SelectItem value="Other">Other</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                <FormMessage />
+                            </FormItem>
+                        )} />
+                    </div>
+                     <FormField control={patientForm.control} name="phone" render={({ field }) => (
+                        <FormItem><FormLabel>Phone</FormLabel><FormControl><Input type="tel" {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                    <FormField control={patientForm.control} name="govtId" render={({ field }) => (
+                        <FormItem><FormLabel>Govt. ID</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                     <FormField control={patientForm.control} name="address" render={({ field }) => (
+                        <FormItem><FormLabel>Address</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                    <FormField control={patientForm.control} name="email" render={({ field }) => (
+                        <FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                    <DialogFooter>
+                        <DialogClose asChild>
+                            <Button type="button" variant="secondary">Cancel</Button>
+                        </DialogClose>
+                        <Button type="submit">Save Changes</Button>
                     </DialogFooter>
                 </form>
             </Form>

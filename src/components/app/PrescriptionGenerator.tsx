@@ -1,8 +1,9 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
+import { useSearchParams } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
@@ -21,7 +22,7 @@ type GeneratedSummary = {
     id?: string;
     name: string;
     age: string;
-    gender: string;
+    sex: string;
     contact?: string;
     address?: string;
     govtId?: string;
@@ -79,7 +80,7 @@ const formSchema = z.object({
   patientId: z.string().optional(),
   patientName: z.string().min(1, 'Patient name is required.'),
   patientAge: z.string().min(1, 'Patient age is required.'),
-  patientGender: z.string().min(1, 'Patient gender is required.'),
+  patientSex: z.string().min(1, 'Patient sex is required.'),
   patientContact: z.string().optional(),
   patientAddress: z.string().optional(),
   govtId: z.string().optional(),
@@ -110,7 +111,8 @@ const instructionSuggestions = ["Before food", "After food", "With meals", "Empt
 const toTitleCase = (str: string) => str.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
 const capitalizeFirstLetter = (str: string) => str.charAt(0).toUpperCase() + str.slice(1);
 
-export function PrescriptionGenerator() {
+function PrescriptionGeneratorInternal() {
+  const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
   const [opdSummary, setOpdSummary] = useState<GeneratedSummary | null>(null);
   const { toast } = useToast();
@@ -121,7 +123,7 @@ export function PrescriptionGenerator() {
       patientId: '',
       patientName: '',
       patientAge: '',
-      patientGender: '',
+      patientSex: '',
       patientContact: '',
       patientAddress: '',
       govtId: '',
@@ -143,15 +145,23 @@ export function PrescriptionGenerator() {
     },
   });
 
-  const isFinalDiagnosis = form.watch('isFinalDiagnosis');
-
   useEffect(() => {
-    // Auto-generate a patient ID for new patients
-    if (!form.getValues('patientId')) {
-      const newPatientId = `CZ-${Date.now().toString().slice(-6)}`;
-      form.setValue('patientId', newPatientId);
+    const patientData = {
+        patientId: searchParams.get('patientId') || `CZ-${Date.now().toString().slice(-6)}`,
+        patientName: searchParams.get('patientName') || '',
+        patientAge: searchParams.get('patientAge') || '',
+        patientSex: searchParams.get('patientSex') || '',
+        patientContact: searchParams.get('patientContact') || '',
+        patientAddress: searchParams.get('patientAddress') || '',
+        govtId: searchParams.get('govtId') || '',
+    };
+    if (patientData.patientName) {
+        form.reset(patientData);
     }
-  }, [form]);
+  }, [searchParams, form]);
+
+
+  const isFinalDiagnosis = form.watch('isFinalDiagnosis');
 
   const handleFetchPatient = () => {
     const patientId = form.getValues('patientId');
@@ -205,7 +215,7 @@ export function PrescriptionGenerator() {
                 id: values.patientId || undefined,
                 name: toTitleCase(values.patientName),
                 age: values.patientAge,
-                gender: values.patientGender,
+                sex: values.patientSex,
                 contact: values.patientContact || undefined,
                 address: values.patientAddress || undefined,
                 govtId: values.govtId || undefined,
@@ -284,20 +294,20 @@ export function PrescriptionGenerator() {
                     <FormItem><FormLabel>Govt. ID Number</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                   )} />
                 </div>
-                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <FormField control={form.control} name="patientName" render={({ field }) => (
-                        <FormItem><FormLabel>Patient Name</FormLabel><FormControl><Input {...field} onBlur={(e) => field.onChange(toTitleCase(e.target.value))} /></FormControl><FormMessage /></FormItem>
+                        <FormItem className="md:col-span-2"><FormLabel>Patient Name</FormLabel><FormControl><Input {...field} onBlur={(e) => field.onChange(toTitleCase(e.target.value))} /></FormControl><FormMessage /></FormItem>
                     )} />
                     <FormField control={form.control} name="patientAge" render={({ field }) => (
                         <FormItem><FormLabel>Age</FormLabel><FormControl><Input type="text" {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
-                    <FormField control={form.control} name="patientGender" render={({ field }) => (
+                    <FormField control={form.control} name="patientSex" render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Gender</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormLabel>Sex</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Select gender" />
+                              <SelectValue placeholder="Select sex" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
@@ -310,7 +320,7 @@ export function PrescriptionGenerator() {
                       </FormItem>
                     )} />
                     <FormField control={form.control} name="patientContact" render={({ field }) => (
-                        <FormItem><FormLabel>Contact Number</FormLabel><FormControl><Input type="tel" {...field} /></FormControl><FormMessage /></FormItem>
+                        <FormItem className="md:col-span-2"><FormLabel>Contact Number</FormLabel><FormControl><Input type="tel" {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
                     <FormField control={form.control} name="patientAddress" render={({ field }) => (
                         <FormItem className="md:col-span-2"><FormLabel>Address</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
@@ -561,7 +571,7 @@ export function PrescriptionGenerator() {
             <div className="text-sm">
                 <div className="flex items-start justify-between">
                     <div>
-                        <h2 className="text-base font-bold text-primary">ClinicZero</h2>
+                        <h2 className="text-base font-bold text-primary">ClinicEase</h2>
                         <p>123 Health St, Wellness City, India | Phone: +91 98765 43210</p>
                         <p className="font-semibold">Dr. Rajesh Kumar, MBBS, MD (General Medicine)</p>
                         <p className="text-muted-foreground">Reg. No. 12345</p>
@@ -581,7 +591,7 @@ export function PrescriptionGenerator() {
                             <div><strong>Patient ID:</strong> {opdSummary.patientDetails.id || 'N/A'}</div>
                             <div><strong>Name:</strong> {opdSummary.patientDetails.name}</div>
                             <div><strong>Age:</strong> {opdSummary.patientDetails.age}</div>
-                            <div><strong>Gender:</strong> {opdSummary.patientDetails.gender}</div>
+                            <div><strong>Sex:</strong> {opdSummary.patientDetails.sex}</div>
                             <div><strong>Contact:</strong> {opdSummary.patientDetails.contact || 'N/A'}</div>
                             <div><strong>Govt. ID:</strong> {opdSummary.patientDetails.govtId || 'N/A'}</div>
                             <div className="col-span-2"><strong>Address:</strong> {opdSummary.patientDetails.address || 'N/A'}</div>
@@ -686,4 +696,12 @@ export function PrescriptionGenerator() {
       )}
     </div>
   );
+}
+
+export function PrescriptionGenerator() {
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <PrescriptionGeneratorInternal />
+        </Suspense>
+    )
 }
