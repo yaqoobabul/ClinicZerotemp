@@ -24,6 +24,7 @@ type GeneratedSummary = {
     gender: string;
     contact?: string;
     address?: string;
+    govtId?: string;
   };
   vitals?: {
     height?: string;
@@ -81,6 +82,7 @@ const formSchema = z.object({
   patientGender: z.string().min(1, 'Patient gender is required.'),
   patientContact: z.string().optional(),
   patientAddress: z.string().optional(),
+  govtId: z.string().optional(),
   height: z.string().optional(),
   weight: z.string().optional(),
   bp: z.string().optional(),
@@ -122,6 +124,7 @@ export function PrescriptionGenerator() {
       patientGender: '',
       patientContact: '',
       patientAddress: '',
+      govtId: '',
       height: '',
       weight: '',
       bp: '',
@@ -205,6 +208,7 @@ export function PrescriptionGenerator() {
                 gender: values.patientGender,
                 contact: values.patientContact || undefined,
                 address: values.patientAddress || undefined,
+                govtId: values.govtId || undefined,
             },
             vitals: hasVitals ? vitals : undefined,
             examinationFindings: values.examinationFindings ? capitalizeFirstLetter(values.examinationFindings) : undefined,
@@ -276,6 +280,9 @@ export function PrescriptionGenerator() {
                       </FormItem>
                     )}
                   />
+                  <FormField control={form.control} name="govtId" render={({ field }) => (
+                    <FormItem><FormLabel>Govt. ID Number</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                  )} />
                 </div>
                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <FormField control={form.control} name="patientName" render={({ field }) => (
@@ -576,6 +583,7 @@ export function PrescriptionGenerator() {
                             <div><strong>Age:</strong> {opdSummary.patientDetails.age}</div>
                             <div><strong>Gender:</strong> {opdSummary.patientDetails.gender}</div>
                             <div><strong>Contact:</strong> {opdSummary.patientDetails.contact || 'N/A'}</div>
+                            <div><strong>Govt. ID:</strong> {opdSummary.patientDetails.govtId || 'N/A'}</div>
                             <div className="col-span-2"><strong>Address:</strong> {opdSummary.patientDetails.address || 'N/A'}</div>
                         </div>
                     </div>
