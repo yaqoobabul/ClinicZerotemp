@@ -125,6 +125,38 @@ export default function PatientsPage() {
       govtId: 'RSTUV5678W',
       visits: [],
     },
+    {
+        id: 'CZ-555666',
+        name: 'Kavita Reddy',
+        age: 29,
+        gender: 'Female',
+        avatarUrl: 'https://placehold.co/40x40.png?text=KR',
+        email: 'kavita.r@example.com',
+        phone: '9988776655',
+        address: '22, Jubilee Hills, Hyderabad, India',
+        govtId: 'QWERTY1234Z',
+        visits: [
+            {
+                date: '2024-03-20',
+                doctor: 'Dr. Ansari',
+                complaint: 'Persistent cough',
+                diagnosis: 'Bronchitis',
+                prescription: ['Azithromycin 500mg', 'Cough Syrup'],
+            },
+        ],
+    },
+    {
+        id: 'CZ-777888',
+        name: 'Vijay Singh',
+        age: 41,
+        gender: 'Male',
+        avatarUrl: 'https://placehold.co/40x40.png?text=VS',
+        email: 'vijay.s@example.com',
+        phone: '8877665544',
+        address: '33, Koramangala, Bangalore, India',
+        govtId: 'ASDFG5678Y',
+        visits: [],
+    },
   ]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
@@ -274,7 +306,7 @@ export default function PatientsPage() {
             <div>
               <div className="flex justify-between items-center mb-2">
                 <h3 className="text-xl font-semibold">Visit History</h3>
-                <Button variant="outline" onClick={() => setIsNewVisitDialogOpen(true)}>
+                 <Button onClick={() => setIsNewVisitDialogOpen(true)}>
                     <PlusCircle className="mr-2 h-4 w-4" />
                     Add New Entry
                 </Button>
