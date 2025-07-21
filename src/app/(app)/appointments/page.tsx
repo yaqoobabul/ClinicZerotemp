@@ -203,17 +203,16 @@ export default function AppointmentsPage() {
   
   const renderAppointmentCard = (app: Appointment) => {
     const startMinutes = (app.dateTime.getHours() * 60 + app.dateTime.getMinutes()) - (START_HOUR * 60);
-    const durationMinutes = app.durationMinutes || 30;
     
     const gridRowStart = (startMinutes / SLOT_INTERVAL) + 1;
-    const gridRowEnd = gridRowStart + (durationMinutes / SLOT_INTERVAL);
+    const gridRowCount = Math.round(app.durationMinutes / SLOT_INTERVAL);
 
     return (
       <div
         key={app.id}
         className="relative flex flex-col overflow-hidden rounded-lg p-2 text-primary-foreground shadow-md bg-primary/90 border-l-4 border-primary"
         style={{ 
-            gridRow: `${gridRowStart} / span ${Math.round(durationMinutes / SLOT_INTERVAL)}`,
+            gridRow: `${gridRowStart} / span ${gridRowCount}`,
             gridColumn: 1,
         }}
       >
@@ -323,13 +322,11 @@ export default function AppointmentsPage() {
 
         <div className="flex-grow overflow-auto rounded-lg border bg-card">
             <div className="grid h-full" style={{ gridTemplateColumns: 'auto 1fr' }}>
-                <div className="sticky top-0 z-10 grid bg-card border-b" style={{ gridTemplateRows: `48px repeat(${totalSlots}, minmax(0, 1fr))`, gridTemplateColumns: '50px' }}>
-                    {/* Top-left empty cell */}
-                    <div className="border-b border-r"></div>
-                    {/* Time Gutter */}
+                {/* Time Gutter */}
+                <div className="sticky top-0 z-10 grid bg-card" style={{ gridTemplateRows: `48px repeat(${totalSlots}, minmax(0, 1fr))`, gridTemplateColumns: '50px' }}>
+                    <div className="border-b border-r"></div> {/* Top-left empty cell */}
                     {timeSlots.map((time, index) => {
                         const isHour = time.getMinutes() === 0;
-                        const isFirstSlot = index === 0;
                         return (
                             <div key={index} className="relative border-r" style={{ height: slotHeight }}>
                                 {isHour && (
@@ -343,7 +340,7 @@ export default function AppointmentsPage() {
                 </div>
                 
                 <div className="overflow-x-auto">
-                    <div className="grid" style={{ gridTemplateColumns: `repeat(${doctors.length}, minmax(200px, 1fr))` }}>
+                    <div className="grid h-full" style={{ gridTemplateColumns: `repeat(${doctors.length}, minmax(200px, 1fr))` }}>
                         {/* Doctor Headers */}
                         {doctors.map(doctor => (
                             <div key={doctor.id} className="sticky top-0 z-10 h-12 flex items-center justify-center p-2 text-center font-semibold border-b border-l bg-muted first:border-l-0">
@@ -374,3 +371,5 @@ export default function AppointmentsPage() {
     </div>
   );
 }
+
+    
