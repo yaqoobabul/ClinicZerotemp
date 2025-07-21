@@ -177,9 +177,9 @@ export default function PatientsPage() {
           <DialogContent className="max-w-4xl p-0">
              {viewingVisit && (
                 <>
-                <DialogHeader className="sr-only">
-                    <DialogTitle>Visit Report for {selectedPatient.name}</DialogTitle>
-                    <DialogDescription>
+                <DialogHeader className="p-8 pb-0">
+                    <DialogTitle className="sr-only">Visit Report for {selectedPatient.name}</DialogTitle>
+                    <DialogDescription className="sr-only">
                         A printable summary of the patient's visit on {new Date(viewingVisit.date).toLocaleDateString()}.
                     </DialogDescription>
                 </DialogHeader>
@@ -207,6 +207,7 @@ export default function PatientsPage() {
                               <div><strong>ID:</strong> {selectedPatient.id}</div>
                               <div><strong>Name:</strong> {selectedPatient.name}</div>
                               <div><strong>Age/Gender:</strong> {selectedPatient.age} / {selectedPatient.gender}</div>
+                              <div className="col-span-3"><strong>Address:</strong> {selectedPatient.address}</div>
                             </div>
                           </div>
 
