@@ -132,7 +132,7 @@ const normalizeGender = (gender?: string) => {
     if (lower === 'male') return 'Male';
     if (lower === 'female') return 'Female';
     if (lower === 'other') return 'Other';
-    return '';
+    return toTitleCase(gender);
 }
 
 export function PrescriptionGenerator({
@@ -178,9 +178,7 @@ export function PrescriptionGenerator({
   });
 
   useEffect(() => {
-    const newPatientId = patientId || `CZ-${Date.now().toString().slice(-6)}`;
-    form.setValue('patientId', newPatientId);
-    
+    form.setValue('patientId', patientId || `CZ-${Date.now().toString().slice(-6)}`);
     if (patientName) form.setValue('patientName', toTitleCase(decodeURIComponent(patientName)));
     if (patientAge) form.setValue('patientAge', patientAge);
     if (patientGender) form.setValue('patientGender', normalizeGender(patientGender));
@@ -196,7 +194,10 @@ export function PrescriptionGenerator({
     const patientId = form.getValues('patientId');
     // Placeholder for fetching patient data from a database
     // In a real app, this would make an API call
-    alert(`Fetching data for Patient ID: ${patientId}\n(This is a placeholder - no database is connected yet)`);
+    toast({
+      title: 'Feature Not Implemented',
+      description: `Fetching for Patient ID: ${patientId} is not connected to a database.`
+    });
   };
 
   const { fields: medicineFields, append: appendMedicine, remove: removeMedicine } = useFieldArray({
@@ -768,7 +769,3 @@ export function PrescriptionGenerator({
     </div>
   );
 }
-
-    
-
-    

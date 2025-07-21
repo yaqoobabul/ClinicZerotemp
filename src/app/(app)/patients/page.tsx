@@ -157,6 +157,38 @@ export default function PatientsPage() {
         govtId: 'ASDFG5678Y',
         visits: [],
     },
+    {
+      id: 'CZ-112233',
+      name: 'Deepika Iyer',
+      age: 31,
+      gender: 'Female',
+      avatarUrl: 'https://placehold.co/40x40.png?text=DI',
+      email: 'deepika.i@example.com',
+      phone: '9123456789',
+      address: '77, Anna Salai, Chennai, India',
+      govtId: 'ZXCVB1234N',
+      visits: [],
+    },
+    {
+      id: 'CZ-445566',
+      name: 'Ravi Verma',
+      age: 48,
+      gender: 'Male',
+      avatarUrl: 'https://placehold.co/40x40.png?text=RV',
+      email: 'ravi.v@example.com',
+      phone: '9876501234',
+      address: '88, Linking Road, Mumbai, India',
+      govtId: 'POIUY5678M',
+      visits: [
+        {
+          date: '2024-01-10',
+          doctor: 'Dr. Patel',
+          complaint: 'Routine Checkup',
+          diagnosis: 'Healthy',
+          prescription: ['Vitamins'],
+        },
+      ],
+    },
   ]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
