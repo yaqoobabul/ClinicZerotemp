@@ -409,6 +409,11 @@ export default function PatientsPage() {
                     <span className="text-base">Dental OPD</span>
                 </Button>
             </div>
+             <DialogFooter className="pt-4">
+                <Button variant="link" onClick={() => { setIsNewVisitDialogOpen(false); setIsNewOldVisitDialogOpen(true); }}>
+                    Or, add a historical visit entry
+                </Button>
+            </DialogFooter>
         </DialogContent>
       </Dialog>
       
