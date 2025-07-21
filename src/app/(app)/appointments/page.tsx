@@ -58,11 +58,13 @@ const initialAppointments: Appointment[] = [
 ];
 
 
-// Generate time slots from 8 AM to 10 PM
-const timeSlots = Array.from({ length: (22 - 8) * 2 }, (_, i) => {
-    const hour = 8 + Math.floor(i / 2);
+// Generate time slots for all 24 hours
+const timeSlots = Array.from({ length: 24 * 2 }, (_, i) => {
+    const hour = Math.floor(i / 2);
     const minute = (i % 2) * 30;
-    return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+    const date = new Date();
+    date.setHours(hour, minute, 0, 0);
+    return date;
 });
 
 export default function AppointmentsPage() {
@@ -167,14 +169,14 @@ export default function AppointmentsPage() {
   };
 
   const renderAppointmentCard = (app: Appointment) => {
-    const top = (app.dateTime.getHours() - 8) * 60 + app.dateTime.getMinutes();
+    const top = app.dateTime.getHours() * 60 + app.dateTime.getMinutes();
     const duration = 30; // Assuming 30 minute slots for now
 
     return (
       <div
         key={app.id}
         className="absolute w-full p-2 rounded-lg bg-red-100 border border-red-300 shadow-sm"
-        style={{ top: `${(top / (14 * 60)) * 100}%`, height: `${(duration / (14 * 60)) * 100}%` }}
+        style={{ top: `${(top / (24 * 60)) * 100}%`, height: `${(duration / (24 * 60)) * 100}%` }}
       >
         <p className="font-semibold text-sm text-red-800">{app.patientName}</p>
         <p className="text-xs text-red-600">{format(app.dateTime, 'p')}</p>
@@ -209,7 +211,7 @@ export default function AppointmentsPage() {
               </DialogTrigger>
               <DialogContent onInteractOutside={(e) => {
                     const target = e.target as HTMLElement;
-                    if (target.closest('[data-radix-popper-content-wrapper]')) {
+                    if (target.closest('[cmdk-root], [data-radix-popper-content-wrapper]')) {
                         e.preventDefault();
                     }
                 }}>
@@ -253,10 +255,11 @@ export default function AppointmentsPage() {
         <div className="flex-grow overflow-auto border rounded-lg bg-card">
             <div className="flex h-full">
                 {/* Time Gutter */}
-                <div className="w-16 text-center border-r">
+                <div className="w-20 text-center border-r">
                     {timeSlots.map(time => (
-                        <div key={time} className="h-16 flex items-center justify-center border-b">
-                            <span className="text-xs text-muted-foreground">{time}</span>
+                        (time.getMinutes() === 0) &&
+                        <div key={time.toISOString()} className="h-16 flex items-center justify-center border-b relative">
+                            <span className="text-xs text-muted-foreground absolute -top-2 bg-card px-1">{format(time, 'h a')}</span>
                         </div>
                     ))}
                 </div>
@@ -271,7 +274,7 @@ export default function AppointmentsPage() {
                             <div className="relative h-full">
                                 {/* Background time slots */}
                                 {timeSlots.map(time => (
-                                    <div key={time} className="h-16 border-b bg-green-50/50"></div>
+                                    <div key={time.toISOString()} className="h-8 border-b bg-green-50/50 last:border-b-0"></div>
                                 ))}
                                 {/* Appointments */}
                                 {getAppointmentsForDoctorAndDate(doctor.id, selectedDate).map(renderAppointmentCard)}
