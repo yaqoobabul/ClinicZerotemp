@@ -18,10 +18,14 @@ import { Card, CardHeader, CardContent, CardTitle, CardDescription } from '../ui
 
 type GeneratedSummary = {
   patientDetails: {
+    id?: string;
     name: string;
     age: string;
     gender: string;
+    contact?: string;
+    address?: string;
   };
+  chiefComplaint?: string;
   medicalHistory?: string;
   provisionalDiagnosis: string;
   toothChartNotes?: string;
@@ -75,9 +79,13 @@ const testAdvisedSchema = z.object({
 
 
 const formSchema = z.object({
+  patientId: z.string().optional(),
   patientName: z.string().min(1, 'Patient name is required.'),
   patientAge: z.string().min(1, 'Patient age is required.'),
   patientGender: z.string().min(1, 'Patient gender is required.'),
+  patientContact: z.string().optional(),
+  patientAddress: z.string().optional(),
+  chiefComplaint: z.string().optional(),
   medicalHistory: z.string().optional(),
   toothNotes: z.array(toothNoteSchema).optional(),
   provisionalDiagnosis: z.string().min(1, 'Diagnosis is required.'),
@@ -103,9 +111,13 @@ export function DentalPrescriptionGenerator() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      patientId: '',
       patientName: '',
       patientAge: '',
       patientGender: '',
+      patientContact: '',
+      patientAddress: '',
+      chiefComplaint: '',
       medicalHistory: '',
       toothNotes: [],
       provisionalDiagnosis: '',
@@ -165,10 +177,14 @@ export function DentalPrescriptionGenerator() {
 
         const summary: GeneratedSummary = {
             patientDetails: {
+                id: values.patientId || undefined,
                 name: values.patientName,
                 age: values.patientAge,
                 gender: values.patientGender,
+                contact: values.patientContact || undefined,
+                address: values.patientAddress || undefined,
             },
+            chiefComplaint: values.chiefComplaint || undefined,
             medicalHistory: values.medicalHistory || undefined,
             provisionalDiagnosis: values.provisionalDiagnosis,
             toothChartNotes: values.toothNotes
@@ -222,6 +238,9 @@ export function DentalPrescriptionGenerator() {
                 <CardTitle>Patient Details</CardTitle>
               </CardHeader>
               <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                 <FormField control={form.control} name="patientId" render={({ field }) => (
+                    <FormItem><FormLabel>Patient ID (Optional)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
                 <FormField control={form.control} name="patientName" render={({ field }) => (
                     <FormItem><FormLabel>Patient Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
@@ -246,14 +265,30 @@ export function DentalPrescriptionGenerator() {
                     <FormMessage />
                   </FormItem>
                 )} />
+                <FormField control={form.control} name="patientContact" render={({ field }) => (
+                    <FormItem><FormLabel>Contact Number</FormLabel><FormControl><Input type="tel" {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+                <FormField control={form.control} name="patientAddress" render={({ field }) => (
+                    <FormItem className="md:col-span-2"><FormLabel>Address</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
               </CardContent>
             </Card>
 
             <Card>
-              <CardHeader><CardTitle>Medical History</CardTitle></CardHeader>
-              <CardContent>
+              <CardHeader><CardTitle>Clinical Information</CardTitle></CardHeader>
+              <CardContent className="space-y-4">
+                  <FormField control={form.control} name="chiefComplaint" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Chief Complaint</FormLabel>
+                        <FormControl>
+                           <Textarea {...field} placeholder="e.g., Pain in upper right tooth since 2 days" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                  )} />
                   <FormField control={form.control} name="medicalHistory" render={({ field }) => (
                       <FormItem>
+                        <FormLabel>Relevant Medical History</FormLabel>
                         <FormControl>
                           <Textarea {...field} className="text-destructive placeholder:text-destructive/50" placeholder="e.g., Hypertension, Diabetes, Allergy to Penicillin" />
                           </FormControl>
@@ -506,11 +541,21 @@ export function DentalPrescriptionGenerator() {
                     <div className="mb-1">
                         <h3 className="font-bold">Patient Details</h3>
                         <div className="grid grid-cols-3 gap-x-4">
+                          <div><strong>Patient ID:</strong> {opdSummary.patientDetails.id || 'N/A'}</div>
                           <div><strong>Name:</strong> {opdSummary.patientDetails.name}</div>
                           <div><strong>Age:</strong> {opdSummary.patientDetails.age}</div>
                           <div><strong>Gender:</strong> {opdSummary.patientDetails.gender}</div>
+                          <div><strong>Contact:</strong> {opdSummary.patientDetails.contact || 'N/A'}</div>
+                          <div className="col-span-2"><strong>Address:</strong> {opdSummary.patientDetails.address || 'N/A'}</div>
                         </div>
                     </div>
+
+                    {opdSummary.chiefComplaint && (
+                      <div className='mb-1'>
+                          <h3 className="font-bold">Chief Complaint</h3>
+                          <p>{opdSummary.chiefComplaint}</p>
+                      </div>
+                    )}
                     
                     {opdSummary.medicalHistory && (
                       <div className='mb-1'>
@@ -591,3 +636,5 @@ export function DentalPrescriptionGenerator() {
     </div>
   );
 }
+
+    
