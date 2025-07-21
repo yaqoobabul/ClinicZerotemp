@@ -65,7 +65,7 @@ const initialAppointments: Appointment[] = [
 ];
 
 const START_HOUR = 8;
-const END_HOUR = 21;
+const END_HOUR = 22; // Extended to 10 PM to render up to 9 PM slot
 const timeSlots = Array.from({ length: (END_HOUR - START_HOUR) * 4 }, (_, i) => {
     const baseDate = startOfDay(new Date());
     return addMinutes(baseDate, START_HOUR * 60 + i * 15);
@@ -373,5 +373,3 @@ export default function AppointmentsPage() {
     </div>
   );
 }
-
-    
