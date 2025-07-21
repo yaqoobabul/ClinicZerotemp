@@ -127,7 +127,7 @@ const instructionSuggestions = ["Before food", "After food", "With meals", "Empt
 const toTitleCase = (str: string) => str ? str.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()) : '';
 const capitalizeFirstLetter = (str: string) => str ? str.charAt(0).toUpperCase() + str.slice(1) : '';
 const normalizeGender = (gender?: string) => {
-    if (!gender) return '';
+    if (!gender || typeof gender !== 'string') return '';
     const lower = gender.toLowerCase();
     if (lower === 'male') return 'Male';
     if (lower === 'female') return 'Female';
@@ -185,8 +185,6 @@ export function PrescriptionGenerator({
     const normalized = normalizeGender(patientGender);
     if (normalized) {
       form.setValue('patientGender', normalized);
-    } else {
-      form.setValue('patientGender', '');
     }
     
     if (patientContact) form.setValue('patientContact', patientContact);
