@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -34,6 +34,11 @@ export default function AppointmentsPage() {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [appointments, setAppointments] = useState<Appointment[]>(initialAppointments);
   const [isNewAppointmentDialogOpen, setIsNewAppointmentDialogOpen] = useState(false);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const upcomingAppointments = appointments.filter(a => a.status === 'upcoming').sort((a,b) => a.dateTime.getTime() - b.dateTime.getTime());
   const finishedAppointments = appointments.filter(a => a.status === 'finished').sort((a,b) => b.dateTime.getTime() - a.dateTime.getTime());
@@ -95,36 +100,40 @@ export default function AppointmentsPage() {
             </Dialog>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="upcoming">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="upcoming">
-                    <Clock className="mr-2 h-4 w-4"/>
-                    Upcoming ({upcomingAppointments.length})
-                </TabsTrigger>
-                <TabsTrigger value="finished">
-                    <CheckCircle className="mr-2 h-4 w-4"/>
-                    Finished ({finishedAppointments.length})
-                </TabsTrigger>
-              </TabsList>
-              <TabsContent value="upcoming">
-                <div className="mt-4 space-y-2">
-                    {upcomingAppointments.length > 0 ? (
-                        upcomingAppointments.map(app => <AppointmentCard key={app.id} appointment={app}/>)
-                    ) : (
-                        <p className="text-center text-muted-foreground py-8">No upcoming appointments.</p>
-                    )}
-                </div>
-              </TabsContent>
-              <TabsContent value="finished">
-                <div className="mt-4 space-y-2">
-                     {finishedAppointments.length > 0 ? (
-                        finishedAppointments.map(app => <AppointmentCard key={app.id} appointment={app}/>)
-                    ) : (
-                        <p className="text-center text-muted-foreground py-8">No finished appointments.</p>
-                    )}
-                </div>
-              </TabsContent>
-            </Tabs>
+            {isClient ? (
+                <Tabs defaultValue="upcoming">
+                <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="upcoming">
+                        <Clock className="mr-2 h-4 w-4"/>
+                        Upcoming ({upcomingAppointments.length})
+                    </TabsTrigger>
+                    <TabsTrigger value="finished">
+                        <CheckCircle className="mr-2 h-4 w-4"/>
+                        Finished ({finishedAppointments.length})
+                    </TabsTrigger>
+                </TabsList>
+                <TabsContent value="upcoming">
+                    <div className="mt-4 space-y-2">
+                        {upcomingAppointments.length > 0 ? (
+                            upcomingAppointments.map(app => <AppointmentCard key={app.id} appointment={app}/>)
+                        ) : (
+                            <p className="text-center text-muted-foreground py-8">No upcoming appointments.</p>
+                        )}
+                    </div>
+                </TabsContent>
+                <TabsContent value="finished">
+                    <div className="mt-4 space-y-2">
+                        {finishedAppointments.length > 0 ? (
+                            finishedAppointments.map(app => <AppointmentCard key={app.id} appointment={app}/>)
+                        ) : (
+                            <p className="text-center text-muted-foreground py-8">No finished appointments.</p>
+                        )}
+                    </div>
+                </TabsContent>
+                </Tabs>
+            ) : (
+                <div className="text-center text-muted-foreground py-8">Loading appointments...</div>
+            )}
           </CardContent>
         </Card>
       </div>
