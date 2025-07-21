@@ -144,6 +144,14 @@ const radiographTypes = ["OPG", "IOPA", "CBCT", "Bitewing"];
 // Helper functions for capitalization
 const toTitleCase = (str: string) => str ? str.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()) : '';
 const capitalizeFirstLetter = (str: string) => str ? str.charAt(0).toUpperCase() + str.slice(1) : '';
+const normalizeGender = (gender?: string) => {
+    if (!gender) return '';
+    const lower = gender.toLowerCase();
+    if (lower === 'male') return 'Male';
+    if (lower === 'female') return 'Female';
+    if (lower === 'other') return 'Other';
+    return '';
+}
 
 export function DentalPrescriptionGenerator({
   patientId,
@@ -190,15 +198,12 @@ export function DentalPrescriptionGenerator({
   });
   
   useEffect(() => {
-    if (patientId) {
-        form.setValue('patientId', patientId);
-    } else if (!form.getValues('patientId')) {
-        const newPatientId = `CZ-${Date.now().toString().slice(-6)}`;
-        form.setValue('patientId', newPatientId);
-    }
+    const newPatientId = patientId || `CZ-${Date.now().toString().slice(-6)}`;
+    form.setValue('patientId', newPatientId);
+
     if (patientName) form.setValue('patientName', toTitleCase(decodeURIComponent(patientName)));
     if (patientAge) form.setValue('patientAge', patientAge);
-    if (patientGender) form.setValue('patientGender', patientGender);
+    if (patientGender) form.setValue('patientGender', normalizeGender(patientGender));
     if (patientContact) form.setValue('patientContact', patientContact);
     if (patientAddress) form.setValue('patientAddress', toTitleCase(decodeURIComponent(patientAddress)));
     if (govtId) form.setValue('govtId', govtId);
