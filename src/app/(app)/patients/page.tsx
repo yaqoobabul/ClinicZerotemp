@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Search, User, Phone, Mail, Printer, FileText, PlusCircle, Stethoscope, BriefcaseMedical } from 'lucide-react';
+import { ArrowLeft, Search, User, Phone, Mail, Printer, FileText, PlusCircle, Stethoscope, BriefcaseMedical, Home } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose, DialogFooter } from '@/components/ui/dialog';
@@ -51,7 +51,7 @@ const newPatientSchema = z.object({
     govtId: z.string().optional(),
 });
 
-const toTitleCase = (str: string) => str.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
+const toTitleCase = (str: string) => str ? str.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()) : '';
 
 
 export default function PatientsPage() {
@@ -91,13 +91,22 @@ export default function PatientsPage() {
         id: `CZ-${Date.now().toString().slice(-6)}`,
         ...values,
         name: toTitleCase(values.name),
+        address: toTitleCase(values.address),
         email: values.email || '',
         govtId: values.govtId || '',
         avatarUrl: `https://placehold.co/40x40.png?text=${values.name[0]}`,
         visits: [],
     };
     setPatients(prev => [...prev, newPatient]);
-    form.reset();
+    form.reset({
+      name: '',
+      age: '' as any,
+      gender: 'Male',
+      email: '',
+      phone: '',
+      address: '',
+      govtId: '',
+    });
     setIsNewPatientDialogOpen(false);
     setSelectedPatient(newPatient);
   }
@@ -153,7 +162,7 @@ export default function PatientsPage() {
                     <span>{selectedPatient.phone}</span>
                 </div>
                  <div className="flex items-center col-span-2 gap-2 text-sm">
-                    <User className="h-4 w-4 text-muted-foreground"/>
+                    <Home className="h-4 w-4 text-muted-foreground"/>
                     <span>{selectedPatient.address}</span>
                 </div>
                 <div className="flex items-center col-span-2 gap-2 text-sm">
@@ -404,10 +413,10 @@ export default function PatientsPage() {
                         <FormItem><FormLabel>Govt. ID</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
                      <FormField control={form.control} name="address" render={({ field }) => (
-                        <FormItem><FormLabel>Address</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                        <FormItem><FormLabel>Address</FormLabel><FormControl><Input {...field} onBlur={(e) => field.onChange(toTitleCase(e.target.value))} /></FormControl><FormMessage /></FormItem>
                     )} />
                     <FormField control={form.control} name="email" render={({ field }) => (
-                        <FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" {...field} /></FormControl><FormMessage /></FormItem>
+                        <FormItem><FormLabel>Email (Optional)</FormLabel><FormControl><Input type="email" {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
                     <DialogFooter>
                         <DialogClose asChild>

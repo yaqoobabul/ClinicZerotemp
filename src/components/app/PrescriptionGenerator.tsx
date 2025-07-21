@@ -156,7 +156,7 @@ export function PrescriptionGenerator() {
         form.setValue('patientAge', searchParams.get('patientAge') || '');
         form.setValue('patientGender', searchParams.get('patientGender') || '');
         form.setValue('patientContact', searchParams.get('patientContact') || '');
-        form.setValue('patientAddress', searchParams.get('patientAddress') || '');
+        form.setValue('patientAddress', toTitleCase(searchParams.get('patientAddress') || ''));
         form.setValue('govtId', searchParams.get('govtId') || '');
     } else if (!form.getValues('patientId')) {
         // Auto-generate a patient ID for new patients
@@ -219,7 +219,7 @@ export function PrescriptionGenerator() {
                 age: values.patientAge,
                 gender: values.patientGender,
                 contact: values.patientContact || undefined,
-                address: values.patientAddress || undefined,
+                address: toTitleCase(values.patientAddress || ''),
                 govtId: values.govtId || undefined,
             },
             vitals: hasVitals ? vitals : undefined,
@@ -325,7 +325,7 @@ export function PrescriptionGenerator() {
                         <FormItem><FormLabel>Contact Number</FormLabel><FormControl><Input type="tel" {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
                     <FormField control={form.control} name="patientAddress" render={({ field }) => (
-                        <FormItem className="md:col-span-2"><FormLabel>Address</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                        <FormItem className="md:col-span-2"><FormLabel>Address</FormLabel><FormControl><Input {...field} onBlur={(e) => field.onChange(toTitleCase(e.target.value))} /></FormControl><FormMessage /></FormItem>
                     )} />
                  </div>
               </CardContent>
