@@ -75,7 +75,12 @@ body {
 @media print {
   @page {
     size: auto;
-    margin: 1.5rem;
+    margin: 1cm;
+  }
+
+  body {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 
   body * {
@@ -94,7 +99,7 @@ body {
     width: 100%;
     height: auto;
     margin: 0;
-    padding: 0; 
+    padding: 0;
     border: none;
     box-shadow: none;
     background-color: white !important;

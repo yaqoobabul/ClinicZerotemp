@@ -198,18 +198,17 @@ export function DentalPrescriptionGenerator({
   });
   
   useEffect(() => {
-    form.setValue('patientId', patientId || `CZ-${Date.now().toString().slice(-6)}`);
-    if (patientName) form.setValue('patientName', toTitleCase(decodeURIComponent(patientName)));
-    if (patientAge) form.setValue('patientAge', patientAge);
-    
-    const normalized = normalizeGender(patientGender);
-    if (normalized) {
-      form.setValue('patientGender', normalized);
-    }
-
-    if (patientContact) form.setValue('patientContact', patientContact);
-    if (patientAddress) form.setValue('patientAddress', toTitleCase(decodeURIComponent(patientAddress)));
-    if (govtId) form.setValue('govtId', govtId);
+    const normalizedGender = normalizeGender(patientGender);
+    form.reset({
+      ...form.getValues(),
+      patientId: patientId || `CZ-${Date.now().toString().slice(-6)}`,
+      patientName: patientName ? toTitleCase(decodeURIComponent(patientName)) : '',
+      patientAge: patientAge || '',
+      patientGender: normalizedGender || '',
+      patientContact: patientContact || '',
+      patientAddress: patientAddress ? toTitleCase(decodeURIComponent(patientAddress)) : '',
+      govtId: govtId || '',
+    });
   }, [patientId, patientName, patientAge, patientGender, patientContact, patientAddress, govtId, form]);
 
   const isFinalDiagnosis = form.watch('isFinalDiagnosis');
