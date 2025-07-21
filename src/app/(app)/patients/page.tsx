@@ -61,7 +61,7 @@ export default function PatientsPage() {
     resolver: zodResolver(newPatientSchema),
     defaultValues: {
       name: '',
-      age: undefined,
+      age: '' as any, // Initialize with empty string to avoid uncontrolled to controlled error
       gender: 'Male',
       email: '',
       phone: '',
