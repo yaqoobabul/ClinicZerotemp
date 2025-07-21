@@ -6,15 +6,19 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Search, User, Phone, Mail } from 'lucide-react';
+import { ArrowLeft, Search, User, Phone, Mail, Printer, FileText } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Separator } from '@/components/ui/separator';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose } from '@/components/ui/dialog';
 
 type Visit = {
   date: string;
   doctor: string;
+  complaint: string;
   diagnosis: string;
-  prescription: string;
+  prescription: string[];
+  testsAdvised?: string;
+  notes?: string;
 };
 
 type Patient = {
@@ -40,8 +44,8 @@ const mockPatients: Patient[] = [
     phone: '+91 98765 43210',
     address: 'A-123, Rosewood Apartments, Mumbai',
     visits: [
-      { date: '2024-07-15', doctor: 'Dr. Rajesh Kumar', diagnosis: 'Viral Fever', prescription: 'Tab. Paracetamol 500mg (1-1-1) for 3 days.' },
-      { date: '2024-05-02', doctor: 'Dr. Rajesh Kumar', diagnosis: 'Common Cold', prescription: 'Tab. Cetirizine 10mg (0-0-1) for 5 days.' },
+      { date: '2024-07-15', doctor: 'Dr. Rajesh Kumar', complaint: 'Fever and body ache', diagnosis: 'Viral Fever', prescription: ['Tab. Paracetamol 500mg (1-1-1) for 3 days.', 'Syp. Cough Syrup (2 tsp SOS)'] },
+      { date: '2024-05-02', doctor: 'Dr. Rajesh Kumar', complaint: 'Runny nose and sneezing', diagnosis: 'Common Cold', prescription: ['Tab. Cetirizine 10mg (0-0-1) for 5 days.'] },
     ],
   },
   {
@@ -54,7 +58,7 @@ const mockPatients: Patient[] = [
     phone: '+91 91234 56789',
     address: 'B-45, Sunshine Colony, Delhi',
     visits: [
-      { date: '2024-06-20', doctor: 'Dr. Priya Singh', diagnosis: 'Dental Caries (#16)', prescription: 'Dental filling advised. Tab. Ketorolac DT for pain.' },
+      { date: '2024-06-20', doctor: 'Dr. Priya Singh', complaint: 'Pain in upper right tooth', diagnosis: 'Dental Caries (#16)', prescription: ['Dental filling advised.', 'Tab. Ketorolac DT for pain.'], testsAdvised: 'IOPA w.r.t #16' },
     ],
   },
   {
@@ -67,9 +71,9 @@ const mockPatients: Patient[] = [
     phone: '+91 99887 76655',
     address: '7, Lotus Lane, Bengaluru',
     visits: [
-      { date: '2024-07-22', doctor: 'Dr. Rajesh Kumar', diagnosis: 'Acute Gastritis', prescription: 'Syp. Digene (2 tsp SOS). Avoid spicy food.' },
-      { date: '2023-11-10', doctor: 'Dr. Rajesh Kumar', diagnosis: 'Migraine', prescription: 'Tab. Sumatriptan 50mg (SOS).' },
-      { date: '2023-01-30', doctor: 'Dr. Rajesh Kumar', diagnosis: 'Routine Checkup', prescription: 'All vitals normal. Advised multivitamins.' },
+      { date: '2024-07-22', doctor: 'Dr. Rajesh Kumar', complaint: 'Stomach pain', diagnosis: 'Acute Gastritis', prescription: ['Syp. Digene (2 tsp SOS).'], notes: 'Avoid spicy food.' },
+      { date: '2023-11-10', doctor: 'Dr. Rajesh Kumar', complaint: 'Headache', diagnosis: 'Migraine', prescription: ['Tab. Sumatriptan 50mg (SOS).'] },
+      { date: '2023-01-30', doctor: 'Dr. Rajesh Kumar', complaint: 'Routine checkup', diagnosis: 'Routine Checkup', prescription: ['All vitals normal. Advised multivitamins.'] },
     ],
   },
    {
@@ -82,7 +86,7 @@ const mockPatients: Patient[] = [
     phone: '+91 87654 32109',
     address: 'Flat 501, Heritage Heights, Pune',
     visits: [
-      { date: '2024-07-05', doctor: 'Dr. Rajesh Kumar', diagnosis: 'Hypertension', prescription: 'Tab. Amlodipine 5mg (1-0-0). Monitor BP weekly.' },
+      { date: '2024-07-05', doctor: 'Dr. Rajesh Kumar', complaint: 'High BP reading at home', diagnosis: 'Hypertension', prescription: ['Tab. Amlodipine 5mg (1-0-0).'], notes: 'Monitor BP weekly.' },
     ],
   },
 ];
@@ -91,11 +95,17 @@ const mockPatients: Patient[] = [
 export default function PatientsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const [viewingVisit, setViewingVisit] = useState<Visit | null>(null);
 
   const filteredPatients = mockPatients.filter(patient =>
     patient.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     patient.id.toLowerCase().includes(searchQuery.toLowerCase())
   );
+  
+  const handlePrint = () => {
+    // This uses the browser's print functionality
+    window.print();
+  };
 
   if (selectedPatient) {
     return (
@@ -146,10 +156,15 @@ export default function PatientsPage() {
                         <span className="text-muted-foreground">{visit.diagnosis}</span>
                       </div>
                     </AccordionTrigger>
-                    <AccordionContent className="space-y-2 pl-2">
+                    <AccordionContent className="space-y-4 pl-2">
                       <p><strong>Doctor:</strong> {visit.doctor}</p>
+                      <p><strong>Chief Complaint:</strong> {visit.complaint}</p>
                       <p><strong>Diagnosis:</strong> {visit.diagnosis}</p>
-                      <p><strong>Prescription:</strong> {visit.prescription}</p>
+                      <p><strong>Prescription:</strong> {visit.prescription.join(' ')}</p>
+                      <Button variant="secondary" size="sm" onClick={() => setViewingVisit(visit)}>
+                        <FileText className="mr-2 h-4 w-4"/>
+                        View Report
+                      </Button>
                     </AccordionContent>
                   </AccordionItem>
                 ))}
@@ -157,6 +172,77 @@ export default function PatientsPage() {
             </div>
           </CardContent>
         </Card>
+        
+        <Dialog open={!!viewingVisit} onOpenChange={(isOpen) => !isOpen && setViewingVisit(null)}>
+          <DialogContent className="max-w-4xl p-0">
+             {viewingVisit && (
+                <div id="printable-prescription" className="p-8">
+                  <div className="text-sm">
+                      <div className="flex items-start justify-between">
+                          <div>
+                              <h2 className="text-base font-bold text-primary">ClinicZero</h2>
+                              <p>123 Health St, Wellness City, India | Phone: +91 98765 43210</p>
+                              <p className="font-semibold">Dr. {viewingVisit.doctor}</p>
+                              <p className="text-muted-foreground">Reg. No. 12345</p>
+                          </div>
+                          <div className="text-right flex-shrink-0">
+                              <p><strong>Date:</strong> {new Date(viewingVisit.date).toLocaleString('en-IN')}</p>
+                          </div>
+                      </div>
+                      <div className="flex justify-end mt-1 no-print">
+                          <Button variant="outline" size="icon" onClick={handlePrint}><Printer className="h-4 w-4" /></Button>
+                      </div>
+                      <Separator className="my-1 bg-black"/>
+                      <div className="px-1 space-y-2">
+                          <div className="mb-1">
+                            <h3 className="font-bold">Patient Details</h3>
+                            <div className="grid grid-cols-2 gap-x-4">
+                              <div><strong>Patient ID:</strong> {selectedPatient.id}</div>
+                              <div><strong>Name:</strong> {selectedPatient.name}</div>
+                              <div><strong>Age:</strong> {selectedPatient.age}</div>
+                              <div><strong>Gender:</strong> {selectedPatient.gender}</div>
+                            </div>
+                          </div>
+
+                          <div>
+                              <h3 className="font-bold">Chief Complaint</h3>
+                              <p>{viewingVisit.complaint}</p>
+                          </div>
+
+                          <div>
+                              <h3 className="font-bold">Diagnosis</h3>
+                              <p>{viewingVisit.diagnosis}</p>
+                          </div>
+
+                          {viewingVisit.testsAdvised && (
+                          <div>
+                              <h3 className="font-bold">Tests Advised</h3>
+                              <p>{viewingVisit.testsAdvised}</p>
+                          </div>
+                          )}
+
+                          <div>
+                              <h3 className="font-bold">Prescription (Rx)</h3>
+                              <ul className="list-disc list-inside">
+                                {viewingVisit.prescription.map((item, i) => <li key={i}>{item}</li>)}
+                              </ul>
+                          </div>
+
+                          {viewingVisit.notes && (
+                          <div>
+                              <h3 className="font-bold">Additional Notes</h3>
+                              <p>{viewingVisit.notes}</p>
+                          </div>
+                          )}
+                      </div>
+                      <div className="text-right mt-24">
+                          <p className="border-t-2 border-black pt-1 font-semibold inline-block">Dr. {viewingVisit.doctor}</p>
+                      </div>
+                  </div>
+                </div>
+             )}
+          </DialogContent>
+        </Dialog>
       </div>
     );
   }
@@ -209,4 +295,3 @@ export default function PatientsPage() {
     </div>
   );
 }
-
