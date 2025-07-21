@@ -13,7 +13,7 @@ export default function LoginPage() {
           <div className="mx-auto mb-4 flex items-center justify-center rounded-full bg-primary/10 p-4">
             <StethoscopeIcon className="h-10 w-10 text-primary" />
           </div>
-          <h1 className="font-headline text-4xl font-bold text-primary">ClinicEase</h1>
+          <h1 className="font-headline text-4xl font-bold text-primary">ClinicZero</h1>
           <CardDescription className="pt-2">
             Smart, Simple, and Seamless Clinic Management.
           </CardDescription>
