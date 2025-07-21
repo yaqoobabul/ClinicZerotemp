@@ -14,6 +14,7 @@ import { format } from 'date-fns';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 
 type Appointment = {
   id: string;
@@ -25,10 +26,13 @@ type Appointment = {
   status: 'upcoming' | 'finished';
 };
 
-// Assuming Patient type is also needed for the existing patient list
 type Patient = {
   id: string;
   name: string;
+  age?: number;
+  sex?: 'Male' | 'Female' | 'Other';
+  phone?: string;
+  address?: string;
   avatarUrl: string;
 }
 
@@ -51,11 +55,12 @@ const initialAppointments: Appointment[] = [
 export default function AppointmentsPage() {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [appointments, setAppointments] = useState<Appointment[]>(initialAppointments);
-  const [patients] = useState<Patient[]>(initialPatients);
+  const [patients, setPatients] = useState<Patient[]>(initialPatients);
   const [isNewAppointmentDialogOpen, setIsNewAppointmentDialogOpen] = useState(false);
   const [appointmentFlowStep, setAppointmentFlowStep] = useState<'choose' | 'new' | 'existing'>('choose');
   const [selectedPatientForAppointment, setSelectedPatientForAppointment] = useState<Patient | null>(null);
   const [isClient, setIsClient] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     setIsClient(true);
@@ -65,11 +70,39 @@ export default function AppointmentsPage() {
   const finishedAppointments = appointments.filter(a => a.status === 'finished').sort((a,b) => b.dateTime.getTime() - a.dateTime.getTime());
 
   const handleAddAppointment = (values: AppointmentFormValues) => {
+    
+    // If it's a new patient, create a new patient record first
+    if (appointmentFlowStep === 'new') {
+        const newPatient: Patient = {
+            id: `CZ-${Date.now().toString().slice(-6)}`,
+            name: values.patientName,
+            age: values.age,
+            sex: values.sex,
+            phone: values.phone,
+            address: values.address,
+            avatarUrl: `https://placehold.co/40x40.png?text=${values.patientName[0]}`
+        };
+        setPatients(prev => [...prev, newPatient]);
+    }
+
+    const patientForAppointment = appointmentFlowStep === 'new' 
+        ? { id: `CZ-${Date.now().toString().slice(-6)}`, avatarUrl: `https://placehold.co/40x40.png?text=${values.patientName[0]}` } 
+        : selectedPatientForAppointment;
+
+    if (!patientForAppointment) {
+        toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: 'No patient selected for the appointment.',
+        });
+        return;
+    }
+
     const newAppointment: Appointment = {
         id: `APP-${Date.now().toString().slice(-6)}`,
         patientName: values.patientName,
-        patientId: selectedPatientForAppointment?.id || 'CZ-New',
-        avatarUrl: selectedPatientForAppointment?.avatarUrl || `https://placehold.co/40x40.png?text=${values.patientName[0]}`,
+        patientId: patientForAppointment.id,
+        avatarUrl: patientForAppointment.avatarUrl,
         dateTime: values.dateTime,
         reason: values.reason,
         status: 'upcoming',
@@ -189,7 +222,11 @@ export default function AppointmentsPage() {
                     </div>
                 )}
                 {appointmentFlowStep === 'new' && (
-                    <AppointmentForm onSubmit={handleAddAppointment} onCancel={closeAndResetDialog} />
+                    <AppointmentForm 
+                        onSubmit={handleAddAppointment} 
+                        onCancel={closeAndResetDialog}
+                        showPatientDetails={true}
+                    />
                 )}
                 {appointmentFlowStep === 'existing' && (
                     <div className="space-y-4">
@@ -200,6 +237,7 @@ export default function AppointmentsPage() {
                                 onSubmit={handleAddAppointment} 
                                 onCancel={closeAndResetDialog}
                                 initialData={{ patientName: selectedPatientForAppointment.name }}
+                                showPatientDetails={false}
                             />
                         )}
                     </div>

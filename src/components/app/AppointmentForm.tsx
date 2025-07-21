@@ -13,9 +13,14 @@ import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Textarea } from '../ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
 const appointmentFormSchema = z.object({
   patientName: z.string().min(1, 'Patient name is required.'),
+  age: z.coerce.number().optional(),
+  sex: z.enum(['Male', 'Female', 'Other']).optional(),
+  phone: z.string().optional(),
+  address: z.string().optional(),
   dateTime: z.date({
     required_error: 'An appointment date is required.',
   }),
@@ -28,13 +33,18 @@ interface AppointmentFormProps {
   onSubmit: (values: AppointmentFormValues) => void;
   onCancel: () => void;
   initialData?: Partial<AppointmentFormValues>;
+  showPatientDetails?: boolean;
 }
 
-export function AppointmentForm({ onSubmit, onCancel, initialData }: AppointmentFormProps) {
+export function AppointmentForm({ onSubmit, onCancel, initialData, showPatientDetails = false }: AppointmentFormProps) {
   const form = useForm<AppointmentFormValues>({
     resolver: zodResolver(appointmentFormSchema),
     defaultValues: initialData || {
       patientName: '',
+      age: undefined,
+      sex: undefined,
+      phone: '',
+      address: '',
       dateTime: new Date(),
       reason: '',
     },
@@ -56,6 +66,37 @@ export function AppointmentForm({ onSubmit, onCancel, initialData }: Appointment
             </FormItem>
           )}
         />
+        
+        {showPatientDetails && (
+          <>
+            <div className="grid grid-cols-2 gap-4">
+                <FormField control={form.control} name="age" render={({ field }) => (
+                    <FormItem><FormLabel>Age</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+                <FormField control={form.control} name="sex" render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Sex</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl><SelectTrigger><SelectValue placeholder="Select sex"/></SelectTrigger></FormControl>
+                            <SelectContent>
+                                <SelectItem value="Male">Male</SelectItem>
+                                <SelectItem value="Female">Female</SelectItem>
+                                <SelectItem value="Other">Other</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                    </FormItem>
+                )} />
+            </div>
+             <FormField control={form.control} name="phone" render={({ field }) => (
+                <FormItem><FormLabel>Phone</FormLabel><FormControl><Input type="tel" {...field} /></FormControl><FormMessage /></FormItem>
+            )} />
+             <FormField control={form.control} name="address" render={({ field }) => (
+                <FormItem><FormLabel>Address</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+            )} />
+          </>
+        )}
+
         <FormField
           control={form.control}
           name="dateTime"
