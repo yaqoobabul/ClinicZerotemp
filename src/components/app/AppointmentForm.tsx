@@ -42,7 +42,7 @@ export function AppointmentForm({ onSubmit, onCancel, initialData }: Appointment
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 pt-4">
         <FormField
           control={form.control}
           name="patientName"
@@ -50,7 +50,7 @@ export function AppointmentForm({ onSubmit, onCancel, initialData }: Appointment
             <FormItem>
               <FormLabel>Patient Name</FormLabel>
               <FormControl>
-                <Input placeholder="Enter patient's full name" {...field} />
+                <Input placeholder="Enter patient's full name" {...field} disabled={!!initialData?.patientName} />
               </FormControl>
               <FormMessage />
             </FormItem>

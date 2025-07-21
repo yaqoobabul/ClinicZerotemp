@@ -7,10 +7,13 @@ import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
-import { PlusCircle, Clock, CheckCircle } from 'lucide-react';
+import { PlusCircle, Clock, CheckCircle, ChevronsUpDown, Check } from 'lucide-react';
 import { AppointmentForm, AppointmentFormValues } from '@/components/app/AppointmentForm';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { format } from 'date-fns';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
+import { cn } from '@/lib/utils';
 
 type Appointment = {
   id: string;
@@ -21,6 +24,21 @@ type Appointment = {
   reason: string;
   status: 'upcoming' | 'finished';
 };
+
+// Assuming Patient type is also needed for the existing patient list
+type Patient = {
+  id: string;
+  name: string;
+  avatarUrl: string;
+}
+
+const initialPatients: Patient[] = [
+  { id: '1', name: 'Aarav Patel', avatarUrl: 'https://placehold.co/40x40.png' },
+  { id: '2', name: 'Priya Singh', avatarUrl: 'https://placehold.co/40x40.png' },
+  { id: '3', name: 'Rohan Gupta', avatarUrl: 'https://placehold.co/40x40.png' },
+  { id: '4', name: 'Saanvi Sharma', avatarUrl: 'https://placehold.co/40x40.png' },
+];
+
 
 const initialAppointments: Appointment[] = [
   { id: '1', patientName: 'Aarav Patel', patientId: 'CZ-12345', avatarUrl: 'https://placehold.co/40x40.png', dateTime: new Date(new Date().setDate(new Date().getDate() + 1)), reason: 'Routine Checkup', status: 'upcoming' },
@@ -33,7 +51,10 @@ const initialAppointments: Appointment[] = [
 export default function AppointmentsPage() {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [appointments, setAppointments] = useState<Appointment[]>(initialAppointments);
+  const [patients] = useState<Patient[]>(initialPatients);
   const [isNewAppointmentDialogOpen, setIsNewAppointmentDialogOpen] = useState(false);
+  const [appointmentFlowStep, setAppointmentFlowStep] = useState<'choose' | 'new' | 'existing'>('choose');
+  const [selectedPatientForAppointment, setSelectedPatientForAppointment] = useState<Patient | null>(null);
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
@@ -47,14 +68,23 @@ export default function AppointmentsPage() {
     const newAppointment: Appointment = {
         id: `APP-${Date.now().toString().slice(-6)}`,
         patientName: values.patientName,
-        patientId: 'CZ-New',
-        avatarUrl: `https://placehold.co/40x40.png?text=${values.patientName[0]}`,
+        patientId: selectedPatientForAppointment?.id || 'CZ-New',
+        avatarUrl: selectedPatientForAppointment?.avatarUrl || `https://placehold.co/40x40.png?text=${values.patientName[0]}`,
         dateTime: values.dateTime,
         reason: values.reason,
         status: 'upcoming',
     };
     setAppointments(prev => [...prev, newAppointment]);
+    closeAndResetDialog();
+  }
+
+  const closeAndResetDialog = () => {
     setIsNewAppointmentDialogOpen(false);
+    // Reset flow after a short delay to allow dialog to close
+    setTimeout(() => {
+      setAppointmentFlowStep('choose');
+      setSelectedPatientForAppointment(null);
+    }, 300);
   }
 
   const AppointmentCard = ({ appointment }: { appointment: Appointment }) => (
@@ -73,6 +103,58 @@ export default function AppointmentsPage() {
         </div>
     </div>
   );
+  
+  const PatientCombobox = () => {
+    const [open, setOpen] = useState(false);
+    const [value, setValue] = useState("");
+
+    return (
+        <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger asChild>
+                <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={open}
+                    className="w-full justify-between"
+                >
+                    {value
+                        ? patients.find((patient) => patient.name.toLowerCase() === value)?.name
+                        : "Select patient..."}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                <Command>
+                    <CommandInput placeholder="Search patient..." />
+                    <CommandEmpty>No patient found.</CommandEmpty>
+                    <CommandGroup>
+                        {patients.map((patient) => (
+                            <CommandItem
+                                key={patient.id}
+                                value={patient.name.toLowerCase()}
+                                onSelect={(currentValue) => {
+                                    setValue(currentValue === value ? "" : currentValue);
+                                    const selected = patients.find(p => p.name.toLowerCase() === currentValue);
+                                    setSelectedPatientForAppointment(selected || null);
+                                    setOpen(false);
+                                }}
+                            >
+                                <Check
+                                    className={cn(
+                                        "mr-2 h-4 w-4",
+                                        value === patient.name.toLowerCase() ? "opacity-100" : "opacity-0"
+                                    )}
+                                />
+                                {patient.name}
+                            </CommandItem>
+                        ))}
+                    </CommandGroup>
+                </Command>
+            </PopoverContent>
+        </Popover>
+    );
+};
+
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
@@ -90,12 +172,38 @@ export default function AppointmentsPage() {
                   Add Appointment
                 </Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent onInteractOutside={(e) => {
+                    // Prevent closing dialog when clicking inside popovers
+                    if ((e.target as HTMLElement).closest('[role="combobox"]')) {
+                        e.preventDefault();
+                    }
+                }}>
                 <DialogHeader>
                   <DialogTitle>New Appointment</DialogTitle>
-                  <DialogDescription>Fill in the details to schedule a new appointment.</DialogDescription>
+                  <DialogDescription>Is this for a new or an existing patient?</DialogDescription>
                 </DialogHeader>
-                <AppointmentForm onSubmit={handleAddAppointment} onCancel={() => setIsNewAppointmentDialogOpen(false)} />
+                {appointmentFlowStep === 'choose' && (
+                    <div className='grid grid-cols-2 gap-4 pt-4'>
+                        <Button variant="outline" onClick={() => setAppointmentFlowStep('new')}>New Patient</Button>
+                        <Button onClick={() => setAppointmentFlowStep('existing')}>Existing Patient</Button>
+                    </div>
+                )}
+                {appointmentFlowStep === 'new' && (
+                    <AppointmentForm onSubmit={handleAddAppointment} onCancel={closeAndResetDialog} />
+                )}
+                {appointmentFlowStep === 'existing' && (
+                    <div className="space-y-4">
+                        <PatientCombobox />
+                        {selectedPatientForAppointment && (
+                            <AppointmentForm 
+                                key={selectedPatientForAppointment.id}
+                                onSubmit={handleAddAppointment} 
+                                onCancel={closeAndResetDialog}
+                                initialData={{ patientName: selectedPatientForAppointment.name }}
+                            />
+                        )}
+                    </div>
+                )}
               </DialogContent>
             </Dialog>
           </CardHeader>
