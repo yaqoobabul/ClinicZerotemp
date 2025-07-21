@@ -120,7 +120,7 @@ export default function PatientsPage() {
             <div className="grid gap-2 md:grid-cols-2">
                 <div className="flex items-center gap-2 text-sm">
                     <Mail className="h-4 w-4 text-muted-foreground"/>
-                    <span>{selectedPatient.email}</span>
+                    <span>{selectedPatient.email || 'N/A'}</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                     <Phone className="h-4 w-4 text-muted-foreground"/>
@@ -342,9 +342,6 @@ export default function PatientsPage() {
                             </FormItem>
                         )} />
                     </div>
-                     <FormField control={form.control} name="email" render={({ field }) => (
-                        <FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" {...field} /></FormControl><FormMessage /></FormItem>
-                    )} />
                      <FormField control={form.control} name="phone" render={({ field }) => (
                         <FormItem><FormLabel>Phone</FormLabel><FormControl><Input type="tel" {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
@@ -353,6 +350,9 @@ export default function PatientsPage() {
                     )} />
                      <FormField control={form.control} name="address" render={({ field }) => (
                         <FormItem><FormLabel>Address</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                    <FormField control={form.control} name="email" render={({ field }) => (
+                        <FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
                     <DialogFooter>
                         <DialogClose asChild>
