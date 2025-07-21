@@ -22,7 +22,10 @@ type Doctor = {
 
 const appointmentFormSchema = z.object({
   patientName: z.string().min(1, 'Patient name is required.'),
+  age: z.coerce.number().optional(),
+  sex: z.enum(['Male', 'Female', 'Other']).optional(),
   patientPhone: z.string().optional(),
+  address: z.string().optional(),
   doctorId: z.string().min(1, 'A doctor must be selected.'),
   dateTime: z.date({
     required_error: 'An appointment date is required.',
@@ -31,7 +34,6 @@ const appointmentFormSchema = z.object({
   reason: z.string().min(1, 'Reason for appointment is required.'),
 });
 
-// Final submission values
 export type AppointmentFormValues = Omit<z.infer<typeof appointmentFormSchema>, 'appointmentTime'>;
 
 interface AppointmentFormProps {
@@ -48,6 +50,9 @@ export function AppointmentForm({ onSubmit, onCancel, doctors, initialData, show
     defaultValues: {
       patientName: initialData?.patientName || '',
       patientPhone: initialData?.patientPhone || '',
+      age: initialData?.age,
+      sex: initialData?.sex,
+      address: initialData?.address || '',
       doctorId: initialData?.doctorId || '',
       dateTime: initialData?.dateTime || new Date(),
       appointmentTime: initialData?.dateTime ? format(initialData.dateTime, 'HH:mm') : '09:00',
@@ -69,7 +74,7 @@ export function AppointmentForm({ onSubmit, onCancel, doctors, initialData, show
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6 pt-4">
+      <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-4 pt-4">
         <FormField
           control={form.control}
           name="patientName"
@@ -85,19 +90,43 @@ export function AppointmentForm({ onSubmit, onCancel, doctors, initialData, show
         />
         
         {showPatientDetails && (
-          <FormField
-            control={form.control}
-            name="patientPhone"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Patient Phone</FormLabel>
-                <FormControl>
-                  <Input type="tel" placeholder="Enter patient's phone number" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <>
+            <div className="grid grid-cols-2 gap-4">
+                <FormField control={form.control} name="age" render={({ field }) => (
+                    <FormItem><FormLabel>Age</FormLabel><FormControl><Input type="number" {...field} onChange={e => field.onChange(e.target.value === '' ? undefined : Number(e.target.value))} /></FormControl><FormMessage /></FormItem>
+                )} />
+                <FormField control={form.control} name="sex" render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Sex</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl><SelectTrigger><SelectValue placeholder="Select sex" /></SelectTrigger></FormControl>
+                            <SelectContent>
+                                <SelectItem value="Male">Male</SelectItem>
+                                <SelectItem value="Female">Female</SelectItem>
+                                <SelectItem value="Other">Other</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                    </FormItem>
+                )} />
+            </div>
+            <FormField
+                control={form.control}
+                name="patientPhone"
+                render={({ field }) => (
+                <FormItem>
+                    <FormLabel>Patient Phone</FormLabel>
+                    <FormControl>
+                    <Input type="tel" placeholder="Enter patient's phone number" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                </FormItem>
+                )}
+            />
+             <FormField control={form.control} name="address" render={({ field }) => (
+                <FormItem><FormLabel>Address</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+            )} />
+          </>
         )}
         
         <FormField

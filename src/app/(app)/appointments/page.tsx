@@ -83,6 +83,9 @@ export default function AppointmentsPage() {
         id: `P-${Date.now().toString().slice(-6)}`,
         name: values.patientName,
         phone: values.patientPhone,
+        age: values.age,
+        sex: values.sex,
+        address: values.address,
       };
       setPatients(prev => [...prev, newPatient]);
       patientId = newPatient.id;
@@ -205,7 +208,8 @@ export default function AppointmentsPage() {
                 </Button>
               </DialogTrigger>
               <DialogContent onInteractOutside={(e) => {
-                    if ((e.target as HTMLElement).closest('[role="combobox"]')) {
+                    const target = e.target as HTMLElement;
+                    if (target.closest('[data-radix-popper-content-wrapper]')) {
                         e.preventDefault();
                     }
                 }}>
