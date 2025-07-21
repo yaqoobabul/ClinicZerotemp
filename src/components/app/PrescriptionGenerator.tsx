@@ -146,17 +146,14 @@ function PrescriptionGeneratorInternal() {
   });
 
   useEffect(() => {
-    const patientName = searchParams.get('patientName');
-    if (patientName) {
-      form.setValue('patientId', searchParams.get('patientId') || `CZ-${Date.now().toString().slice(-6)}`);
-      form.setValue('patientName', toTitleCase(decodeURIComponent(patientName)));
-      form.setValue('patientAge', searchParams.get('patientAge') || '');
-      form.setValue('patientSex', searchParams.get('patientSex') || '');
-      form.setValue('patientContact', searchParams.get('patientContact') || '');
-      form.setValue('patientAddress', toTitleCase(decodeURIComponent(searchParams.get('patientAddress') || '')));
-      form.setValue('govtId', searchParams.get('govtId') || '');
-    }
-  }, [searchParams, form.setValue]);
+    form.setValue('patientId', searchParams.get('patientId') || `CZ-${Date.now().toString().slice(-6)}`);
+    form.setValue('patientName', toTitleCase(decodeURIComponent(searchParams.get('patientName') || '')));
+    form.setValue('patientAge', searchParams.get('patientAge') || '');
+    form.setValue('patientSex', searchParams.get('patientSex') || '');
+    form.setValue('patientContact', searchParams.get('patientContact') || '');
+    form.setValue('patientAddress', toTitleCase(decodeURIComponent(searchParams.get('patientAddress') || '')));
+    form.setValue('govtId', searchParams.get('govtId') || '');
+  }, [searchParams, form]);
 
 
   const isFinalDiagnosis = form.watch('isFinalDiagnosis');
