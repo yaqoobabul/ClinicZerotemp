@@ -42,6 +42,7 @@ type GeneratedSummary = {
   diagnosisLabel: string;
   provisionalDiagnosis: string;
   toothChartNotes?: string;
+  treatmentAdvised?: string;
   prescriptionTable?: string;
   radiographsAdvised?: string;
   testsAdvised?: string;
@@ -111,6 +112,7 @@ const formSchema = z.object({
   isFinalDiagnosis: z.boolean().default(false),
   toothNotes: z.array(toothNoteSchema).optional(),
   provisionalDiagnosis: z.string().min(1, 'Diagnosis is required.'),
+  treatmentAdvised: z.string().optional(),
   medicines: z.array(medicineSchema).optional(),
   radiographsAdvised: z.array(radiographSchema).optional(),
   testsAdvised: z.array(testAdvisedSchema).optional(),
@@ -157,6 +159,7 @@ function DentalPrescriptionGeneratorInternal() {
       isFinalDiagnosis: false,
       toothNotes: [],
       provisionalDiagnosis: '',
+      treatmentAdvised: '',
       medicines: [],
       radiographsAdvised: [],
       testsAdvised: [],
@@ -261,6 +264,7 @@ function DentalPrescriptionGeneratorInternal() {
                 ?.filter(tn => tn.note && tn.note.trim() !== '')
                 .map(tn => `#${tn.tooth}: ${tn.note}`)
                 .join(', ') || undefined,
+            treatmentAdvised: values.treatmentAdvised ? capitalizeFirstLetter(values.treatmentAdvised) : undefined,
             radiographsAdvised: radiographs,
             testsAdvised: otherTests,
             prescriptionTable,
@@ -636,6 +640,24 @@ function DentalPrescriptionGeneratorInternal() {
                 </Button>
               </CardContent>
             </Card>
+
+            <Card>
+              <CardHeader><CardTitle>Treatment Advised</CardTitle></CardHeader>
+              <CardContent>
+                <FormField
+                    control={form.control}
+                    name="treatmentAdvised"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormControl>
+                                <Textarea {...field} placeholder="e.g., Extraction of 16, Restoration of 24..." onBlur={(e) => field.onChange(capitalizeFirstLetter(e.target.value))} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+              </CardContent>
+            </Card>
             
             <Card>
               <CardHeader><CardTitle>Notes & Follow-up</CardTitle></CardHeader>
@@ -752,6 +774,13 @@ function DentalPrescriptionGeneratorInternal() {
                         {opdSummary.testsAdvised && <p><strong>Tests:</strong> {opdSummary.testsAdvised}</p>}
                     </div>
                     )}
+                    
+                    {opdSummary.treatmentAdvised && (
+                        <div className="mb-1">
+                            <h3 className="font-bold">Treatment Advised</h3>
+                            <p>{opdSummary.treatmentAdvised}</p>
+                        </div>
+                    )}
 
                     {prescriptionTableRows.length > 0 && (
                     <div className="mb-1">
@@ -817,4 +846,5 @@ export function DentalPrescriptionGenerator() {
     
 
     
+
 

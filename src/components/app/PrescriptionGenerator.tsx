@@ -40,6 +40,7 @@ type GeneratedSummary = {
   medicalHistory?: string;
   diagnosisLabel: string;
   provisionalDiagnosis: string;
+  treatmentAdvised?: string;
   prescriptionTable?: string;
   testsAdvised?: string;
   additionalNotes?: string;
@@ -95,6 +96,7 @@ const formSchema = z.object({
   medicalHistory: z.string().optional(),
   isFinalDiagnosis: z.boolean().default(false),
   provisionalDiagnosis: z.string().min(1, 'Diagnosis is required.'),
+  treatmentAdvised: z.string().optional(),
   medicines: z.array(medicineSchema).optional(),
   testsAdvised: z.array(testAdvisedSchema).optional(),
   additionalNotes: z.string().optional(),
@@ -138,6 +140,7 @@ function PrescriptionGeneratorInternal() {
       medicalHistory: '',
       isFinalDiagnosis: false,
       provisionalDiagnosis: '',
+      treatmentAdvised: '',
       medicines: [],
       testsAdvised: [],
       additionalNotes: '',
@@ -221,6 +224,7 @@ function PrescriptionGeneratorInternal() {
             medicalHistory: values.medicalHistory ? capitalizeFirstLetter(values.medicalHistory) : undefined,
             diagnosisLabel: values.isFinalDiagnosis ? 'Final Diagnosis' : 'Provisional Diagnosis',
             provisionalDiagnosis: capitalizeFirstLetter(values.provisionalDiagnosis),
+            treatmentAdvised: values.treatmentAdvised ? capitalizeFirstLetter(values.treatmentAdvised) : undefined,
             testsAdvised: values.testsAdvised?.filter(t => t.value && t.value.trim() !== '').map(t => t.value).join(', ') || undefined,
             prescriptionTable,
             additionalNotes: values.additionalNotes ? capitalizeFirstLetter(values.additionalNotes) : undefined,
@@ -535,6 +539,24 @@ function PrescriptionGeneratorInternal() {
                 </Button>
               </CardContent>
             </Card>
+
+            <Card>
+              <CardHeader><CardTitle>Treatment Advised</CardTitle></CardHeader>
+              <CardContent>
+                <FormField
+                    control={form.control}
+                    name="treatmentAdvised"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormControl>
+                                <Textarea {...field} placeholder="e.g., Physiotherapy, Surgical consultation..." onBlur={(e) => field.onChange(capitalizeFirstLetter(e.target.value))} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+              </CardContent>
+            </Card>
             
             <Card>
               <CardHeader><CardTitle>Notes & Follow-up</CardTitle></CardHeader>
@@ -644,6 +666,13 @@ function PrescriptionGeneratorInternal() {
                     </div>
                     )}
 
+                    {opdSummary.treatmentAdvised && (
+                        <div className="mb-1">
+                            <h3 className="font-bold">Treatment Advised</h3>
+                            <p>{opdSummary.treatmentAdvised}</p>
+                        </div>
+                    )}
+
                     {prescriptionTableRows.length > 0 && (
                     <div className="mb-1">
                         <h3 className="font-bold">Prescription (Rx)</h3>
@@ -708,4 +737,5 @@ export function PrescriptionGenerator() {
     
 
     
+
 
