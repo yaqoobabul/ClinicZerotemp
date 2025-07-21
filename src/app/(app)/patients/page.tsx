@@ -2,11 +2,12 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Search, User, Phone, Mail, Printer, FileText, PlusCircle } from 'lucide-react';
+import { ArrowLeft, Search, User, Phone, Mail, Printer, FileText, PlusCircle, Stethoscope, BriefcaseMedical } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose, DialogFooter } from '@/components/ui/dialog';
@@ -15,6 +16,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ToothIcon } from '@/components/icons/ToothIcon';
 
 type Visit = {
   date: string;
@@ -56,6 +58,9 @@ export default function PatientsPage() {
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [viewingVisit, setViewingVisit] = useState<Visit | null>(null);
   const [isNewPatientDialogOpen, setIsNewPatientDialogOpen] = useState(false);
+  const [isNewVisitDialogOpen, setIsNewVisitDialogOpen] = useState(false);
+  const router = useRouter();
+
 
   const form = useForm<z.infer<typeof newPatientSchema>>({
     resolver: zodResolver(newPatientSchema),
@@ -94,8 +99,26 @@ export default function PatientsPage() {
     setSelectedPatient(newPatient);
   }
 
+  const handleNavigateToVisit = (type: 'medical' | 'dental') => {
+    if (!selectedPatient) return;
+    const path = type === 'medical' ? '/prescriptions' : '/dental';
+    
+    const queryParams = new URLSearchParams({
+        patientId: selectedPatient.id,
+        patientName: selectedPatient.name,
+        patientAge: selectedPatient.age.toString(),
+        patientGender: selectedPatient.gender,
+        patientContact: selectedPatient.phone,
+        patientAddress: selectedPatient.address,
+        govtId: selectedPatient.govtId,
+    });
+    
+    router.push(`${path}?${queryParams.toString()}`);
+  }
+
   if (selectedPatient) {
     return (
+      <>
       <div className="grid flex-1 items-start gap-4">
         <div className="flex items-center gap-4">
           <Button variant="outline" size="icon" onClick={() => setSelectedPatient(null)}>
@@ -137,7 +160,10 @@ export default function PatientsPage() {
               {selectedPatient.visits.length === 0 ? (
                 <div className="text-center text-muted-foreground py-8">
                     <p>No visit history found.</p>
-                    <Button className="mt-4" variant="outline">Add New Visit Record</Button>
+                    <Button className="mt-4" variant="outline" onClick={() => setIsNewVisitDialogOpen(true)}>
+                        <BriefcaseMedical className="mr-2 h-4 w-4" />
+                        Add New Visit Record
+                    </Button>
                 </div>
               ) : (
                 <Accordion type="single" collapsible className="w-full">
@@ -247,6 +273,28 @@ export default function PatientsPage() {
           </DialogContent>
         </Dialog>
       </div>
+      
+      <Dialog open={isNewVisitDialogOpen} onOpenChange={setIsNewVisitDialogOpen}>
+        <DialogContent>
+            <DialogHeader>
+                <DialogTitle>Create New Visit</DialogTitle>
+                <DialogDescription>
+                    Choose the type of OPD visit for {selectedPatient.name}.
+                </DialogDescription>
+            </DialogHeader>
+            <div className="grid grid-cols-2 gap-4 pt-4">
+                <Button variant="outline" className="h-24 flex-col gap-2" onClick={() => handleNavigateToVisit('medical')}>
+                    <Stethoscope className="h-8 w-8"/>
+                    <span className="text-base">Medical OPD</span>
+                </Button>
+                <Button variant="outline" className="h-24 flex-col gap-2" onClick={() => handleNavigateToVisit('dental')}>
+                    <ToothIcon className="h-8 w-8"/>
+                    <span className="text-base">Dental OPD</span>
+                </Button>
+            </div>
+        </DialogContent>
+      </Dialog>
+      </>
     );
   }
 
@@ -325,7 +373,7 @@ export default function PatientsPage() {
                     )} />
                     <div className="grid grid-cols-2 gap-4">
                         <FormField control={form.control} name="age" render={({ field }) => (
-                            <FormItem><FormLabel>Age</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+                            <FormItem><FormLabel>Age</FormLabel><FormControl><Input type="number" {...field} value={field.value === undefined ? '' : field.value} /></FormControl><FormMessage /></FormItem>
                         )} />
                         <FormField control={form.control} name="gender" render={({ field }) => (
                             <FormItem>
@@ -367,3 +415,5 @@ export default function PatientsPage() {
     </>
   );
 }
+
+    

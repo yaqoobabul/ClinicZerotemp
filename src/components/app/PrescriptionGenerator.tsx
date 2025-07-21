@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -114,6 +115,7 @@ export function PrescriptionGenerator() {
   const [isLoading, setIsLoading] = useState(false);
   const [opdSummary, setOpdSummary] = useState<GeneratedSummary | null>(null);
   const { toast } = useToast();
+  const searchParams = useSearchParams();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -146,12 +148,22 @@ export function PrescriptionGenerator() {
   const isFinalDiagnosis = form.watch('isFinalDiagnosis');
 
   useEffect(() => {
-    // Auto-generate a patient ID for new patients
-    if (!form.getValues('patientId')) {
-      const newPatientId = `CZ-${Date.now().toString().slice(-6)}`;
-      form.setValue('patientId', newPatientId);
+    // Pre-fill from query params if available
+    const patientId = searchParams.get('patientId');
+    if (patientId) {
+        form.setValue('patientId', patientId);
+        form.setValue('patientName', toTitleCase(searchParams.get('patientName') || ''));
+        form.setValue('patientAge', searchParams.get('patientAge') || '');
+        form.setValue('patientGender', searchParams.get('patientGender') || '');
+        form.setValue('patientContact', searchParams.get('patientContact') || '');
+        form.setValue('patientAddress', searchParams.get('patientAddress') || '');
+        form.setValue('govtId', searchParams.get('govtId') || '');
+    } else if (!form.getValues('patientId')) {
+        // Auto-generate a patient ID for new patients
+        const newPatientId = `CZ-${Date.now().toString().slice(-6)}`;
+        form.setValue('patientId', newPatientId);
     }
-  }, [form]);
+}, [searchParams, form]);
 
   const handleFetchPatient = () => {
     const patientId = form.getValues('patientId');
@@ -294,7 +306,7 @@ export function PrescriptionGenerator() {
                     <FormField control={form.control} name="patientGender" render={({ field }) => (
                       <FormItem>
                         <FormLabel>Gender</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Select gender" />
@@ -687,3 +699,5 @@ export function PrescriptionGenerator() {
     </div>
   );
 }
+
+    
