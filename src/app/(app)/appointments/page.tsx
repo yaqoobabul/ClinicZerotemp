@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import { PlusCircle, ChevronsUpDown, Check, Calendar as CalendarIcon, ZoomIn, ZoomOut } from 'lucide-react';
 import { AppointmentForm, AppointmentFormValues } from '@/components/app/AppointmentForm';
-import { format, set } from 'date-fns';
+import { format, set, addMinutes, startOfDay } from 'date-fns';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
 import { Calendar } from '@/components/ui/calendar';
@@ -59,17 +59,16 @@ const initialPatients: Patient[] = [
 
 const initialAppointments: Appointment[] = [
   { id: '1', patientName: 'Aarav Patel', patientId: '1', doctorId: 'doc1', dateTime: new Date(new Date().setHours(10, 0, 0, 0)), reason: 'Routine Checkup', status: 'upcoming', durationMinutes: 30 },
-  { id: '2', patientName: 'Priya Singh', patientId: '2', doctorId: 'doc2', dateTime: new Date(new Date().setHours(11, 30, 0, 0)), reason: 'Follow-up', status: 'upcoming', durationMinutes: 30 },
+  { id: '2', patientName: 'Priya Singh', patientId: '2', doctorId: 'doc2', dateTime: new Date(new Date().setHours(11, 30, 0, 0)), reason: 'Follow-up', status: 'upcoming', durationMinutes: 45 },
   { id: '3', patientName: 'Rohan Gupta', patientId: '3', doctorId: 'doc1', dateTime: new Date(new Date().setHours(14, 0, 0, 0)), reason: 'Dental Cleaning', status: 'upcoming', durationMinutes: 60 },
   { id: '4', patientName: 'Saanvi Sharma', patientId: '4', doctorId: 'doc1', dateTime: new Date(new Date().setDate(new Date().getDate() - 1)), reason: 'Root Canal', status: 'finished', durationMinutes: 90 },
 ];
 
-const timeSlots = Array.from({ length: 48 }, (_, i) => {
-    const hour = Math.floor(i / 2);
-    const minute = (i % 2) * 30;
-    const date = new Date();
-    date.setHours(hour, minute, 0, 0);
-    return date;
+const START_HOUR = 8;
+const END_HOUR = 21;
+const timeSlots = Array.from({ length: (END_HOUR - START_HOUR) * 4 }, (_, i) => {
+    const baseDate = startOfDay(new Date());
+    return addMinutes(baseDate, START_HOUR * 60 + i * 15);
 });
 
 export default function AppointmentsPage() {
@@ -195,21 +194,23 @@ export default function AppointmentsPage() {
       return app.doctorId === doctorId && format(app.dateTime, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd');
     });
   };
+  
+  const slotHeight = `${zoomLevel * 0.5 + 0.5}rem`;
 
   const renderAppointmentCard = (app: Appointment) => {
-    const startMinutes = app.dateTime.getHours() * 60 + app.dateTime.getMinutes();
+    const startMinutes = (app.dateTime.getHours() * 60 + app.dateTime.getMinutes()) - (START_HOUR * 60);
     const durationMinutes = app.durationMinutes || 30;
     
-    // Each 15-minute slot is a row, so 4 rows per hour. Grid rows are 1-indexed.
     const gridRowStart = (startMinutes / 15) + 1;
     const gridRowEnd = gridRowStart + (durationMinutes / 15);
 
     return (
       <div
         key={app.id}
-        className="relative flex flex-col overflow-hidden rounded-lg p-2 text-white shadow-md bg-primary/80"
+        className="relative flex flex-col overflow-hidden rounded-lg p-2 text-primary-foreground shadow-md bg-primary/90 border-l-4 border-primary"
         style={{ 
             gridRow: `${gridRowStart} / ${gridRowEnd}`,
+            gridColumn: 1,
         }}
       >
         <p className="font-semibold text-sm">{app.patientName}</p>
@@ -236,8 +237,6 @@ export default function AppointmentsPage() {
     }
     return {};
   };
-
-  const slotHeight = `${zoomLevel * 0.5}rem`; // e.g., zoom 2 -> 1rem, zoom 4 -> 2rem
 
   return (
     <div className="flex flex-col h-[calc(100vh-8rem)]">
@@ -338,33 +337,32 @@ export default function AppointmentsPage() {
                 {/* Timeline Grid */}
                 <div className="col-start-1 row-start-2 border-r relative">
                     {timeSlots.map((time, index) => (
-                        (time.getMinutes() === 0) &&
-                        <div key={index} className="relative text-right pr-2" style={{ height: `calc(${slotHeight} * 4)` }}>
-                             <span className="text-xs text-muted-foreground absolute -top-2 right-2 bg-card px-1">{format(time, 'h a')}</span>
+                        <div key={index} className="relative text-right" style={{ height: slotHeight }}>
+                             {time.getMinutes() === 0 && (
+                                <span className="text-xs text-muted-foreground absolute -top-2 right-2 bg-card px-1">{format(time, 'h a')}</span>
+                             )}
                         </div>
                     ))}
                 </div>
                 
                 <div className="col-start-2 row-start-2 grid" style={{ gridTemplateColumns: `repeat(${doctors.length}, 1fr)` }}>
                      {doctors.map(doctor => (
-                        <div key={doctor.id} className="relative grid border-l first:border-l-0" style={{ gridTemplateRows: `repeat(${timeSlots.length * 4}, ${slotHeight})` }}>
-                            {/* Background Lines & Clickable slots */}
-                            {timeSlots.map((time, index) => (
-                                <React.Fragment key={`${doctor.id}-${index}`}>
-                                  <button
-                                      aria-label={`Book with ${doctor.name} at ${format(time, 'p')}`}
-                                      onClick={() => handleSlotClick(doctor.id, time)}
-                                      className="w-full border-b border-dotted border-border/75 transition-colors hover:bg-accent/50"
-                                      style={{ height: `calc(${slotHeight} * 2)` }}
-                                  ></button>
-                                  <button
-                                      aria-label={`Book with ${doctor.name} at ${format(new Date(time.getTime() + 15 * 60000), 'p')}`}
-                                      onClick={() => handleSlotClick(doctor.id, new Date(time.getTime() + 15 * 60000))}
-                                      className="w-full border-b border-dashed border-border transition-colors hover:bg-accent/50"
-                                      style={{ height: `calc(${slotHeight} * 2)` }}
-                                  ></button>
-                                </React.Fragment>
-                            ))}
+                        <div key={doctor.id} className="relative grid border-l first:border-l-0" style={{ gridTemplateRows: `repeat(${timeSlots.length}, ${slotHeight})` }}>
+                            {timeSlots.map((time, index) => {
+                                const isHour = time.getMinutes() === 0;
+                                return (
+                                    <button
+                                        key={`${doctor.id}-${index}`}
+                                        aria-label={`Book with ${doctor.name} at ${format(time, 'p')}`}
+                                        onClick={() => handleSlotClick(doctor.id, time)}
+                                        className={cn(
+                                            "w-full transition-colors hover:bg-accent/50",
+                                            isHour ? "border-t border-dashed border-border" : "border-t border-dotted border-border/75"
+                                        )}
+                                        style={{ height: slotHeight }}
+                                    ></button>
+                                );
+                            })}
                              {/* Appointments */}
                             {getAppointmentsForDoctorAndDate(doctor.id, selectedDate).map(app => renderAppointmentCard(app))}
                         </div>
@@ -375,3 +373,5 @@ export default function AppointmentsPage() {
     </div>
   );
 }
+
+    
