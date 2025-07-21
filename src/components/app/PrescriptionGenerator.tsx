@@ -237,7 +237,7 @@ export function PrescriptionGenerator() {
                 </div>
                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <FormField control={form.control} name="patientName" render={({ field }) => (
-                        <FormItem><FormLabel>Patient Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                        <FormItem><FormLabel>Patient Name</FormLabel><FormControl><Input {...field} onBlur={(e) => field.onChange(toTitleCase(e.target.value))} /></FormControl><FormMessage /></FormItem>
                     )} />
                     <FormField control={form.control} name="patientAge" render={({ field }) => (
                         <FormItem><FormLabel>Age</FormLabel><FormControl><Input type="text" {...field} /></FormControl><FormMessage /></FormItem>
@@ -277,7 +277,7 @@ export function PrescriptionGenerator() {
                       <FormItem>
                         <FormLabel>Chief Complaint</FormLabel>
                         <FormControl>
-                          <Textarea {...field} placeholder="e.g., Fever and cough since 3 days" />
+                          <Textarea {...field} placeholder="e.g., Fever and cough since 3 days" onBlur={(e) => field.onChange(capitalizeFirstLetter(e.target.value))} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -286,7 +286,7 @@ export function PrescriptionGenerator() {
                       <FormItem>
                          <FormLabel>Relevant Medical History</FormLabel>
                         <FormControl>
-                          <Textarea {...field} className="text-destructive placeholder:text-destructive/50" placeholder="e.g., Hypertension, Diabetes, Allergy to Sulfa drugs" />
+                          <Textarea {...field} className="text-destructive placeholder:text-destructive/50" placeholder="e.g., Hypertension, Diabetes, Allergy to Sulfa drugs" onBlur={(e) => field.onChange(capitalizeFirstLetter(e.target.value))} />
                           </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -298,7 +298,7 @@ export function PrescriptionGenerator() {
               <CardHeader><CardTitle>Provisional Diagnosis</CardTitle></CardHeader>
               <CardContent>
                   <FormField control={form.control} name="provisionalDiagnosis" render={({ field }) => (
-                      <FormItem><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                      <FormItem><FormControl><Input {...field} onBlur={(e) => field.onChange(capitalizeFirstLetter(e.target.value))} /></FormControl><FormMessage /></FormItem>
                   )} />
               </CardContent>
             </Card>
@@ -342,7 +342,7 @@ export function PrescriptionGenerator() {
                         <div className="flex-grow space-y-4">
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                             <FormField control={form.control} name={`medicines.${index}.name`} render={({ field }) => (
-                                <FormItem><FormLabel>Drug Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                                <FormItem><FormLabel>Drug Name</FormLabel><FormControl><Input {...field} onBlur={(e) => field.onChange(e.target.value.toUpperCase())} /></FormControl><FormMessage /></FormItem>
                             )} />
                             <FormField
                                 control={form.control}
@@ -426,7 +426,7 @@ export function PrescriptionGenerator() {
               <CardHeader><CardTitle>Notes & Follow-up</CardTitle></CardHeader>
               <CardContent className="grid md:grid-cols-2 gap-4">
                   <FormField control={form.control} name="additionalNotes" render={({ field }) => (
-                      <FormItem><FormLabel>Additional Notes</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>
+                      <FormItem><FormLabel>Additional Notes</FormLabel><FormControl><Textarea {...field} onBlur={(e) => field.onChange(capitalizeFirstLetter(e.target.value))} /></FormControl><FormMessage /></FormItem>
                   )} />
                   <FormField control={form.control} name="followUpDate" render={({ field }) => (
                       <FormItem><FormLabel>Follow-up Date</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
