@@ -287,30 +287,6 @@ function PrescriptionGeneratorInternal() {
       <div className="no-print">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-             <Card>
-              <CardHeader>
-                <CardTitle>Consulting Doctor</CardTitle>
-              </CardHeader>
-               <CardContent>
-                    <FormField
-                        control={form.control}
-                        name="doctorId"
-                        render={({ field }) => (
-                            <FormItem>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                    <FormControl><SelectTrigger><SelectValue placeholder="Select a doctor" /></SelectTrigger></FormControl>
-                                    <SelectContent>
-                                        {doctors.map(doc => (
-                                            <SelectItem key={doc.id} value={doc.id}>{doc.name}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                </CardContent>
-            </Card>
             <Card>
               <CardHeader>
                 <CardTitle>Patient Details</CardTitle>
@@ -601,13 +577,31 @@ function PrescriptionGeneratorInternal() {
             
             <Card>
               <CardHeader><CardTitle>Notes & Follow-up</CardTitle></CardHeader>
-              <CardContent className="grid md:grid-cols-2 gap-4">
+              <CardContent className="grid md:grid-cols-2 gap-x-4 gap-y-6">
                   <FormField control={form.control} name="additionalNotes" render={({ field }) => (
-                      <FormItem><FormLabel>Additional Notes</FormLabel><FormControl><Textarea {...field} onBlur={(e) => field.onChange(capitalizeFirstLetter(e.target.value))} /></FormControl><FormMessage /></FormItem>
+                      <FormItem className="md:col-span-2"><FormLabel>Additional Notes</FormLabel><FormControl><Textarea {...field} onBlur={(e) => field.onChange(capitalizeFirstLetter(e.target.value))} /></FormControl><FormMessage /></FormItem>
                   )} />
                   <FormField control={form.control} name="followUpDate" render={({ field }) => (
                       <FormItem><FormLabel>Follow-up Date</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                   )} />
+                  <FormField
+                      control={form.control}
+                      name="doctorId"
+                      render={({ field }) => (
+                          <FormItem>
+                              <FormLabel>Consulting Doctor</FormLabel>
+                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                  <FormControl><SelectTrigger><SelectValue placeholder="Select a doctor" /></SelectTrigger></FormControl>
+                                  <SelectContent>
+                                      {doctors.map(doc => (
+                                          <SelectItem key={doc.id} value={doc.id}>{doc.name}</SelectItem>
+                                      ))}
+                                  </SelectContent>
+                              </Select>
+                              <FormMessage />
+                          </FormItem>
+                      )}
+                  />
               </CardContent>
             </Card>
             
