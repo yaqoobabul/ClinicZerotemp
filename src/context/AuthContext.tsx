@@ -3,7 +3,16 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import { onAuthStateChanged, User, GoogleAuthProvider, signInWithPopup, signOut as firebaseSignOut, signInWithEmailAndPassword } from 'firebase/auth';
+import { 
+  onAuthStateChanged, 
+  User, 
+  GoogleAuthProvider, 
+  signInWithPopup, 
+  signOut as firebaseSignOut, 
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  sendPasswordResetEmail
+} from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { Loader2 } from 'lucide-react';
 
@@ -13,6 +22,8 @@ interface AuthContextType {
   signInWithGoogle: () => Promise<void>;
   signInWithEmail: (email: string, pass: string) => Promise<any>;
   signOut: () => Promise<void>;
+  createUser: (email: string, pass: string) => Promise<any>;
+  sendPasswordReset: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -38,12 +49,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       router.push('/dashboard');
     } catch (error) {
       console.error("Error during Google sign-in:", error);
+      throw error;
     }
   };
   
   const signInWithEmail = async (email: string, pass: string) => {
     return signInWithEmailAndPassword(auth, email, pass);
-  }
+  };
+
+  const createUser = async (email: string, pass: string) => {
+    return createUserWithEmailAndPassword(auth, email, pass);
+  };
+
+  const sendPasswordReset = async () => {
+    if (auth.currentUser?.email) {
+      return sendPasswordResetEmail(auth, auth.currentUser.email);
+    }
+    throw new Error("No user email found to send reset link.");
+  };
 
   const signOut = async () => {
     try {
@@ -63,7 +86,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }
   
   return (
-    <AuthContext.Provider value={{ user, loading, signInWithGoogle, signInWithEmail, signOut }}>
+    <AuthContext.Provider value={{ user, loading, signInWithGoogle, signInWithEmail, signOut, createUser, sendPasswordReset }}>
       {children}
     </AuthContext.Provider>
   );
