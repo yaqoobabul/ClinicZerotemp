@@ -751,7 +751,7 @@ function DentalPrescriptionGeneratorInternal() {
                     </div>
                     <div className="text-right flex-shrink-0">
                        <p><strong>Date:</strong> {new Date().toLocaleString('en-IN')}</p>
-                       <p className="text-muted-foreground">Reg. No. {opdSummary.doctorDetails.registrationId}</p>
+                       {opdSummary.doctorDetails.registrationId && <p className="text-muted-foreground">Reg. No. {opdSummary.doctorDetails.registrationId}</p>}
                     </div>
                 </div>
                 <div className="flex justify-end mt-1 no-print">
