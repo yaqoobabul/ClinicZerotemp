@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import { PlusCircle, ChevronsUpDown, Check, Calendar as CalendarIcon, Edit } from 'lucide-react';
 import { AppointmentForm, AppointmentFormValues } from '@/components/app/AppointmentForm';
-import { format, set, addMinutes, startOfDay, getHours } from 'date-fns';
+import { format, set, getHours } from 'date-fns';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
 import { Calendar } from '@/components/ui/calendar';
@@ -15,7 +15,6 @@ import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
 
 
 type Doctor = {
@@ -64,6 +63,7 @@ const initialPatients: Patient[] = [
 
 const initialAppointments: Appointment[] = [
   { id: '1', patientName: 'Aarav Patel', patientId: '1', doctorId: 'doc1', dateTime: new Date(new Date().setHours(10, 0, 0, 0)), reason: 'Routine Checkup', status: 'upcoming', durationMinutes: 30, priority: 'Medium' },
+  { id: '5', patientName: 'Ishaan Verma', patientId: '1', doctorId: 'doc1', dateTime: new Date(new Date().setHours(10, 30, 0, 0)), reason: 'Consultation', status: 'upcoming', durationMinutes: 30, priority: 'Medium' },
   { id: '2', patientName: 'Priya Singh', patientId: '2', doctorId: 'doc1', dateTime: new Date(new Date().setHours(11, 30, 0, 0)), reason: 'Follow-up', status: 'upcoming', durationMinutes: 45, priority: 'High' },
   { id: '3', patientName: 'Rohan Gupta', patientId: '3', doctorId: 'doc2', dateTime: new Date(new Date().setHours(14, 0, 0, 0)), reason: 'Dental Cleaning', status: 'upcoming', durationMinutes: 60, priority: 'Low' },
   { id: '4', patientName: 'Saanvi Sharma', patientId: '4', doctorId: 'doc1', dateTime: new Date(new Date().setDate(new Date().getDate() - 1)), reason: 'Root Canal', status: 'finished', durationMinutes: 90, priority: 'High' },
@@ -131,7 +131,7 @@ export default function AppointmentsPage() {
         ...values,
         status: 'upcoming',
       };
-      setAppointments(prev => [...prev, newAppointment]);
+      setAppointments(prev => [...prev, newAppointment].sort((a,b) => a.dateTime.getTime() - b.dateTime.getTime()));
       toast({ title: 'Appointment Created', description: `New appointment for ${values.patientName} at ${format(values.dateTime, 'p')}.` });
     }
     
@@ -360,7 +360,7 @@ export default function AppointmentsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-24">Time</TableHead>
+                <TableHead className="w-28 text-center">Time</TableHead>
                 <TableHead>Patient / Task</TableHead>
                 <TableHead>Notes</TableHead>
                 <TableHead className="w-24 text-center">Priority</TableHead>
@@ -376,14 +376,23 @@ export default function AppointmentsPage() {
                 if (appointmentsInHour.length > 0) {
                   return appointmentsInHour.map((app, index) => (
                     <TableRow key={app.id}>
-                      {index === 0 && <TableCell rowSpan={appointmentsInHour.length} className="font-semibold align-top">{timeLabel}</TableCell>}
-                      <TableCell className="font-medium">{app.patientName} <span className="text-muted-foreground block text-sm font-normal">{app.reason}</span></TableCell>
+                      {index === 0 && (
+                        <TableCell rowSpan={appointmentsInHour.length} className="font-semibold align-top text-center border-r">
+                           {format(set(new Date(), { hours: hour, minutes: 0 }), 'h aa')}
+                        </TableCell>
+                      )}
+                      <TableCell className="font-medium">
+                        {app.patientName} 
+                        <span className="text-muted-foreground block text-sm font-normal">
+                          {format(app.dateTime, 'p')} &bull; {app.reason}
+                        </span>
+                      </TableCell>
                       <TableCell className="text-muted-foreground">{app.notes}</TableCell>
                       <TableCell className="text-center">
                         <Badge variant={getPriorityBadgeVariant(app.priority)}>{app.priority || 'N/A'}</Badge>
                       </TableCell>
                        <TableCell className="text-center">
-                         <Badge variant={app.status === 'finished' ? 'default' : 'secondary'}>{app.status}</Badge>
+                         <Badge variant={app.status === 'finished' ? 'default' : app.status === 'cancelled' ? 'destructive' : 'secondary'}>{app.status}</Badge>
                       </TableCell>
                        <TableCell>
                         <Button variant="ghost" size="icon" onClick={() => handleEditClick(app)}>
@@ -396,7 +405,7 @@ export default function AppointmentsPage() {
 
                 return (
                   <TableRow key={hour} className="h-14 hover:bg-muted/50 transition-colors">
-                    <TableCell className="font-semibold">{timeLabel}</TableCell>
+                    <TableCell className="font-semibold text-center border-r">{format(set(new Date(), { hours: hour, minutes: 0 }), 'h aa')}</TableCell>
                     <TableCell colSpan={4} className="text-muted-foreground">
                       <Button variant="link" className="p-0 h-auto" onClick={() => handleSlotClick(hour)}>+ Add Appointment</Button>
                     </TableCell>
@@ -410,5 +419,3 @@ export default function AppointmentsPage() {
     </div>
   );
 }
-
-    
