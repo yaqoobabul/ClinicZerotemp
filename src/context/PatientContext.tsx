@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import type { Patient, Appointment, Doctor } from '@/types';
 import { useAuth } from './AuthContext';
 
@@ -44,22 +44,69 @@ export const PatientProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useAuth();
   const [patients, setPatients] = useState<Patient[]>(initialPatients);
   const [appointments, setAppointments] = useState<Appointment[]>(initialAppointments);
-  const [doctors, setDoctors] = useState<Doctor[]>(initialDoctors);
-  const [clinicName, setClinicName] = useState<string>('ClinicEase');
+  
+  const [doctors, setDoctors] = useState<Doctor[]>(() => {
+    if (typeof window === 'undefined') {
+        return initialDoctors;
+    }
+    try {
+        const storedDoctors = window.localStorage.getItem('clinic_doctors');
+        return storedDoctors ? JSON.parse(storedDoctors) : initialDoctors;
+    } catch (error) {
+        console.error("Error reading doctors from localStorage", error);
+        return initialDoctors;
+    }
+  });
+
+  const [clinicName, setClinicName] = useState<string>(() => {
+      if (typeof window === 'undefined') {
+        return 'ClinicEase';
+      }
+      try {
+        const storedName = window.localStorage.getItem('clinic_name');
+        return storedName || 'ClinicEase';
+      } catch (error) {
+        console.error("Error reading clinic name from localStorage", error);
+        return 'ClinicEase';
+      }
+  });
+
+  useEffect(() => {
+    try {
+        window.localStorage.setItem('clinic_name', clinicName);
+    } catch (error) {
+        console.error("Error saving clinic name to localStorage", error);
+    }
+  }, [clinicName]);
+
+  useEffect(() => {
+    try {
+        window.localStorage.setItem('clinic_doctors', JSON.stringify(doctors));
+    } catch (error) {
+        console.error("Error saving doctors to localStorage", error);
+    }
+  }, [doctors]);
+
 
   // When a user logs in, we associate their Firebase UID with a doctor profile.
   // For this example, we'll assign the logged-in user to 'doc1' if they are 'j@gmail.com'.
   // In a real app, you'd fetch this mapping from your database.
-  React.useEffect(() => {
+  useEffect(() => {
     if (user?.email === 'j@gmail.com') {
-      setDoctors(prevDoctors => {
-        const userExists = prevDoctors.some(d => d.uid === user.uid);
-        if (userExists) return prevDoctors; // Prevent re-assigning on every render
-        
-        return prevDoctors.map(d => d.id === 'doc1' ? { ...d, uid: user.uid } : d);
-      });
+        const userIsMapped = doctors.some(d => d.uid === user.uid);
+        if (!userIsMapped) {
+            setDoctors(prevDoctors => {
+                const userDocIndex = prevDoctors.findIndex(d => d.id === 'doc1');
+                if (userDocIndex !== -1) {
+                    const newDoctors = [...prevDoctors];
+                    newDoctors[userDocIndex] = { ...newDoctors[userDocIndex], uid: user.uid };
+                    return newDoctors;
+                }
+                return prevDoctors;
+            });
+        }
     }
-  }, [user]);
+  }, [user, doctors]);
 
   const updateDoctorProfile = (doctorId: string, profileData: Partial<Omit<Doctor, 'id' | 'uid'>>) => {
     setDoctors(prevDoctors =>
