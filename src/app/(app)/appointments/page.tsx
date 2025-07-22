@@ -4,7 +4,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
-import { PlusCircle, ChevronsUpDown, Check, Calendar as CalendarIcon, Edit, Plus } from 'lucide-react';
+import { PlusCircle, ChevronsUpDown, Check, Calendar as CalendarIcon, Edit, Plus, Trash2 } from 'lucide-react';
 import { AppointmentForm, AppointmentFormValues } from '@/components/app/AppointmentForm';
 import { format, set, getHours } from 'date-fns';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -17,6 +17,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { useClinic } from '@/context/PatientContext';
 import type { Patient, Doctor, Appointment } from '@/types';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
 const START_HOUR = 0;
 const END_HOUR = 24;
@@ -30,6 +31,7 @@ export default function AppointmentsPage() {
   const [selectedPatientForAppointment, setSelectedPatientForAppointment] = useState<Patient | null>(null);
   const [selectedSlotInfo, setSelectedSlotInfo] = useState<{ doctorId: string; dateTime: Date; } | null>(null);
   const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null);
+  const [appointmentToDelete, setAppointmentToDelete] = useState<Appointment | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -85,6 +87,13 @@ export default function AppointmentsPage() {
     }
     
     closeAndResetDialog();
+  };
+  
+  const handleDeleteAppointment = () => {
+    if (!appointmentToDelete) return;
+    setAppointments(prev => prev.filter(app => app.id !== appointmentToDelete.id));
+    toast({ title: 'Appointment Deleted', description: `Appointment for ${appointmentToDelete.patientName} has been deleted.` });
+    setAppointmentToDelete(null);
   };
 
   const handleSlotClick = (hour: number) => {
@@ -326,7 +335,7 @@ export default function AppointmentsPage() {
                 <TableHead>Notes</TableHead>
                 <TableHead className="w-24 text-center">Priority</TableHead>
                 <TableHead className="w-24 text-center">Status</TableHead>
-                <TableHead className="w-16"></TableHead>
+                <TableHead className="w-32 text-center">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -363,10 +372,35 @@ export default function AppointmentsPage() {
                          <TableCell className="text-center">
                            <Badge variant={app.status === 'finished' ? 'default' : app.status === 'cancelled' ? 'destructive' : 'secondary'}>{app.status}</Badge>
                         </TableCell>
-                         <TableCell>
+                         <TableCell className="text-center">
                           <Button variant="ghost" size="icon" onClick={() => handleEditClick(app)}>
                             <Edit className="h-4 w-4" />
                           </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  This action cannot be undone. This will permanently delete the appointment for {app.patientName}.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => {
+                                  if (!app) return;
+                                  setAppointments(prev => prev.filter(a => a.id !== app.id));
+                                  toast({ title: 'Appointment Deleted', description: `Appointment for ${app.patientName} has been deleted.` });
+                                }}>
+                                  Delete
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
                         </TableCell>
                       </TableRow>
                     );
