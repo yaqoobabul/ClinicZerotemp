@@ -4,7 +4,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
-import { PlusCircle, ChevronsUpDown, Check, Calendar as CalendarIcon, Edit } from 'lucide-react';
+import { PlusCircle, ChevronsUpDown, Check, Calendar as CalendarIcon, Edit, Plus } from 'lucide-react';
 import { AppointmentForm, AppointmentFormValues } from '@/components/app/AppointmentForm';
 import { format, set, getHours } from 'date-fns';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -289,7 +289,7 @@ export default function AppointmentsPage() {
             </div>
              <Dialog open={isNewAppointmentDialogOpen} onOpenChange={setIsNewAppointmentDialogOpen}>
               <DialogTrigger asChild>
-                 <Button onClick={() => handleSlotClick(new Date().getHours())}>
+                 <Button>
                    <PlusCircle className="mr-2" />
                    Add Appointment
                  </Button>
@@ -360,7 +360,7 @@ export default function AppointmentsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-28 text-center">Time</TableHead>
+                <TableHead className="w-32 text-center">Time</TableHead>
                 <TableHead>Patient / Task</TableHead>
                 <TableHead>Notes</TableHead>
                 <TableHead className="w-24 text-center">Priority</TableHead>
@@ -371,47 +371,64 @@ export default function AppointmentsPage() {
             <TableBody>
               {hourlySlots.map(hour => {
                 const appointmentsInHour = appointmentsByHour[hour] || [];
-                const timeLabel = format(set(new Date(), { hours: hour, minutes: 0 }), 'p');
+                const rowCount = Math.max(1, appointmentsInHour.length); // Ensure at least one row per hour
 
-                if (appointmentsInHour.length > 0) {
-                  return appointmentsInHour.map((app, index) => (
-                    <TableRow key={app.id}>
-                      {index === 0 && (
-                        <TableCell rowSpan={appointmentsInHour.length} className="font-semibold align-top text-center border-r">
-                           {format(set(new Date(), { hours: hour, minutes: 0 }), 'h aa')}
+                return Array.from({ length: rowCount }).map((_, index) => {
+                  const app = appointmentsInHour[index];
+
+                  if (app) {
+                    // Row for an existing appointment
+                    return (
+                      <TableRow key={app.id}>
+                        {index === 0 && (
+                          <TableCell rowSpan={rowCount} className="font-semibold align-top text-center border-r">
+                           <div className="flex flex-col items-center gap-2">
+                             <span>{format(set(new Date(), { hours: hour, minutes: 0 }), 'h aa')}</span>
+                             <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleSlotClick(hour)}>
+                               <Plus className="h-4 w-4" />
+                             </Button>
+                           </div>
+                          </TableCell>
+                        )}
+                        <TableCell className="font-medium">
+                          {app.patientName} 
+                          <span className="text-muted-foreground block text-sm font-normal">
+                            {format(app.dateTime, 'p')} &bull; {app.reason}
+                          </span>
                         </TableCell>
-                      )}
-                      <TableCell className="font-medium">
-                        {app.patientName} 
-                        <span className="text-muted-foreground block text-sm font-normal">
-                          {format(app.dateTime, 'p')} &bull; {app.reason}
-                        </span>
+                        <TableCell className="text-muted-foreground">{app.notes}</TableCell>
+                        <TableCell className="text-center">
+                          <Badge variant={getPriorityBadgeVariant(app.priority)}>{app.priority || 'N/A'}</Badge>
+                        </TableCell>
+                         <TableCell className="text-center">
+                           <Badge variant={app.status === 'finished' ? 'default' : app.status === 'cancelled' ? 'destructive' : 'secondary'}>{app.status}</Badge>
+                        </TableCell>
+                         <TableCell>
+                          <Button variant="ghost" size="icon" onClick={() => handleEditClick(app)}>
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  }
+
+                  // Row for an empty hour slot
+                  return (
+                    <TableRow key={`empty-${hour}`} className="h-14 hover:bg-muted/50 transition-colors">
+                      <TableCell className="font-semibold align-top text-center border-r">
+                         <div className="flex flex-col items-center gap-2">
+                             <span>{format(set(new Date(), { hours: hour, minutes: 0 }), 'h aa')}</span>
+                             <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleSlotClick(hour)}>
+                               <Plus className="h-4 w-4" />
+                             </Button>
+                           </div>
                       </TableCell>
-                      <TableCell className="text-muted-foreground">{app.notes}</TableCell>
-                      <TableCell className="text-center">
-                        <Badge variant={getPriorityBadgeVariant(app.priority)}>{app.priority || 'N/A'}</Badge>
-                      </TableCell>
-                       <TableCell className="text-center">
-                         <Badge variant={app.status === 'finished' ? 'default' : app.status === 'cancelled' ? 'destructive' : 'secondary'}>{app.status}</Badge>
-                      </TableCell>
-                       <TableCell>
-                        <Button variant="ghost" size="icon" onClick={() => handleEditClick(app)}>
-                          <Edit className="h-4 w-4" />
-                        </Button>
+                      <TableCell colSpan={5} className="text-muted-foreground text-center">
+                        No appointments
                       </TableCell>
                     </TableRow>
-                  ));
-                }
-
-                return (
-                  <TableRow key={hour} className="h-14 hover:bg-muted/50 transition-colors">
-                    <TableCell className="font-semibold text-center border-r">{format(set(new Date(), { hours: hour, minutes: 0 }), 'h aa')}</TableCell>
-                    <TableCell colSpan={4} className="text-muted-foreground">
-                      <Button variant="link" className="p-0 h-auto" onClick={() => handleSlotClick(hour)}>+ Add Appointment</Button>
-                    </TableCell>
-                    <TableCell></TableCell>
-                  </TableRow>
-                );
+                  );
+                });
               })}
             </TableBody>
           </Table>
