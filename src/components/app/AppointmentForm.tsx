@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
@@ -30,7 +30,7 @@ const appointmentFormSchema = z.object({
   dateTime: z.date({
     required_error: 'An appointment date is required.',
   }),
-  appointmentTime: z.string().min(1, 'An appointment time is required.'),
+  appointmentTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format (HH:mm)").min(1, 'An appointment time is required.'),
   durationMinutes: z.coerce.number().min(1, 'Duration must be at least 1 minute.'),
   reason: z.string().min(1, 'Reason for appointment is required.'),
   notes: z.string().optional(),
@@ -52,10 +52,10 @@ export function AppointmentForm({ onSubmit, onCancel, doctors, initialData, show
     resolver: zodResolver(appointmentFormSchema),
     defaultValues: {
       patientName: initialData?.patientName || '',
-      patientPhone: '',
-      age: undefined,
-      sex: undefined,
-      address: '',
+      patientPhone: initialData?.patientPhone || '',
+      age: initialData?.age,
+      sex: initialData?.sex,
+      address: initialData?.address || '',
       doctorId: initialData?.doctorId || '',
       dateTime: initialData?.dateTime || new Date(),
       appointmentTime: initialData?.dateTime ? format(initialData.dateTime, 'HH:mm') : '09:00',
@@ -67,18 +67,27 @@ export function AppointmentForm({ onSubmit, onCancel, doctors, initialData, show
   });
 
   const handleFormSubmit = (values: z.infer<typeof appointmentFormSchema>) => {
-    const time = parse(values.appointmentTime, 'HH:mm', new Date());
-    const combinedDateTime = setMinutes(setHours(values.dateTime, time.getHours()), time.getMinutes());
+    try {
+      const time = parse(values.appointmentTime, 'HH:mm', new Date());
+      const combinedDateTime = setMinutes(setHours(values.dateTime, time.getHours()), time.getMinutes());
+      
+      const { appointmentTime, ...rest } = values;
 
-    const finalValues: AppointmentFormValues = {
-      ...values,
-      dateTime: combinedDateTime,
-    };
+      const finalValues: AppointmentFormValues = {
+        ...rest,
+        dateTime: combinedDateTime,
+      };
+      
+      onSubmit(finalValues);
 
-    onSubmit(finalValues);
+    } catch (error) {
+       console.error("Error parsing time:", error);
+       form.setError("appointmentTime", { type: "manual", message: "Invalid time format. Please use HH:mm." });
+    }
   };
   
-  const isSlotSelected = !!initialData?.dateTime;
+  const isSlotSelected = !!initialData?.dateTime && !!initialData?.patientName;
+  const isEditing = !!initialData?.reason;
 
   return (
     <Form {...form}>
@@ -143,7 +152,7 @@ export function AppointmentForm({ onSubmit, onCancel, doctors, initialData, show
             render={({ field }) => (
                 <FormItem>
                     <FormLabel>Doctor</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isSlotSelected}>
+                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isSlotSelected && !isEditing}>
                         <FormControl><SelectTrigger><SelectValue placeholder="Assign a doctor" /></SelectTrigger></FormControl>
                         <SelectContent>
                             {doctors.map(doc => (
@@ -172,7 +181,6 @@ export function AppointmentForm({ onSubmit, onCancel, doctors, initialData, show
                           'w-full pl-3 text-left font-normal',
                           !field.value && 'text-muted-foreground'
                         )}
-                        disabled={isSlotSelected && !initialData?.reason}
                       >
                         {field.value ? (
                           format(field.value, 'PPP')
@@ -204,7 +212,7 @@ export function AppointmentForm({ onSubmit, onCancel, doctors, initialData, show
               <FormItem className="flex flex-col justify-end">
                 <FormLabel>Appointment Time</FormLabel>
                 <FormControl>
-                  <Input type="time" {...field} step="900" disabled={isSlotSelected && !initialData?.reason} />
+                  <Input type="time" {...field} step="900" />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -278,5 +286,3 @@ export function AppointmentForm({ onSubmit, onCancel, doctors, initialData, show
     </Form>
   );
 }
-
-    

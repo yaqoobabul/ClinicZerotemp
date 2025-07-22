@@ -100,7 +100,7 @@ export default function AppointmentsPage() {
         ...editingAppointment,
         ...values,
       };
-      setAppointments(prev => prev.map(app => app.id === editingAppointment.id ? updatedAppointment : app));
+      setAppointments(prev => prev.map(app => app.id === editingAppointment.id ? updatedAppointment : app).sort((a,b) => a.dateTime.getTime() - b.dateTime.getTime()));
       toast({ title: 'Appointment Updated', description: `Appointment for ${values.patientName} has been updated.` });
     } else {
       // Add new appointment
@@ -232,7 +232,14 @@ export default function AppointmentsPage() {
 
   const getDialogInitialData = (): Partial<AppointmentFormValues> => {
     if (editingAppointment) {
-      return { ...editingAppointment };
+        const patient = patients.find(p => p.id === editingAppointment.patientId);
+        return { 
+            ...editingAppointment,
+            patientPhone: patient?.phone,
+            age: patient?.age,
+            sex: patient?.sex,
+            address: patient?.address,
+        };
     }
     if (selectedSlotInfo) {
       return {
@@ -244,6 +251,10 @@ export default function AppointmentsPage() {
     if (selectedPatientForAppointment) {
       return { 
         patientName: selectedPatientForAppointment.name,
+        patientPhone: selectedPatientForAppointment.phone,
+        age: selectedPatientForAppointment.age,
+        sex: selectedPatientForAppointment.sex,
+        address: selectedPatientForAppointment.address,
         doctorId: selectedDoctorId
       };
     }
@@ -287,7 +298,7 @@ export default function AppointmentsPage() {
                     </SelectContent>
                 </Select>
             </div>
-             <Dialog open={isNewAppointmentDialogOpen} onOpenChange={setIsNewAppointmentDialogOpen}>
+             <Dialog open={isNewAppointmentDialogOpen} onOpenChange={(isOpen) => !isOpen && closeAndResetDialog()}>
               <DialogTrigger asChild>
                  <Button>
                    <PlusCircle className="mr-2" />
@@ -309,6 +320,7 @@ export default function AppointmentsPage() {
 
                 {editingAppointment ? (
                    <AppointmentForm
+                        key={editingAppointment.id}
                         onSubmit={handleAddOrUpdateAppointment}
                         onCancel={closeAndResetDialog}
                         doctors={doctors}
