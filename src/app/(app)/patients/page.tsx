@@ -7,7 +7,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Search, User, Phone, Mail, Printer, FileText, PlusCircle, Pencil } from 'lucide-react';
+import { ArrowLeft, Search, User, Phone, Mail, Printer, FileText, PlusCircle, Pencil, BadgeIndianRupee, Fingerprint } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose, DialogFooter } from '@/components/ui/dialog';
@@ -122,7 +122,8 @@ export default function PatientsPage() {
       if(selectedPatient) {
           patientForm.reset({
               ...selectedPatient,
-              age: selectedPatient.age ?? undefined
+              age: selectedPatient.age ?? undefined,
+              govtId: selectedPatient.govtId ?? ''
           });
           setIsEditPatientDialogOpen(true);
       }
@@ -195,6 +196,10 @@ export default function PatientsPage() {
                 <div className="flex items-center gap-2 text-sm">
                     <Phone className="h-4 w-4 text-muted-foreground"/>
                     <span>{selectedPatient.phone}</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                    <Fingerprint className="h-4 w-4 text-muted-foreground"/>
+                    <span>Govt. ID: {selectedPatient.govtId || 'N/A'}</span>
                 </div>
                  <div className="flex items-center col-span-2 gap-2 text-sm">
                     <User className="h-4 w-4 text-muted-foreground"/>
