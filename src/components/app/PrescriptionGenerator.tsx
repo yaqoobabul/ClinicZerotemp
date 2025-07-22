@@ -28,6 +28,11 @@ type GeneratedSummary = {
     address?: string;
     govtId?: string;
   };
+  doctorDetails: {
+    name: string;
+    qualification?: string;
+    registrationId?: string;
+  };
   vitals?: {
     height?: string;
     weight?: string;
@@ -102,6 +107,7 @@ const formSchema = z.object({
   testsAdvised: z.array(testAdvisedSchema).optional(),
   additionalNotes: z.string().optional(),
   followUpDate: z.string().optional(),
+  doctorId: z.string().optional(),
 });
 
 
@@ -116,7 +122,7 @@ const capitalizeFirstLetter = (str: string) => str.charAt(0).toUpperCase() + str
 
 function PrescriptionGeneratorInternal() {
   const searchParams = useSearchParams();
-  const { clinicName } = useClinic();
+  const { clinicName, doctors } = useClinic();
   const [isLoading, setIsLoading] = useState(false);
   const [opdSummary, setOpdSummary] = useState<GeneratedSummary | null>(null);
   const { toast } = useToast();
@@ -147,6 +153,7 @@ function PrescriptionGeneratorInternal() {
       testsAdvised: [],
       additionalNotes: '',
       followUpDate: '',
+      doctorId: doctors.length > 0 ? doctors[0].id : '',
     },
   });
 
@@ -186,6 +193,13 @@ function PrescriptionGeneratorInternal() {
     setOpdSummary(null);
     
     try {
+        const selectedDoctor = doctors.find(d => d.id === values.doctorId);
+        if (!selectedDoctor) {
+            toast({ variant: 'destructive', title: 'Error', description: 'Please select a doctor.' });
+            setIsLoading(false);
+            return;
+        }
+
         const filteredMedicines = values.medicines
             ?.filter(m => m.name && m.name.trim() !== '') || [];
 
@@ -219,6 +233,11 @@ function PrescriptionGeneratorInternal() {
                 contact: values.patientContact || undefined,
                 address: values.patientAddress || undefined,
                 govtId: values.govtId || undefined,
+            },
+            doctorDetails: {
+                name: selectedDoctor.name,
+                qualification: selectedDoctor.qualification,
+                registrationId: selectedDoctor.registrationId,
             },
             vitals: hasVitals ? vitals : undefined,
             examinationFindings: values.examinationFindings ? capitalizeFirstLetter(values.examinationFindings) : undefined,
@@ -327,6 +346,24 @@ function PrescriptionGeneratorInternal() {
                         <FormItem className="md:col-span-2"><FormLabel>Address</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
                  </div>
+                 <FormField
+                    control={form.control}
+                    name="doctorId"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Consulting Doctor</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl><SelectTrigger><SelectValue placeholder="Assign a doctor" /></SelectTrigger></FormControl>
+                                <SelectContent>
+                                    {doctors.map(doc => (
+                                        <SelectItem key={doc.id} value={doc.id}>{doc.name}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
               </CardContent>
             </Card>
 
@@ -592,11 +629,12 @@ function PrescriptionGeneratorInternal() {
                     <div>
                         <h2 className="text-base font-bold text-primary">{clinicName}</h2>
                         <p>123 Health St, Wellness City, India | Phone: +91 98765 43210</p>
-                        <p className="font-semibold">Dr. Rajesh Kumar, MBBS, MD (General Medicine)</p>
-                        <p className="text-muted-foreground">Reg. No. 12345</p>
+                        <p className="font-semibold">{opdSummary.doctorDetails.name}</p>
+                        <p className="text-muted-foreground">{opdSummary.doctorDetails.qualification}</p>
                     </div>
                     <div className="text-right flex-shrink-0">
                         <p><strong>Date:</strong> {new Date().toLocaleString('en-IN')}</p>
+                        <p className="text-muted-foreground">Reg. No. {opdSummary.doctorDetails.registrationId}</p>
                     </div>
                 </div>
                 <div className="flex justify-end mt-1 no-print">
@@ -712,8 +750,8 @@ function PrescriptionGeneratorInternal() {
                         )}
                     </div>
                     <div className="text-center mt-16">
-                        <p className="border-t-2 border-black pt-1 font-semibold">Dr. Rajesh Kumar</p>
-                        <p className="text-xs text-muted-foreground">Reg. No. 12345</p>
+                        <p className="border-t-2 border-black pt-1 font-semibold">{opdSummary.doctorDetails.name}</p>
+                        <p className="text-xs text-muted-foreground">Reg. No. {opdSummary.doctorDetails.registrationId}</p>
                         <p className="text-xs">{new Date().toLocaleString('en-IN')}</p>
                     </div>
                 </div>

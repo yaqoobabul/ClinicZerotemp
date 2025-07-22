@@ -1,4 +1,5 @@
 
+
 export type Visit = {
   date: string;
   doctor: string;
@@ -24,7 +25,10 @@ export type Patient = {
 
 export type Doctor = {
   id: string;
+  uid: string; // Firebase Auth User ID
   name: string;
+  qualification?: string;
+  registrationId?: string;
 };
 
 export type Appointment = {

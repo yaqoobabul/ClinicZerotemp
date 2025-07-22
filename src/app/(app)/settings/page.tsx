@@ -2,8 +2,11 @@
 'use client';
 
 import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -11,11 +14,39 @@ import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from 'lucide-react';
 import { useClinic } from '@/context/PatientContext';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+
+const doctorProfileSchema = z.object({
+    name: z.string().min(1, "Name is required."),
+    registrationId: z.string().min(1, "Registration ID is required."),
+    qualification: z.string().min(1, "Qualification is required."),
+});
 
 function ProfileSettings() {
     const { user, sendPasswordReset } = useAuth();
+    const { doctors, updateDoctorProfile } = useClinic();
     const { toast } = useToast();
     const [isLoading, setIsLoading] = useState(false);
+
+    const currentUserDoctorProfile = doctors.find(d => d.uid === user?.uid);
+
+    const form = useForm<z.infer<typeof doctorProfileSchema>>({
+        resolver: zodResolver(doctorProfileSchema),
+        defaultValues: {
+            name: currentUserDoctorProfile?.name || '',
+            registrationId: currentUserDoctorProfile?.registrationId || '',
+            qualification: currentUserDoctorProfile?.qualification || '',
+        }
+    });
+
+    const handleProfileUpdate = (values: z.infer<typeof doctorProfileSchema>) => {
+        if (!currentUserDoctorProfile) return;
+        updateDoctorProfile(currentUserDoctorProfile.id, values);
+        toast({
+            title: "Profile Updated",
+            description: "Your professional details have been saved.",
+        });
+    };
 
     const handlePasswordReset = async () => {
         if (!user?.email) return;
@@ -39,26 +70,43 @@ function ProfileSettings() {
 
     return (
         <Card>
-            <CardHeader>
-                <CardTitle>Profile</CardTitle>
-                <CardDescription>Manage your personal account settings.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-                <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input id="email" type="email" value={user?.email || ''} readOnly disabled />
-                </div>
-                <div className="space-y-2">
-                    <Label>Password</Label>
-                    <div className="flex items-center gap-4">
-                        <p className="text-sm text-muted-foreground flex-grow">For security, you can reset your password via email.</p>
-                        <Button variant="outline" onClick={handlePasswordReset} disabled={isLoading}>
-                             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Send Password Reset
-                        </Button>
-                    </div>
-                </div>
-            </CardContent>
+            <Form {...form}>
+                <form onSubmit={form.handleSubmit(handleProfileUpdate)}>
+                    <CardHeader>
+                        <CardTitle>Profile</CardTitle>
+                        <CardDescription>Manage your personal and professional account settings.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <FormField control={form.control} name="name" render={({ field }) => (
+                            <FormItem><FormLabel>Full Name</FormLabel><FormControl><Input {...field} placeholder="e.g., Dr. Jane Doe" /></FormControl><FormMessage /></FormItem>
+                        )} />
+                        <FormField control={form.control} name="qualification" render={({ field }) => (
+                            <FormItem><FormLabel>Qualifications</FormLabel><FormControl><Input {...field} placeholder="e.g., MBBS, MD (General Medicine)" /></FormControl><FormMessage /></FormItem>
+                        )} />
+                        <FormField control={form.control} name="registrationId" render={({ field }) => (
+                            <FormItem><FormLabel>Registration ID</FormLabel><FormControl><Input {...field} placeholder="e.g., 12345" /></FormControl><FormMessage /></FormItem>
+                        )} />
+                        
+                        <div className="space-y-2 pt-4">
+                            <Label htmlFor="email">Email</Label>
+                            <Input id="email" type="email" value={user?.email || ''} readOnly disabled />
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Password</Label>
+                            <div className="flex items-center gap-4">
+                                <p className="text-sm text-muted-foreground flex-grow">For security, you can reset your password via email.</p>
+                                <Button type="button" variant="outline" onClick={handlePasswordReset} disabled={isLoading}>
+                                     {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                    Send Password Reset
+                                </Button>
+                            </div>
+                        </div>
+                    </CardContent>
+                    <CardFooter className="border-t px-6 py-4">
+                        <Button type="submit">Save Changes</Button>
+                    </CardFooter>
+                </form>
+            </Form>
         </Card>
     );
 }
@@ -91,10 +139,10 @@ function ClinicSettings() {
                         onChange={(e) => setName(e.target.value)} 
                     />
                 </div>
-                <div className="flex justify-end">
-                    <Button onClick={handleSave}>Save Changes</Button>
-                </div>
             </CardContent>
+             <CardFooter className="border-t px-6 py-4">
+                <Button onClick={handleSave}>Save Changes</Button>
+            </CardFooter>
         </Card>
     );
 }
@@ -134,40 +182,40 @@ function StaffManagement() {
                 <CardTitle>Staff Management</CardTitle>
                 <CardDescription>Create and manage login credentials for your staff.</CardDescription>
             </CardHeader>
-            <CardContent>
-                <form onSubmit={handleCreateStaff} className="space-y-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="staff-email">Staff Email</Label>
-                        <Input 
-                            id="staff-email" 
-                            type="email" 
-                            placeholder="staff.member@example.com" 
-                            required 
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                        />
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="staff-password">Temporary Password</Label>
-                        <Input 
-                            id="staff-password" 
-                            type="password" 
-                            placeholder="Create a strong password" 
-                            required 
-                            minLength={6}
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                        />
-                        <p className="text-xs text-muted-foreground">The staff member will be prompted to change this on first login.</p>
-                    </div>
-                    <div className="flex justify-end">
-                        <Button type="submit" disabled={isLoading}>
-                            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Create Staff Account
-                        </Button>
-                    </div>
-                </form>
-            </CardContent>
+            <form onSubmit={handleCreateStaff}>
+                <CardContent className="space-y-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="staff-email">Staff Email</Label>
+                            <Input 
+                                id="staff-email" 
+                                type="email" 
+                                placeholder="staff.member@example.com" 
+                                required 
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="staff-password">Temporary Password</Label>
+                            <Input 
+                                id="staff-password" 
+                                type="password" 
+                                placeholder="Create a strong password" 
+                                required 
+                                minLength={6}
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                            />
+                            <p className="text-xs text-muted-foreground">The staff member will be prompted to change this on first login.</p>
+                        </div>
+                </CardContent>
+                <CardFooter className="border-t px-6 py-4">
+                    <Button type="submit" disabled={isLoading}>
+                        {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Create Staff Account
+                    </Button>
+                </CardFooter>
+            </form>
         </Card>
     );
 }

@@ -3,6 +3,7 @@
 
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import type { Patient, Appointment, Doctor } from '@/types';
+import { useAuth } from './AuthContext';
 
 interface AppContextType {
   patients: Patient[];
@@ -10,6 +11,8 @@ interface AppContextType {
   appointments: Appointment[];
   setAppointments: React.Dispatch<React.SetStateAction<Appointment[]>>;
   doctors: Doctor[];
+  setDoctors: React.Dispatch<React.SetStateAction<Doctor[]>>;
+  updateDoctorProfile: (doctorId: string, profileData: Partial<Doctor>) => void;
   clinicName: string;
   setClinicName: React.Dispatch<React.SetStateAction<string>>;
 }
@@ -32,19 +35,39 @@ const initialAppointments: Appointment[] = [
 ];
 
 const initialDoctors: Doctor[] = [
-  { id: 'doc1', name: 'Dr. Priya Sharma' },
-  { id: 'doc2', name: 'Dr. Rohan Mehra' },
+  { id: 'doc1', uid: 'G6s4K3tOr7WqLmM4xYjGo8Zk8Z52', name: 'Dr. Priya Sharma', qualification: 'MBBS, MD', registrationId: '12345' },
+  { id: 'doc2', uid: 'some-other-uid', name: 'Dr. Rohan Mehra', qualification: 'BDS', registrationId: '67890' },
 ];
 
 
 export const PatientProvider = ({ children }: { children: ReactNode }) => {
+  const { user } = useAuth();
   const [patients, setPatients] = useState<Patient[]>(initialPatients);
   const [appointments, setAppointments] = useState<Appointment[]>(initialAppointments);
-  const [doctors] = useState<Doctor[]>(initialDoctors);
+  const [doctors, setDoctors] = useState<Doctor[]>(initialDoctors);
   const [clinicName, setClinicName] = useState<string>('ClinicEase');
 
+  // When a user logs in, we associate their Firebase UID with a doctor profile.
+  // For this example, we'll assign the logged-in user to 'doc1' if they are 'j@gmail.com'.
+  // In a real app, you'd fetch this mapping from your database.
+  React.useEffect(() => {
+    if (user?.email === 'j@gmail.com') {
+      setDoctors(prevDoctors => {
+        return prevDoctors.map(d => d.id === 'doc1' ? { ...d, uid: user.uid } : d);
+      });
+    }
+  }, [user]);
+
+  const updateDoctorProfile = (doctorId: string, profileData: Partial<Omit<Doctor, 'id' | 'uid'>>) => {
+    setDoctors(prevDoctors =>
+      prevDoctors.map(doctor =>
+        doctor.id === doctorId ? { ...doctor, ...profileData } : doctor
+      )
+    );
+  };
+
   return (
-    <AppContext.Provider value={{ patients, setPatients, appointments, setAppointments, doctors, clinicName, setClinicName }}>
+    <AppContext.Provider value={{ patients, setPatients, appointments, setAppointments, doctors, setDoctors, updateDoctorProfile, clinicName, setClinicName }}>
       {children}
     </AppContext.Provider>
   );
