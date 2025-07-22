@@ -198,8 +198,9 @@ export default function AppointmentsPage() {
 
   const getAppointmentsForSelectedDoctorAndDate = () => {
     if (!selectedDate || !selectedDoctorId) return [];
+    const dateStr = format(date, 'yyyy-MM-dd');
     return appointments.filter(app => {
-      return app.doctorId === selectedDoctorId && format(app.dateTime, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd');
+      return app.doctorId === selectedDoctorId && format(app.dateTime, 'yyyy-MM-dd') === dateStr;
     });
   };
   
@@ -361,27 +362,29 @@ export default function AppointmentsPage() {
                 
                 <div className="overflow-x-auto">
                     <div className="grid h-full" style={{ gridTemplateColumns: `minmax(200px, 1fr)` }}>
-                        {/* Doctor Header */}
+                         {/* Doctor Header & Schedule Grid */}
                         {selectedDoctor && (
-                            <div key={selectedDoctor.id} className="sticky top-0 z-10 h-12 flex items-center justify-center p-2 text-center font-semibold border-b border-l bg-muted first:border-l-0">
-                                <h3>{selectedDoctor.name}</h3>
-                            </div>
-                        )}
-                         {/* Grid and Appointments */}
-                        {selectedDoctor && (
-                            <div key={selectedDoctor.id} className="relative grid border-l first:border-l-0" style={{ gridTemplateRows: `repeat(${totalSlots}, minmax(0, 1fr))` }}>
-                                {/* Background grid */}
-                                {timeSlots.map((time, index) => (
-                                    <div key={index} style={{ height: slotHeight }} className={cn("border-t border-dotted border-border", time.getMinutes() === 0 && "border-dashed")}>
-                                        <button
-                                            aria-label={`Book with ${selectedDoctor.name} at ${format(time, 'p')}`}
-                                            onClick={() => handleSlotClick(time)}
-                                            className="w-full h-full transition-colors hover:bg-accent/50"
-                                        />
-                                    </div>
-                                ))}
-                                {/* Appointments */}
-                                {getAppointmentsForSelectedDoctorAndDate().map(app => renderAppointmentCard(app))}
+                            <div className="col-start-1 row-start-1">
+                                {/* Header */}
+                                <div className="sticky top-0 z-10 h-12 flex items-center justify-center p-2 text-center font-semibold border-b bg-muted">
+                                    <h3>{selectedDoctor.name}</h3>
+                                </div>
+                                
+                                {/* Grid and Appointments */}
+                                <div className="relative grid border-l first:border-l-0" style={{ gridTemplateRows: `repeat(${totalSlots}, minmax(0, 1fr))` }}>
+                                    {/* Background grid */}
+                                    {timeSlots.map((time, index) => (
+                                        <div key={index} style={{ height: slotHeight }} className={cn("border-t border-dotted border-border", time.getMinutes() === 0 && "border-dashed")}>
+                                            <button
+                                                aria-label={`Book with ${selectedDoctor.name} at ${format(time, 'p')}`}
+                                                onClick={() => handleSlotClick(time)}
+                                                className="w-full h-full transition-colors hover:bg-accent/50"
+                                            />
+                                        </div>
+                                    ))}
+                                    {/* Appointments */}
+                                    {getAppointmentsForSelectedDoctorAndDate().map(app => renderAppointmentCard(app))}
+                                </div>
                             </div>
                         )}
                     </div>
@@ -391,5 +394,3 @@ export default function AppointmentsPage() {
     </div>
   );
 }
-
-    
