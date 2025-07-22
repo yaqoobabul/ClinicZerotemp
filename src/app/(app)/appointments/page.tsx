@@ -341,10 +341,10 @@ export default function AppointmentsPage() {
             </Dialog>
         </header>
 
-        <div className="flex-grow overflow-auto rounded-lg border bg-card">
-            <div className="grid h-full" style={{ gridTemplateColumns: 'auto 1fr' }}>
+        <div className="flex-grow overflow-y-auto rounded-lg border bg-card">
+            <div className="relative grid" style={{ gridTemplateColumns: 'auto 1fr' }}>
                 {/* Time Gutter */}
-                <div className="sticky top-0 z-10 grid bg-card" style={{ gridTemplateRows: `repeat(${totalSlots}, minmax(0, 1fr))`, gridTemplateColumns: '50px' }}>
+                <div className="grid bg-card" style={{ gridTemplateRows: `repeat(${totalSlots}, minmax(0, 1fr))` }}>
                     {timeSlots.map((time, index) => {
                         const isHour = time.getMinutes() === 0;
                         return (
@@ -359,33 +359,29 @@ export default function AppointmentsPage() {
                     })}
                 </div>
                 
-                <div className="overflow-x-auto">
-                    <div className="grid h-full" style={{ gridTemplateColumns: `minmax(200px, 1fr)` }}>
-                         {/* Doctor Header & Schedule Grid */}
-                        {selectedDoctor && (
-                            <div className="col-start-1 row-start-1">
-                                {/* Header */}
-                                <div className="sticky top-0 z-10 h-12 flex items-center justify-center p-2 text-center font-semibold border-b bg-muted">
-                                    <h3>{selectedDoctor.name}</h3>
-                                </div>
-                                
-                                {/* Grid and Appointments */}
-                                <div className="relative grid border-l first:border-l-0" style={{ gridTemplateRows: `repeat(${totalSlots}, minmax(0, 1fr))` }}>
-                                    {/* Background grid */}
-                                    {timeSlots.map((time, index) => (
-                                        <div key={index} style={{ height: slotHeight }} className={cn("border-t border-dotted border-border", time.getMinutes() === 0 && "border-dashed")}>
-                                            <button
-                                                aria-label={`Book with ${selectedDoctor.name} at ${format(time, 'p')}`}
-                                                onClick={() => handleSlotClick(time)}
-                                                className="w-full h-full transition-colors hover:bg-accent/50"
-                                            />
-                                        </div>
-                                    ))}
-                                    {/* Appointments */}
-                                    {getAppointmentsForSelectedDoctorAndDate().map(app => renderAppointmentCard(app))}
-                                </div>
+                {/* Schedule Area */}
+                <div className="relative">
+                    {/* Doctor Header */}
+                    {selectedDoctor && (
+                        <div className="sticky top-0 z-10 h-12 flex items-center justify-center p-2 text-center font-semibold border-b bg-muted">
+                            <h3>{selectedDoctor.name}</h3>
+                        </div>
+                    )}
+                    
+                    {/* Grid and Appointments */}
+                    <div className="relative grid" style={{ gridTemplateRows: `repeat(${totalSlots}, minmax(0, 1fr))` }}>
+                        {/* Background grid */}
+                        {timeSlots.map((time, index) => (
+                            <div key={index} style={{ height: slotHeight }} className={cn("border-t border-dotted border-border", time.getMinutes() === 0 && "border-dashed")}>
+                                <button
+                                    aria-label={`Book with ${selectedDoctor?.name} at ${format(time, 'p')}`}
+                                    onClick={() => handleSlotClick(time)}
+                                    className="w-full h-full transition-colors hover:bg-accent/50"
+                                />
                             </div>
-                        )}
+                        ))}
+                        {/* Appointments */}
+                        {getAppointmentsForSelectedDoctorAndDate().map(app => renderAppointmentCard(app))}
                     </div>
                 </div>
             </div>
