@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from 'lucide-react';
+import { useClinic } from '@/context/PatientContext';
 
 function ProfileSettings() {
     const { user, sendPasswordReset } = useAuth();
@@ -63,14 +64,15 @@ function ProfileSettings() {
 }
 
 function ClinicSettings() {
-    const [clinicName, setClinicName] = useState("ClinicZero Demo");
+    const { clinicName, setClinicName } = useClinic();
+    const [name, setName] = useState(clinicName);
     const { toast } = useToast();
 
     const handleSave = () => {
-        // In a real app, you would save this to your database
+        setClinicName(name);
         toast({
             title: "Clinic Name Updated",
-            description: `Your clinic name has been set to "${clinicName}".`,
+            description: `Your clinic name has been set to "${name}".`,
         });
     };
 
@@ -85,8 +87,8 @@ function ClinicSettings() {
                     <Label htmlFor="clinic-name">Clinic Name</Label>
                     <Input 
                         id="clinic-name" 
-                        value={clinicName} 
-                        onChange={(e) => setClinicName(e.target.value)} 
+                        value={name} 
+                        onChange={(e) => setName(e.target.value)} 
                     />
                 </div>
                 <div className="flex justify-end">

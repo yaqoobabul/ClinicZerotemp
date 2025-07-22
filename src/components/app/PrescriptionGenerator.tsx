@@ -16,6 +16,7 @@ import { Separator } from '../ui/separator';
 import { Textarea } from '../ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { useClinic } from '@/context/PatientContext';
 
 type GeneratedSummary = {
   patientDetails: {
@@ -115,6 +116,7 @@ const capitalizeFirstLetter = (str: string) => str.charAt(0).toUpperCase() + str
 
 function PrescriptionGeneratorInternal() {
   const searchParams = useSearchParams();
+  const { clinicName } = useClinic();
   const [isLoading, setIsLoading] = useState(false);
   const [opdSummary, setOpdSummary] = useState<GeneratedSummary | null>(null);
   const { toast } = useToast();
@@ -588,7 +590,7 @@ function PrescriptionGeneratorInternal() {
             <div className="text-sm">
                 <div className="flex items-start justify-between">
                     <div>
-                        <h2 className="text-base font-bold text-primary">ClinicEase</h2>
+                        <h2 className="text-base font-bold text-primary">{clinicName}</h2>
                         <p>123 Health St, Wellness City, India | Phone: +91 98765 43210</p>
                         <p className="font-semibold">Dr. Rajesh Kumar, MBBS, MD (General Medicine)</p>
                         <p className="text-muted-foreground">Reg. No. 12345</p>
@@ -729,10 +731,3 @@ export function PrescriptionGenerator() {
         </Suspense>
     )
 }
-
-    
-
-    
-
-
-

@@ -10,6 +10,8 @@ interface AppContextType {
   appointments: Appointment[];
   setAppointments: React.Dispatch<React.SetStateAction<Appointment[]>>;
   doctors: Doctor[];
+  clinicName: string;
+  setClinicName: React.Dispatch<React.SetStateAction<string>>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -39,9 +41,10 @@ export const PatientProvider = ({ children }: { children: ReactNode }) => {
   const [patients, setPatients] = useState<Patient[]>(initialPatients);
   const [appointments, setAppointments] = useState<Appointment[]>(initialAppointments);
   const [doctors] = useState<Doctor[]>(initialDoctors);
+  const [clinicName, setClinicName] = useState<string>('ClinicEase');
 
   return (
-    <AppContext.Provider value={{ patients, setPatients, appointments, setAppointments, doctors }}>
+    <AppContext.Provider value={{ patients, setPatients, appointments, setAppointments, doctors, clinicName, setClinicName }}>
       {children}
     </AppContext.Provider>
   );
