@@ -7,7 +7,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Search, User, Phone, Mail, Printer, FileText, PlusCircle, Pencil, BadgeIndianRupee, Fingerprint } from 'lucide-react';
+import { ArrowLeft, Search, User, Phone, Mail, Printer, FileText, PlusCircle, Pencil, Fingerprint } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose, DialogFooter } from '@/components/ui/dialog';
@@ -17,7 +17,7 @@ import { z } from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { usePatients } from '@/context/PatientContext';
+import { useClinic } from '@/context/PatientContext';
 import type { Patient, Visit } from '@/types';
 
 const patientFormSchema = z.object({
@@ -42,7 +42,7 @@ const newVisitSchema = z.object({
 
 export default function PatientsPage() {
   const router = useRouter();
-  const { patients, setPatients } = usePatients();
+  const { patients, setPatients } = useClinic();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [viewingVisit, setViewingVisit] = useState<Visit | null>(null);
@@ -284,13 +284,13 @@ export default function PatientsPage() {
                             <FormItem><FormLabel>Phone</FormLabel><FormControl><Input type="tel" {...field} /></FormControl><FormMessage /></FormItem>
                         )} />
                         <FormField control={patientForm.control} name="govtId" render={({ field }) => (
-                            <FormItem><FormLabel>Govt. ID</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                            <FormItem><FormLabel>Govt. ID</FormLabel><FormControl><Input {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>
                         )} />
                          <FormField control={patientForm.control} name="address" render={({ field }) => (
                             <FormItem><FormLabel>Address</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                         )} />
                         <FormField control={patientForm.control} name="email" render={({ field }) => (
-                            <FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" {...field} /></FormControl><FormMessage /></FormItem>
+                            <FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>
                         )} />
                         <DialogFooter>
                             <DialogClose asChild>
@@ -543,13 +543,13 @@ export default function PatientsPage() {
                         <FormItem><FormLabel>Phone</FormLabel><FormControl><Input type="tel" {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
                     <FormField control={patientForm.control} name="govtId" render={({ field }) => (
-                        <FormItem><FormLabel>Govt. ID</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                        <FormItem><FormLabel>Govt. ID</FormLabel><FormControl><Input {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>
                     )} />
                      <FormField control={patientForm.control} name="address" render={({ field }) => (
                         <FormItem><FormLabel>Address</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
                     <FormField control={patientForm.control} name="email" render={({ field }) => (
-                        <FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" {...field} /></FormControl><FormMessage /></FormItem>
+                        <FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>
                     )} />
                     <DialogFooter>
                         <DialogClose asChild>

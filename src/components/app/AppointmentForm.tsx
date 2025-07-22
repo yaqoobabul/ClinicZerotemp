@@ -14,11 +14,8 @@ import { format, setHours, setMinutes, parse } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Textarea } from '../ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import type { Appointment, Doctor } from '@/types';
 
-type Doctor = {
-  id: string;
-  name: string;
-};
 
 const appointmentFormSchema = z.object({
   patientName: z.string().min(1, 'Patient name is required.'),

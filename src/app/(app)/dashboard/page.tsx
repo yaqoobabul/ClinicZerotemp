@@ -27,16 +27,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { format, isToday } from 'date-fns';
-import type { Appointment } from '@/types';
-
-
-const initialAppointments: Appointment[] = [
-  { id: '1', patientName: 'Aarav Patel', patientId: '1', doctorId: 'doc1', dateTime: new Date(new Date().setHours(10, 0, 0, 0)), reason: 'Routine Checkup', status: 'upcoming', durationMinutes: 30, priority: 'Medium' },
-  { id: '5', patientName: 'Ishaan Verma', patientId: '1', doctorId: 'doc1', dateTime: new Date(new Date().setHours(10, 30, 0, 0)), reason: 'Consultation', status: 'upcoming', durationMinutes: 30, priority: 'Medium' },
-  { id: '2', patientName: 'Priya Singh', patientId: '2', doctorId: 'doc1', dateTime: new Date(new Date().setHours(11, 30, 0, 0)), reason: 'Follow-up', status: 'upcoming', durationMinutes: 45, priority: 'High' },
-  { id: '3', patientName: 'Rohan Gupta', patientId: '3', doctorId: 'doc2', dateTime: new Date(new Date().setHours(14, 0, 0, 0)), reason: 'Dental Cleaning', status: 'upcoming', durationMinutes: 60, priority: 'Low' },
-  { id: '4', patientName: 'Saanvi Sharma', patientId: '4', doctorId: 'doc1', dateTime: new Date(new Date().setDate(new Date().getDate() - 1)), reason: 'Root Canal', status: 'finished', durationMinutes: 90, priority: 'High' },
-];
+import { useClinic } from '@/context/PatientContext';
 
 
 const chartData = [
@@ -49,7 +40,8 @@ const chartData = [
 ];
 
 export default function Dashboard() {
-  const todaysAppointments = initialAppointments.filter(app => isToday(app.dateTime));
+  const { appointments } = useClinic();
+  const todaysAppointments = appointments.filter(app => isToday(app.dateTime));
 
   return (
     <div className="flex flex-col gap-4">

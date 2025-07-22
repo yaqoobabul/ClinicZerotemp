@@ -15,32 +15,16 @@ import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { usePatients } from '@/context/PatientContext';
+import { useClinic } from '@/context/PatientContext';
 import type { Patient, Doctor, Appointment } from '@/types';
-
-
-const initialDoctors: Doctor[] = [
-  { id: 'doc1', name: 'Dr. Priya Sharma' },
-  { id: 'doc2', name: 'Dr. Rohan Mehra' },
-];
-
-const initialAppointments: Appointment[] = [
-  { id: '1', patientName: 'Aarav Patel', patientId: '1', doctorId: 'doc1', dateTime: new Date(new Date().setHours(10, 0, 0, 0)), reason: 'Routine Checkup', status: 'upcoming', durationMinutes: 30, priority: 'Medium' },
-  { id: '5', patientName: 'Ishaan Verma', patientId: '1', doctorId: 'doc1', dateTime: new Date(new Date().setHours(10, 30, 0, 0)), reason: 'Consultation', status: 'upcoming', durationMinutes: 30, priority: 'Medium' },
-  { id: '2', patientName: 'Priya Singh', patientId: '2', doctorId: 'doc1', dateTime: new Date(new Date().setHours(11, 30, 0, 0)), reason: 'Follow-up', status: 'upcoming', durationMinutes: 45, priority: 'High' },
-  { id: '3', patientName: 'Rohan Gupta', patientId: '3', doctorId: 'doc2', dateTime: new Date(new Date().setHours(14, 0, 0, 0)), reason: 'Dental Cleaning', status: 'upcoming', durationMinutes: 60, priority: 'Low' },
-  { id: '4', patientName: 'Saanvi Sharma', patientId: '4', doctorId: 'doc1', dateTime: new Date(new Date().setDate(new Date().getDate() - 1)), reason: 'Root Canal', status: 'finished', durationMinutes: 90, priority: 'High' },
-];
 
 const START_HOUR = 0;
 const END_HOUR = 24;
 
 export default function AppointmentsPage() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [appointments, setAppointments] = useState<Appointment[]>(initialAppointments);
-  const { patients, setPatients } = usePatients();
-  const [doctors] = useState<Doctor[]>(initialDoctors);
-  const [selectedDoctorId, setSelectedDoctorId] = useState<string>(initialDoctors[0]?.id || '');
+  const { patients, setPatients, appointments, setAppointments, doctors } = useClinic();
+  const [selectedDoctorId, setSelectedDoctorId] = useState<string>(doctors[0]?.id || '');
   const [isNewAppointmentDialogOpen, setIsNewAppointmentDialogOpen] = useState(false);
   const [appointmentFlowStep, setAppointmentFlowStep] = useState<'choose' | 'new' | 'existing'>('choose');
   const [selectedPatientForAppointment, setSelectedPatientForAppointment] = useState<Patient | null>(null);

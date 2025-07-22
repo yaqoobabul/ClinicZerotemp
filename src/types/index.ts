@@ -38,4 +38,8 @@ export type Appointment = {
   priority?: 'High' | 'Medium' | 'Low';
   status: 'upcoming' | 'finished' | 'cancelled';
   durationMinutes: number;
+  age?: number;
+  sex?: 'Male' | 'Female' | 'Other';
+  patientPhone?: string;
+  address?: string;
 };
