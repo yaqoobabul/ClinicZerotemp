@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -15,6 +15,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, Trash2 } from 'lucide-react';
 import { useClinic } from '@/context/PatientContext';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+
 
 const doctorProfileSchema = z.object({
     name: z.string().min(1, "Name is required."),
@@ -33,11 +35,27 @@ function ProfileSettings() {
     const form = useForm<z.infer<typeof doctorProfileSchema>>({
         resolver: zodResolver(doctorProfileSchema),
         defaultValues: {
-            name: currentUserDoctorProfile?.name || user?.displayName || '',
-            registrationId: currentUserDoctorProfile?.registrationId || '',
-            qualification: currentUserDoctorProfile?.qualification || '',
+            name: '',
+            registrationId: '',
+            qualification: '',
         }
     });
+
+    useEffect(() => {
+        if (currentUserDoctorProfile) {
+            form.reset({
+                name: currentUserDoctorProfile.name || user?.displayName || '',
+                registrationId: currentUserDoctorProfile.registrationId || '',
+                qualification: currentUserDoctorProfile.qualification || '',
+            });
+        } else if (user) {
+             form.reset({
+                name: user.displayName || '',
+                registrationId: '',
+                qualification: '',
+            });
+        }
+    }, [currentUserDoctorProfile, user, form]);
     
     const handleProfileUpdate = (values: z.infer<typeof doctorProfileSchema>) => {
         if (!user) return;
@@ -157,7 +175,7 @@ function ClinicSettings() {
 }
 
 function StaffManagement() {
-    const { createUser, staff, deleteStaff, user, signInWithEmail } = useAuth();
+    const { createUser, staff, deleteStaff, user: adminUser, signInWithEmail } = useAuth();
     const { toast } = useToast();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -167,7 +185,7 @@ function StaffManagement() {
         e.preventDefault();
         setIsLoading(true);
 
-        const adminEmail = user?.email;
+        const adminEmail = adminUser?.email;
         // In a real app, you would not hardcode the admin password.
         // This is a workaround for the demo environment.
         const adminPassword = '123'; 
@@ -194,27 +212,21 @@ function StaffManagement() {
             });
         } finally {
             // Re-authenticate the admin user to restore their session
-            try {
-                await signInWithEmail(adminEmail, adminPassword);
-            } catch (reauthError) {
-                 toast({
-                    variant: "destructive",
-                    title: "Session Error",
-                    description: "Could not restore your session. Please log out and log back in.",
-                });
+            if (adminUser) {
+                try {
+                    await signInWithEmail(adminEmail, adminPassword);
+                } catch (reauthError: any) {
+                     toast({
+                        variant: "destructive",
+                        title: "Session Error",
+                        description: reauthError.message || "Could not restore your session. Please log out and log back in.",
+                    });
+                }
             }
             setIsLoading(false);
         }
     };
     
-    const handleDeleteStaff = (staffId: string) => {
-        // In a real app, you'd want a confirmation dialog here
-        deleteStaff(staffId);
-        toast({
-            title: "Staff Account Deleted",
-            description: `The account has been removed.`,
-        });
-    }
 
     return (
         <div className="space-y-6">
@@ -272,9 +284,27 @@ function StaffManagement() {
                             {staff.map((staffMember) => (
                                 <li key={staffMember.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                                     <span className="font-medium text-sm">{staffMember.email}</span>
-                                    <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => handleDeleteStaff(staffMember.id)}>
-                                        <Trash2 className="h-4 w-4" />
-                                    </Button>
+                                    <AlertDialog>
+                                      <AlertDialogTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                                          <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                      </AlertDialogTrigger>
+                                      <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                          <AlertDialogDescription>
+                                            This action will permanently disable the staff account for {staffMember.email}. They will no longer be able to log in.
+                                          </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                          <AlertDialogAction onClick={() => deleteStaff(staffMember.id)}>
+                                            Yes, delete account
+                                          </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                      </AlertDialogContent>
+                                    </AlertDialog>
                                 </li>
                             ))}
                         </ul>

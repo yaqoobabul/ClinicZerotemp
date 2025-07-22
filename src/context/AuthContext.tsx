@@ -11,10 +11,13 @@ import {
   signOut as firebaseSignOut, 
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
-  sendPasswordResetEmail
+  sendPasswordResetEmail,
+  Auth,
+  UserCredential
 } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { Loader2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 // This is a mock type for demonstration. In a real app, you'd fetch users from a backend.
 type StaffMember = {
@@ -36,29 +39,75 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const getInitialState = <T,>(key: string, defaultValue: T): T => {
+    if (typeof window === 'undefined') {
+        return defaultValue;
+    }
+    try {
+        const storedValue = window.localStorage.getItem(key);
+        return storedValue ? JSON.parse(storedValue) : defaultValue;
+    } catch (error) {
+        console.error(`Error reading from localStorage key "${key}":`, error);
+        return defaultValue;
+    }
+};
+
+const usePersistentState = <T,>(key: string, defaultValue: T): [T, React.Dispatch<React.SetStateAction<T>>] => {
+    const [state, setState] = useState(() => getInitialState(key, defaultValue));
+
+    useEffect(() => {
+        try {
+            window.localStorage.setItem(key, JSON.stringify(state));
+        } catch (error) {
+            console.error(`Error writing to localStorage key "${key}":`, error);
+        }
+    }, [key, state]);
+
+    return [state, setState];
+};
+
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const { toast } = useToast();
   
   // NOTE: This is a client-side mock for staff management.
   // A real application would use a secure backend to list/manage users.
-  const [staff, setStaff] = useState<StaffMember[]>([]);
+  const [staff, setStaff] = usePersistentState<StaffMember[]>('clinic_staff', []);
+  const [deletedStaffIds, setDeletedStaffIds] = usePersistentState<string[]>('clinic_deleted_staff', []);
 
+
+  const isUserDisabled = (uid: string) => deletedStaffIds.includes(uid);
+
+  const handleSuccessfulLogin = async (userCredential: UserCredential) => {
+    if (isUserDisabled(userCredential.user.uid)) {
+      await firebaseSignOut(auth);
+      throw new Error("This user account has been disabled.");
+    }
+    router.push('/dashboard');
+  };
+  
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user && isUserDisabled(user.uid)) {
+          await firebaseSignOut(auth);
+          setUser(null);
+      } else {
+          setUser(user);
+      }
       setLoading(false);
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [deletedStaffIds]);
 
   const signInWithGoogle = async () => {
     const provider = new GoogleAuthProvider();
     try {
-      await signInWithPopup(auth, provider);
-      router.push('/dashboard');
+      const result = await signInWithPopup(auth, provider);
+      await handleSuccessfulLogin(result);
     } catch (error) {
       console.error("Error during Google sign-in:", error);
       throw error;
@@ -66,13 +115,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
   
   const signInWithEmail = async (email: string, pass: string) => {
-    return signInWithEmailAndPassword(auth, email, pass);
+    const result = await signInWithEmailAndPassword(auth, email, pass);
+    await handleSuccessfulLogin(result);
+    return result;
   };
 
   const createUser = async (email: string, pass: string) => {
     // In a real app, this would be a backend call that creates the user
     // and adds them to a 'staff' collection in a database.
-    // For this demo, we'll just add them to our local state.
     const response = await createUserWithEmailAndPassword(auth, email, pass);
     const newStaffMember: StaffMember = { id: response.user.uid, email: email };
     setStaff(prevStaff => [...prevStaff, newStaffMember]);
@@ -84,6 +134,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // to delete the user from Firebase Auth and your database.
     // The client SDK cannot delete other users.
     setStaff(prevStaff => prevStaff.filter(s => s.id !== staffId));
+    setDeletedStaffIds(prevIds => [...new Set([...prevIds, staffId])]);
+    toast({
+        title: "Staff Account Deleted",
+        description: `The account has been removed and disabled.`,
+    });
   }
 
   const sendPasswordReset = async () => {
