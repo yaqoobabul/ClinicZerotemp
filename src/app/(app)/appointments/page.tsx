@@ -65,8 +65,8 @@ const initialAppointments: Appointment[] = [
   { id: '4', patientName: 'Saanvi Sharma', patientId: '4', doctorId: 'doc1', dateTime: new Date(new Date().setDate(new Date().getDate() - 1)), reason: 'Root Canal', status: 'finished', durationMinutes: 90 },
 ];
 
-const START_HOUR = 8;
-const END_HOUR = 22; // Renders slots up to 10 PM
+const START_HOUR = 0;
+const END_HOUR = 24;
 const SLOT_INTERVAL = 15; // in minutes
 
 export default function AppointmentsPage() {
@@ -198,7 +198,7 @@ export default function AppointmentsPage() {
 
   const getAppointmentsForSelectedDoctorAndDate = () => {
     if (!selectedDate || !selectedDoctorId) return [];
-    const dateStr = format(date, 'yyyy-MM-dd');
+    const dateStr = format(selectedDate, 'yyyy-MM-dd');
     return appointments.filter(app => {
       return app.doctorId === selectedDoctorId && format(app.dateTime, 'yyyy-MM-dd') === dateStr;
     });
@@ -344,12 +344,11 @@ export default function AppointmentsPage() {
         <div className="flex-grow overflow-auto rounded-lg border bg-card">
             <div className="grid h-full" style={{ gridTemplateColumns: 'auto 1fr' }}>
                 {/* Time Gutter */}
-                <div className="sticky top-0 z-10 grid bg-card" style={{ gridTemplateRows: `48px repeat(${totalSlots}, minmax(0, 1fr))`, gridTemplateColumns: '50px' }}>
-                    <div className="border-b border-r"></div> {/* Top-left empty cell */}
+                <div className="sticky top-0 z-10 grid bg-card" style={{ gridTemplateRows: `repeat(${totalSlots}, minmax(0, 1fr))`, gridTemplateColumns: '50px' }}>
                     {timeSlots.map((time, index) => {
                         const isHour = time.getMinutes() === 0;
                         return (
-                            <div key={index} className="relative border-r" style={{ height: slotHeight }}>
+                            <div key={index} className="relative border-r border-t border-border" style={{ height: slotHeight }}>
                                 {isHour && (
                                     <span className="text-xs text-muted-foreground absolute -top-2.5 right-2 bg-card px-1">
                                         {format(time, 'h a')}
