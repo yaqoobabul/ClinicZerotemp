@@ -33,6 +33,8 @@ const appointmentFormSchema = z.object({
   appointmentTime: z.string().min(1, 'An appointment time is required.'),
   durationMinutes: z.coerce.number().min(1, 'Duration must be at least 1 minute.'),
   reason: z.string().min(1, 'Reason for appointment is required.'),
+  notes: z.string().optional(),
+  priority: z.enum(['High', 'Medium', 'Low']).optional(),
 });
 
 export type AppointmentFormValues = Omit<z.infer<typeof appointmentFormSchema>, 'appointmentTime'>;
@@ -59,6 +61,8 @@ export function AppointmentForm({ onSubmit, onCancel, doctors, initialData, show
       appointmentTime: initialData?.dateTime ? format(initialData.dateTime, 'HH:mm') : '09:00',
       durationMinutes: initialData?.durationMinutes || 30,
       reason: initialData?.reason || '',
+      notes: initialData?.notes || '',
+      priority: initialData?.priority || 'Medium',
     },
   });
 
@@ -168,7 +172,7 @@ export function AppointmentForm({ onSubmit, onCancel, doctors, initialData, show
                           'w-full pl-3 text-left font-normal',
                           !field.value && 'text-muted-foreground'
                         )}
-                        disabled={isSlotSelected}
+                        disabled={isSlotSelected && !initialData?.reason}
                       >
                         {field.value ? (
                           format(field.value, 'PPP')
@@ -200,7 +204,7 @@ export function AppointmentForm({ onSubmit, onCancel, doctors, initialData, show
               <FormItem className="flex flex-col justify-end">
                 <FormLabel>Appointment Time</FormLabel>
                 <FormControl>
-                  <Input type="time" {...field} step="900" disabled={isSlotSelected} />
+                  <Input type="time" {...field} step="900" disabled={isSlotSelected && !initialData?.reason} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -225,13 +229,44 @@ export function AppointmentForm({ onSubmit, onCancel, doctors, initialData, show
           name="reason"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Reason for Appointment</FormLabel>
+              <FormLabel>Task / Reason for Appointment</FormLabel>
               <FormControl>
                 <Textarea placeholder="e.g., Routine Checkup, Follow-up, Toothache..." {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
+        />
+        <FormField
+          control={form.control}
+          name="notes"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Notes</FormLabel>
+              <FormControl>
+                <Textarea placeholder="Add any relevant notes..." {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+         <FormField
+            control={form.control}
+            name="priority"
+            render={({ field }) => (
+                <FormItem>
+                    <FormLabel>Priority</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl><SelectTrigger><SelectValue placeholder="Set priority" /></SelectTrigger></FormControl>
+                        <SelectContent>
+                           <SelectItem value="Low">Low</SelectItem>
+                           <SelectItem value="Medium">Medium</SelectItem>
+                           <SelectItem value="High">High</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                </FormItem>
+            )}
         />
         <div className="flex justify-end gap-2">
           <Button type="button" variant="ghost" onClick={onCancel}>
@@ -243,3 +278,5 @@ export function AppointmentForm({ onSubmit, onCancel, doctors, initialData, show
     </Form>
   );
 }
+
+    

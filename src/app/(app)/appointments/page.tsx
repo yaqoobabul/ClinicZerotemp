@@ -4,16 +4,18 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
-import { PlusCircle, ChevronsUpDown, Check, Calendar as CalendarIcon, ZoomIn, ZoomOut } from 'lucide-react';
+import { PlusCircle, ChevronsUpDown, Check, Calendar as CalendarIcon, Edit } from 'lucide-react';
 import { AppointmentForm, AppointmentFormValues } from '@/components/app/AppointmentForm';
-import { format, set, addMinutes, startOfDay } from 'date-fns';
+import { format, set, addMinutes, startOfDay, getHours } from 'date-fns';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
-import { Slider } from '@/components/ui/slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 
 
 type Doctor = {
@@ -28,6 +30,8 @@ type Appointment = {
   doctorId: string;
   dateTime: Date;
   reason: string;
+  notes?: string;
+  priority?: 'High' | 'Medium' | 'Low';
   status: 'upcoming' | 'finished' | 'cancelled';
   durationMinutes: number;
 };
@@ -59,15 +63,14 @@ const initialPatients: Patient[] = [
 ];
 
 const initialAppointments: Appointment[] = [
-  { id: '1', patientName: 'Aarav Patel', patientId: '1', doctorId: 'doc1', dateTime: new Date(new Date().setHours(10, 0, 0, 0)), reason: 'Routine Checkup', status: 'upcoming', durationMinutes: 30 },
-  { id: '2', patientName: 'Priya Singh', patientId: '2', doctorId: 'doc2', dateTime: new Date(new Date().setHours(11, 30, 0, 0)), reason: 'Follow-up', status: 'upcoming', durationMinutes: 45 },
-  { id: '3', patientName: 'Rohan Gupta', patientId: '3', doctorId: 'doc1', dateTime: new Date(new Date().setHours(14, 0, 0, 0)), reason: 'Dental Cleaning', status: 'upcoming', durationMinutes: 60 },
-  { id: '4', patientName: 'Saanvi Sharma', patientId: '4', doctorId: 'doc1', dateTime: new Date(new Date().setDate(new Date().getDate() - 1)), reason: 'Root Canal', status: 'finished', durationMinutes: 90 },
+  { id: '1', patientName: 'Aarav Patel', patientId: '1', doctorId: 'doc1', dateTime: new Date(new Date().setHours(10, 0, 0, 0)), reason: 'Routine Checkup', status: 'upcoming', durationMinutes: 30, priority: 'Medium' },
+  { id: '2', patientName: 'Priya Singh', patientId: '2', doctorId: 'doc1', dateTime: new Date(new Date().setHours(11, 30, 0, 0)), reason: 'Follow-up', status: 'upcoming', durationMinutes: 45, priority: 'High' },
+  { id: '3', patientName: 'Rohan Gupta', patientId: '3', doctorId: 'doc2', dateTime: new Date(new Date().setHours(14, 0, 0, 0)), reason: 'Dental Cleaning', status: 'upcoming', durationMinutes: 60, priority: 'Low' },
+  { id: '4', patientName: 'Saanvi Sharma', patientId: '4', doctorId: 'doc1', dateTime: new Date(new Date().setDate(new Date().getDate() - 1)), reason: 'Root Canal', status: 'finished', durationMinutes: 90, priority: 'High' },
 ];
 
 const START_HOUR = 0;
 const END_HOUR = 24;
-const SLOT_INTERVAL = 15; // in minutes
 
 export default function AppointmentsPage() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -79,72 +82,79 @@ export default function AppointmentsPage() {
   const [appointmentFlowStep, setAppointmentFlowStep] = useState<'choose' | 'new' | 'existing'>('choose');
   const [selectedPatientForAppointment, setSelectedPatientForAppointment] = useState<Patient | null>(null);
   const [selectedSlotInfo, setSelectedSlotInfo] = useState<SelectedSlotInfo>(null);
-  const [zoomLevel, setZoomLevel] = useState(4); // 1 = 15min, 2=30min, 4=1hr slot height
+  const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
     setSelectedDate(new Date());
   }, []);
   
-  const totalMinutes = (END_HOUR - START_HOUR) * 60;
-  const totalSlots = totalMinutes / SLOT_INTERVAL;
-  const timeSlots = Array.from({ length: totalSlots }, (_, i) => {
-    const baseDate = startOfDay(new Date());
-    return addMinutes(baseDate, START_HOUR * 60 + i * SLOT_INTERVAL);
+  const hourlySlots = Array.from({ length: END_HOUR - START_HOUR }, (_, i) => {
+    return i + START_HOUR;
   });
-  
-  const slotHeight = `${zoomLevel * 0.25}rem`; // e.g., zoomLevel 4 * 0.25rem = 1rem per 15min slot
 
-  const handleAddAppointment = (values: AppointmentFormValues) => {
-    let patientId = selectedPatientForAppointment?.id;
-
-    if (appointmentFlowStep === 'new') {
-      const newPatient: Patient = {
-        id: `P-${Date.now().toString().slice(-6)}`,
-        name: values.patientName,
-        phone: values.patientPhone,
-        age: values.age,
-        sex: values.sex,
-        address: values.address,
+  const handleAddOrUpdateAppointment = (values: AppointmentFormValues) => {
+    if (editingAppointment) {
+      // Update existing appointment
+      const updatedAppointment: Appointment = {
+        ...editingAppointment,
+        ...values,
       };
-      setPatients(prev => [...prev, newPatient]);
-      patientId = newPatient.id;
-    }
+      setAppointments(prev => prev.map(app => app.id === editingAppointment.id ? updatedAppointment : app));
+      toast({ title: 'Appointment Updated', description: `Appointment for ${values.patientName} has been updated.` });
+    } else {
+      // Add new appointment
+      let patientId = selectedPatientForAppointment?.id;
 
-    if (!patientId || !values.doctorId) {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Patient and Doctor are required.',
-      });
-      return;
+      if (appointmentFlowStep === 'new') {
+        const newPatient: Patient = {
+          id: `P-${Date.now().toString().slice(-6)}`,
+          name: values.patientName,
+          phone: values.patientPhone,
+          age: values.age,
+          sex: values.sex,
+          address: values.address,
+        };
+        setPatients(prev => [...prev, newPatient]);
+        patientId = newPatient.id;
+      }
+
+      if (!patientId || !values.doctorId) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Patient and Doctor are required.' });
+        return;
+      }
+      
+      const newAppointment: Appointment = {
+        id: `APP-${Date.now().toString().slice(-6)}`,
+        patientName: values.patientName,
+        patientId: patientId,
+        ...values,
+        status: 'upcoming',
+      };
+      setAppointments(prev => [...prev, newAppointment]);
+      toast({ title: 'Appointment Created', description: `New appointment for ${values.patientName} at ${format(values.dateTime, 'p')}.` });
     }
     
-    const newAppointment: Appointment = {
-      id: `APP-${Date.now().toString().slice(-6)}`,
-      patientName: values.patientName,
-      patientId: patientId,
-      doctorId: values.doctorId,
-      dateTime: values.dateTime,
-      reason: values.reason,
-      status: 'upcoming',
-      durationMinutes: values.durationMinutes || 30,
-    };
-    setAppointments(prev => [...prev, newAppointment]);
     closeAndResetDialog();
   };
 
-  const handleSlotClick = (time: Date) => {
+  const handleSlotClick = (hour: number) => {
     if (!selectedDate || !selectedDoctorId) return;
     const combinedDateTime = set(selectedDate, {
-        hours: time.getHours(),
-        minutes: time.getMinutes(),
+        hours: hour,
+        minutes: 0,
         seconds: 0,
         milliseconds: 0,
     });
     setSelectedSlotInfo({ doctorId: selectedDoctorId, dateTime: combinedDateTime });
     setAppointmentFlowStep('choose');
     setSelectedPatientForAppointment(null);
+    setEditingAppointment(null);
+    setIsNewAppointmentDialogOpen(true);
+  };
+  
+  const handleEditClick = (appointment: Appointment) => {
+    setEditingAppointment(appointment);
     setIsNewAppointmentDialogOpen(true);
   };
 
@@ -154,13 +164,14 @@ export default function AppointmentsPage() {
       setAppointmentFlowStep('choose');
       setSelectedPatientForAppointment(null);
       setSelectedSlotInfo(null);
+      setEditingAppointment(null);
     }, 300);
   };
 
   const PatientCombobox = () => {
     const [open, setOpen] = useState(false);
-    const [value, setValue] = useState('');
-
+    const [value, setValue] = useState(selectedPatientForAppointment?.name.toLowerCase() || '');
+    
     return (
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
@@ -203,27 +214,13 @@ export default function AppointmentsPage() {
       return app.doctorId === selectedDoctorId && format(app.dateTime, 'yyyy-MM-dd') === dateStr;
     });
   };
-  
-  const renderAppointmentCard = (app: Appointment) => {
-    const startMinutes = (app.dateTime.getHours() * 60 + app.dateTime.getMinutes()) - (START_HOUR * 60);
-    
-    const gridRowStart = (startMinutes / SLOT_INTERVAL) + 1;
-    const gridRowCount = Math.round(app.durationMinutes / SLOT_INTERVAL);
 
-    return (
-      <div
-        key={app.id}
-        className="relative flex flex-col overflow-hidden rounded-lg p-2 text-primary-foreground shadow-md bg-primary/90 border-l-4 border-primary"
-        style={{ 
-            gridRow: `${gridRowStart} / span ${gridRowCount}`,
-            gridColumn: 1,
-        }}
-      >
-        <p className="font-semibold text-sm">{app.patientName}</p>
-        <p className="text-xs opacity-90">{format(app.dateTime, 'p')}</p>
-        <p className="text-xs opacity-90 truncate mt-1">{app.reason}</p>
-      </div>
-    );
+  const getPriorityBadgeVariant = (priority?: 'High' | 'Medium' | 'Low') => {
+    switch (priority) {
+      case 'High': return 'destructive';
+      case 'Medium': return 'secondary';
+      default: return 'outline';
+    }
   };
   
   const date = selectedDate;
@@ -233,7 +230,10 @@ export default function AppointmentsPage() {
   
   const selectedDoctor = doctors.find(d => d.id === selectedDoctorId);
 
-  const getDialogInitialData = () => {
+  const getDialogInitialData = (): Partial<AppointmentFormValues> => {
+    if (editingAppointment) {
+      return { ...editingAppointment };
+    }
     if (selectedSlotInfo) {
       return {
         doctorId: selectedSlotInfo.doctorId,
@@ -249,10 +249,20 @@ export default function AppointmentsPage() {
     }
     return { doctorId: selectedDoctorId };
   };
+  
+  const appointmentsForDay = getAppointmentsForSelectedDoctorAndDate();
+  const appointmentsByHour = appointmentsForDay.reduce((acc, app) => {
+    const hour = getHours(app.dateTime);
+    if (!acc[hour]) {
+      acc[hour] = [];
+    }
+    acc[hour].push(app);
+    return acc;
+  }, {} as Record<number, Appointment[]>);
 
   return (
-    <div className="flex flex-col h-[calc(100vh-8rem)]">
-        <header className="flex items-center justify-between pb-4 gap-4 flex-wrap">
+    <div className="flex flex-col h-full">
+        <header className="flex items-center justify-between pb-4 gap-4 flex-wrap border-b mb-4">
             <div className="flex items-center gap-4">
                 <Popover>
                     <PopoverTrigger asChild>
@@ -276,115 +286,126 @@ export default function AppointmentsPage() {
                         ))}
                     </SelectContent>
                 </Select>
-
-                 <div className="flex items-center gap-2">
-                    <Button variant="outline" size="icon" onClick={() => setZoomLevel(prev => Math.max(1, prev - 1))}><ZoomOut/></Button>
-                    <Slider
-                        value={[zoomLevel]}
-                        onValueChange={(value) => setZoomLevel(value[0])}
-                        min={1}
-                        max={8}
-                        step={1}
-                        className="w-32"
-                    />
-                    <Button variant="outline" size="icon" onClick={() => setZoomLevel(prev => Math.min(8, prev + 1))}><ZoomIn/></Button>
-                </div>
             </div>
-            <Dialog open={isNewAppointmentDialogOpen} onOpenChange={setIsNewAppointmentDialogOpen}>
+             <Dialog open={isNewAppointmentDialogOpen} onOpenChange={setIsNewAppointmentDialogOpen}>
               <DialogTrigger asChild>
-                <Button onClick={() => setSelectedSlotInfo(null)}>
-                  <PlusCircle className="mr-2" />
-                  Add Appointment
-                </Button>
+                 <Button onClick={() => handleSlotClick(new Date().getHours())}>
+                   <PlusCircle className="mr-2" />
+                   Add Appointment
+                 </Button>
               </DialogTrigger>
-              <DialogContent onInteractOutside={(e) => {
-                    const target = e.target as HTMLElement;
-                    if (target.closest('[cmdk-root], [data-radix-popper-content-wrapper]')) {
-                        e.preventDefault();
-                    }
-                }}>
+              <DialogContent className="max-w-2xl" onInteractOutside={(e) => {
+                  const target = e.target as HTMLElement;
+                  if (target.closest('[cmdk-root], [data-radix-popper-content-wrapper]')) {
+                      e.preventDefault();
+                  }
+              }}>
                 <DialogHeader>
-                  <DialogTitle>New Appointment</DialogTitle>
-                  <DialogDescription>Is this for a new or an existing patient?</DialogDescription>
+                  <DialogTitle>{editingAppointment ? 'Edit Appointment' : 'New Appointment'}</DialogTitle>
+                  {!editingAppointment && (
+                    <DialogDescription>Is this for a new or an existing patient?</DialogDescription>
+                  )}
                 </DialogHeader>
-                {appointmentFlowStep === 'choose' && (
-                    <div className='grid grid-cols-2 gap-4 pt-4'>
-                        <Button variant="outline" onClick={() => setAppointmentFlowStep('new')}>New Patient</Button>
-                        <Button onClick={() => setAppointmentFlowStep('existing')}>Existing Patient</Button>
-                    </div>
-                )}
-                {appointmentFlowStep === 'new' && (
-                    <AppointmentForm
-                        onSubmit={handleAddAppointment}
+
+                {editingAppointment ? (
+                   <AppointmentForm
+                        onSubmit={handleAddOrUpdateAppointment}
                         onCancel={closeAndResetDialog}
                         doctors={doctors}
                         initialData={getDialogInitialData()}
-                        showPatientDetails={true}
+                        showPatientDetails={false}
                     />
-                )}
-                {appointmentFlowStep === 'existing' && (
-                    <div className="space-y-4">
-                        <PatientCombobox />
-                        {selectedPatientForAppointment && (
-                            <AppointmentForm
-                                key={selectedPatientForAppointment.id}
-                                onSubmit={handleAddAppointment}
-                                onCancel={closeAndResetDialog}
-                                doctors={doctors}
-                                initialData={getDialogInitialData()}
-                                showPatientDetails={false}
-                            />
-                        )}
-                    </div>
+                ) : (
+                  <>
+                  {appointmentFlowStep === 'choose' && (
+                      <div className='grid grid-cols-2 gap-4 pt-4'>
+                          <Button variant="outline" onClick={() => setAppointmentFlowStep('new')}>New Patient</Button>
+                          <Button onClick={() => setAppointmentFlowStep('existing')}>Existing Patient</Button>
+                      </div>
+                  )}
+                  {appointmentFlowStep === 'new' && (
+                      <AppointmentForm
+                          onSubmit={handleAddOrUpdateAppointment}
+                          onCancel={closeAndResetDialog}
+                          doctors={doctors}
+                          initialData={getDialogInitialData()}
+                          showPatientDetails={true}
+                      />
+                  )}
+                  {appointmentFlowStep === 'existing' && (
+                      <div className="space-y-4">
+                          <PatientCombobox />
+                          {selectedPatientForAppointment && (
+                              <AppointmentForm
+                                  key={selectedPatientForAppointment.id}
+                                  onSubmit={handleAddOrUpdateAppointment}
+                                  onCancel={closeAndResetDialog}
+                                  doctors={doctors}
+                                  initialData={getDialogInitialData()}
+                                  showPatientDetails={false}
+                              />
+                          )}
+                      </div>
+                  )}
+                  </>
                 )}
               </DialogContent>
             </Dialog>
         </header>
 
-        <div className="flex-grow overflow-y-auto rounded-lg border bg-card">
-            <div className="relative grid grid-cols-[auto_1fr]">
-                {/* Time Gutter */}
-                <div className="relative grid" style={{ gridTemplateRows: `repeat(${totalSlots}, minmax(0, 1fr))` }}>
-                    {timeSlots.map((time, index) => {
-                        const isHour = time.getMinutes() === 0;
-                        return (
-                             <div key={index} className="relative border-r border-border" style={{ height: slotHeight }}>
-                                {isHour && (
-                                    <span className="text-xs text-muted-foreground absolute -top-2.5 left-2 bg-card px-1">
-                                        {format(time, 'h a')}
-                                    </span>
-                                )}
-                            </div>
-                        )
-                    })}
-                </div>
-                
-                {/* Schedule Area */}
-                <div className="relative">
-                    {/* Doctor Header */}
-                    {selectedDoctor && (
-                        <div className="sticky top-0 z-10 h-12 flex items-center justify-center p-2 text-center font-semibold border-b bg-muted">
-                            <h3>{selectedDoctor.name}</h3>
-                        </div>
-                    )}
-                    
-                    {/* Grid and Appointments */}
-                    <div className="relative grid" style={{ gridTemplateRows: `repeat(${totalSlots}, minmax(0, 1fr))` }}>
-                        {/* Background grid */}
-                        {timeSlots.map((time, index) => (
-                            <div key={index} style={{ height: slotHeight }} className={cn("border-t border-dotted border-border", time.getMinutes() === 0 && "border-dashed")}>
-                                <button
-                                    aria-label={`Book with ${selectedDoctor?.name} at ${format(time, 'p')}`}
-                                    onClick={() => handleSlotClick(time)}
-                                    className="w-full h-full transition-colors hover:bg-accent/50"
-                                />
-                            </div>
-                        ))}
-                        {/* Appointments */}
-                        {getAppointmentsForSelectedDoctorAndDate().map(app => renderAppointmentCard(app))}
-                    </div>
-                </div>
-            </div>
+        <div className="flex-grow overflow-y-auto rounded-lg bg-card">
+          <div className="p-2 bg-primary/10 rounded-t-lg">
+             <h2 className="text-xl font-bold text-center text-primary">Daily Schedule for {selectedDoctor?.name}</h2>
+          </div>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-24">Time</TableHead>
+                <TableHead>Patient / Task</TableHead>
+                <TableHead>Notes</TableHead>
+                <TableHead className="w-24 text-center">Priority</TableHead>
+                <TableHead className="w-24 text-center">Status</TableHead>
+                <TableHead className="w-16"></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {hourlySlots.map(hour => {
+                const appointmentsInHour = appointmentsByHour[hour] || [];
+                const timeLabel = format(set(new Date(), { hours: hour, minutes: 0 }), 'p');
+
+                if (appointmentsInHour.length > 0) {
+                  return appointmentsInHour.map((app, index) => (
+                    <TableRow key={app.id}>
+                      {index === 0 && <TableCell rowSpan={appointmentsInHour.length} className="font-semibold align-top">{timeLabel}</TableCell>}
+                      <TableCell className="font-medium">{app.patientName} <span className="text-muted-foreground block text-sm font-normal">{app.reason}</span></TableCell>
+                      <TableCell className="text-muted-foreground">{app.notes}</TableCell>
+                      <TableCell className="text-center">
+                        <Badge variant={getPriorityBadgeVariant(app.priority)}>{app.priority || 'N/A'}</Badge>
+                      </TableCell>
+                       <TableCell className="text-center">
+                         <Badge variant={app.status === 'finished' ? 'default' : 'secondary'}>{app.status}</Badge>
+                      </TableCell>
+                       <TableCell>
+                        <Button variant="ghost" size="icon" onClick={() => handleEditClick(app)}>
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ));
+                }
+
+                return (
+                  <TableRow key={hour} className="h-14 hover:bg-muted/50 transition-colors">
+                    <TableCell className="font-semibold">{timeLabel}</TableCell>
+                    <TableCell colSpan={4} className="text-muted-foreground">
+                      <Button variant="link" className="p-0 h-auto" onClick={() => handleSlotClick(hour)}>+ Add Appointment</Button>
+                    </TableCell>
+                    <TableCell></TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
         </div>
     </div>
   );
