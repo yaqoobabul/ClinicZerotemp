@@ -107,7 +107,7 @@ const formSchema = z.object({
   testsAdvised: z.array(testAdvisedSchema).optional(),
   additionalNotes: z.string().optional(),
   followUpDate: z.string().optional(),
-  doctorId: z.string().optional(),
+  doctorId: z.string().min(1, 'A doctor must be selected.'),
 });
 
 
@@ -346,24 +346,6 @@ function PrescriptionGeneratorInternal() {
                         <FormItem className="md:col-span-2"><FormLabel>Address</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
                  </div>
-                 <FormField
-                    control={form.control}
-                    name="doctorId"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Consulting Doctor</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                <FormControl><SelectTrigger><SelectValue placeholder="Assign a doctor" /></SelectTrigger></FormControl>
-                                <SelectContent>
-                                    {doctors.map(doc => (
-                                        <SelectItem key={doc.id} value={doc.id}>{doc.name}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
               </CardContent>
             </Card>
 
@@ -603,6 +585,29 @@ function PrescriptionGeneratorInternal() {
                       <FormItem><FormLabel>Follow-up Date</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                   )} />
               </CardContent>
+            </Card>
+            
+            <Card>
+                <CardHeader><CardTitle>Consulting Doctor</CardTitle></CardHeader>
+                <CardContent>
+                    <FormField
+                        control={form.control}
+                        name="doctorId"
+                        render={({ field }) => (
+                            <FormItem>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <FormControl><SelectTrigger><SelectValue placeholder="Select a doctor" /></SelectTrigger></FormControl>
+                                    <SelectContent>
+                                        {doctors.map(doc => (
+                                            <SelectItem key={doc.id} value={doc.id}>{doc.name}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </CardContent>
             </Card>
 
             <Button type="submit" disabled={isLoading} size="lg" className="w-full md:w-auto">
