@@ -34,6 +34,11 @@ type GeneratedSummary = {
     qualification?: string;
     registrationId?: string;
   };
+  clinicDetails: {
+    name: string;
+    address: string;
+    phone: string;
+  };
   vitals?: {
     height?: string;
     weight?: string;
@@ -140,7 +145,7 @@ const capitalizeFirstLetter = (str: string) => str.charAt(0).toUpperCase() + str
 
 function DentalPrescriptionGeneratorInternal() {
   const searchParams = useSearchParams();
-  const { clinicName, doctors } = useClinic();
+  const { clinicName, clinicAddress, clinicPhone, doctors } = useClinic();
   const [isLoading, setIsLoading] = useState(false);
   const [opdSummary, setOpdSummary] = useState<GeneratedSummary | null>(null);
   const { toast } = useToast();
@@ -274,6 +279,11 @@ function DentalPrescriptionGeneratorInternal() {
                 name: selectedDoctor.name,
                 qualification: selectedDoctor.qualification,
                 registrationId: selectedDoctor.registrationId,
+            },
+            clinicDetails: {
+              name: clinicName,
+              address: clinicAddress,
+              phone: clinicPhone,
             },
             vitals: hasVitals ? vitals : undefined,
             examinationFindings: values.examinationFindings ? capitalizeFirstLetter(values.examinationFindings) : undefined,
@@ -734,8 +744,8 @@ function DentalPrescriptionGeneratorInternal() {
             <div className="text-sm">
                 <div className="flex items-start justify-between">
                     <div>
-                      <h2 className="text-base font-bold text-primary">{clinicName}</h2>
-                      <p>123 Health St, Wellness City, India | Phone: +91 98765 43210</p>
+                      <h2 className="text-base font-bold text-primary">{opdSummary.clinicDetails.name}</h2>
+                      <p>{opdSummary.clinicDetails.address} | Phone: {opdSummary.clinicDetails.phone}</p>
                       <p className="font-semibold">{opdSummary.doctorDetails.name}</p>
                       <p className="text-muted-foreground">{opdSummary.doctorDetails.qualification}</p>
                     </div>

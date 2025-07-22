@@ -16,6 +16,10 @@ interface AppContextType {
   updateDoctorProfile: (doctorId: string, profileData: Partial<Doctor>) => void;
   clinicName: string;
   setClinicName: React.Dispatch<React.SetStateAction<string>>;
+  clinicAddress: string;
+  setClinicAddress: React.Dispatch<React.SetStateAction<string>>;
+  clinicPhone: string;
+  setClinicPhone: React.Dispatch<React.SetStateAction<string>>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -46,47 +50,35 @@ export const PatientProvider = ({ children }: { children: ReactNode }) => {
   const [patients, setPatients] = useState<Patient[]>(initialPatients);
   const [appointments, setAppointments] = useState<Appointment[]>(initialAppointments);
   
-  const [doctors, setDoctors] = useState<Doctor[]>(() => {
-    if (typeof window === 'undefined') {
-        return initialDoctors;
-    }
-    try {
-        const storedDoctors = window.localStorage.getItem('clinic_doctors');
-        return storedDoctors ? JSON.parse(storedDoctors) : initialDoctors;
-    } catch (error) {
-        console.error("Error reading doctors from localStorage", error);
-        return initialDoctors;
-    }
-  });
-
-  const [clinicName, setClinicName] = useState<string>(() => {
+  const usePersistentState = <T,>(key: string, defaultValue: T): [T, React.Dispatch<React.SetStateAction<T>>] => {
+    const [state, setState] = useState<T>(() => {
       if (typeof window === 'undefined') {
-        return 'ClinicEase';
+        return defaultValue;
       }
       try {
-        const storedName = window.localStorage.getItem('clinic_name');
-        return storedName || 'ClinicEase';
+        const storedValue = window.localStorage.getItem(key);
+        return storedValue ? JSON.parse(storedValue) : defaultValue;
       } catch (error) {
-        console.error("Error reading clinic name from localStorage", error);
-        return 'ClinicEase';
+        console.error(`Error reading from localStorage key "${key}":`, error);
+        return defaultValue;
       }
-  });
+    });
 
-  useEffect(() => {
-    try {
-        window.localStorage.setItem('clinic_name', clinicName);
-    } catch (error) {
-        console.error("Error saving clinic name to localStorage", error);
-    }
-  }, [clinicName]);
+    useEffect(() => {
+      try {
+        window.localStorage.setItem(key, JSON.stringify(state));
+      } catch (error) {
+        console.error(`Error writing to localStorage key "${key}":`, error);
+      }
+    }, [key, state]);
 
-  useEffect(() => {
-    try {
-        window.localStorage.setItem('clinic_doctors', JSON.stringify(doctors));
-    } catch (error) {
-        console.error("Error saving doctors to localStorage", error);
-    }
-  }, [doctors]);
+    return [state, setState];
+  };
+
+  const [doctors, setDoctors] = usePersistentState<Doctor[]>('clinic_doctors', initialDoctors);
+  const [clinicName, setClinicName] = usePersistentState<string>('clinic_name', 'ClinicEase');
+  const [clinicAddress, setClinicAddress] = usePersistentState<string>('clinic_address', '123 Health St, Wellness City, India');
+  const [clinicPhone, setClinicPhone] = usePersistentState<string>('clinic_phone', '+91 98765 43210');
 
 
   // When a user logs in, we associate their Firebase UID with a doctor profile.
@@ -107,10 +99,14 @@ export const PatientProvider = ({ children }: { children: ReactNode }) => {
             });
         }
     }
-  }, [user, doctors]);
+  }, [user, doctors, setDoctors]);
   
   const addDoctor = (newDoctorData: Omit<Doctor, 'id'>) => {
     setDoctors(prevDoctors => {
+      const existingDoctor = prevDoctors.find(d => d.uid === newDoctorData.uid);
+      if(existingDoctor) {
+        return prevDoctors.map(d => d.uid === newDoctorData.uid ? { ...d, ...newDoctorData } : d);
+      }
       const newDoctor: Doctor = {
         id: `doc-${Date.now().toString().slice(-6)}`,
         ...newDoctorData
@@ -128,7 +124,14 @@ export const PatientProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AppContext.Provider value={{ patients, setPatients, appointments, setAppointments, doctors, setDoctors, addDoctor, updateDoctorProfile, clinicName, setClinicName }}>
+    <AppContext.Provider value={{ 
+      patients, setPatients, 
+      appointments, setAppointments, 
+      doctors, setDoctors, addDoctor, updateDoctorProfile, 
+      clinicName, setClinicName,
+      clinicAddress, setClinicAddress,
+      clinicPhone, setClinicPhone
+    }}>
       {children}
     </AppContext.Provider>
   );

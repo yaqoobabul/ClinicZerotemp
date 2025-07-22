@@ -139,15 +139,23 @@ function ProfileSettings() {
 }
 
 function ClinicSettings() {
-    const { clinicName, setClinicName } = useClinic();
+    const { 
+        clinicName, setClinicName, 
+        clinicAddress, setClinicAddress,
+        clinicPhone, setClinicPhone 
+    } = useClinic();
     const [name, setName] = useState(clinicName);
+    const [address, setAddress] = useState(clinicAddress);
+    const [phone, setPhone] = useState(clinicPhone);
     const { toast } = useToast();
 
     const handleSave = () => {
         setClinicName(name);
+        setClinicAddress(address);
+        setClinicPhone(phone);
         toast({
-            title: "Clinic Name Updated",
-            description: `Your clinic name has been set to "${name}".`,
+            title: "Clinic Info Updated",
+            description: `Your clinic's details have been saved.`,
         });
     };
 
@@ -155,7 +163,7 @@ function ClinicSettings() {
         <Card>
             <CardHeader>
                 <CardTitle>Clinic</CardTitle>
-                <CardDescription>Manage your clinic's general information.</CardDescription>
+                <CardDescription>Manage your clinic's general information. This will appear on all generated documents.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
                 <div className="space-y-2">
@@ -164,6 +172,23 @@ function ClinicSettings() {
                         id="clinic-name" 
                         value={name} 
                         onChange={(e) => setName(e.target.value)} 
+                    />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="clinic-address">Clinic Address</Label>
+                    <Input 
+                        id="clinic-address" 
+                        value={address} 
+                        onChange={(e) => setAddress(e.target.value)} 
+                    />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="clinic-phone">Clinic Phone</Label>
+                    <Input 
+                        id="clinic-phone"
+                        type="tel"
+                        value={phone} 
+                        onChange={(e) => setPhone(e.target.value)} 
                     />
                 </div>
             </CardContent>
