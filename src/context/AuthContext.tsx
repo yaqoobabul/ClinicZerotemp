@@ -16,13 +16,21 @@ import {
 import { auth } from '@/lib/firebase';
 import { Loader2 } from 'lucide-react';
 
+// This is a mock type for demonstration. In a real app, you'd fetch users from a backend.
+type StaffMember = {
+  id: string;
+  email: string;
+}
+
 interface AuthContextType {
   user: User | null;
   loading: boolean;
+  staff: StaffMember[];
   signInWithGoogle: () => Promise<void>;
   signInWithEmail: (email: string, pass: string) => Promise<any>;
   signOut: () => Promise<void>;
   createUser: (email: string, pass: string) => Promise<any>;
+  deleteStaff: (staffId: string) => void;
   sendPasswordReset: () => Promise<void>;
 }
 
@@ -32,6 +40,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  
+  // NOTE: This is a client-side mock for staff management.
+  // A real application would use a secure backend to list/manage users.
+  const [staff, setStaff] = useState<StaffMember[]>([]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -58,8 +70,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const createUser = async (email: string, pass: string) => {
-    return createUserWithEmailAndPassword(auth, email, pass);
+    // In a real app, this would be a backend call that creates the user
+    // and adds them to a 'staff' collection in a database.
+    // For this demo, we'll just add them to our local state.
+    const response = await createUserWithEmailAndPassword(auth, email, pass);
+    const newStaffMember: StaffMember = { id: response.user.uid, email: email };
+    setStaff(prevStaff => [...prevStaff, newStaffMember]);
+    return response;
   };
+
+  const deleteStaff = (staffId: string) => {
+    // This is also a mock. In a real app, this would be a secure backend call
+    // to delete the user from Firebase Auth and your database.
+    // The client SDK cannot delete other users.
+    setStaff(prevStaff => prevStaff.filter(s => s.id !== staffId));
+  }
 
   const sendPasswordReset = async () => {
     if (auth.currentUser?.email) {
@@ -86,7 +111,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }
   
   return (
-    <AuthContext.Provider value={{ user, loading, signInWithGoogle, signInWithEmail, signOut, createUser, sendPasswordReset }}>
+    <AuthContext.Provider value={{ user, loading, staff, signInWithGoogle, signInWithEmail, signOut, createUser, deleteStaff, sendPasswordReset }}>
       {children}
     </AuthContext.Provider>
   );

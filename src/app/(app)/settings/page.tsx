@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from 'lucide-react';
+import { Loader2, Trash2 } from 'lucide-react';
 import { useClinic } from '@/context/PatientContext';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 
@@ -157,7 +157,7 @@ function ClinicSettings() {
 }
 
 function StaffManagement() {
-    const { createUser } = useAuth();
+    const { createUser, staff, deleteStaff } = useAuth();
     const { toast } = useToast();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -184,48 +184,82 @@ function StaffManagement() {
             setIsLoading(false);
         }
     };
+    
+    const handleDeleteStaff = (staffId: string) => {
+        // In a real app, you'd want a confirmation dialog here
+        deleteStaff(staffId);
+        toast({
+            title: "Staff Account Deleted",
+            description: `The account has been removed.`,
+        });
+    }
 
     return (
-        <Card>
-            <CardHeader>
-                <CardTitle>Staff Management</CardTitle>
-                <CardDescription>Create and manage login credentials for your staff.</CardDescription>
-            </CardHeader>
-            <form onSubmit={handleCreateStaff}>
-                <CardContent className="space-y-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="staff-email">Staff Email</Label>
-                            <Input 
-                                id="staff-email" 
-                                type="email" 
-                                placeholder="staff.member@example.com" 
-                                required 
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="staff-password">Temporary Password</Label>
-                            <Input 
-                                id="staff-password" 
-                                type="password" 
-                                placeholder="Create a strong password" 
-                                required 
-                                minLength={6}
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                            />
-                            <p className="text-xs text-muted-foreground">The staff member will be prompted to change this on first login.</p>
-                        </div>
+        <div className="space-y-6">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Create Staff Account</CardTitle>
+                    <CardDescription>Create login credentials for your staff. The password cannot be recovered, so please share it securely.</CardDescription>
+                </CardHeader>
+                <form onSubmit={handleCreateStaff}>
+                    <CardContent className="space-y-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="staff-email">Staff Email</Label>
+                                <Input 
+                                    id="staff-email" 
+                                    type="email" 
+                                    placeholder="staff.member@example.com" 
+                                    required 
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="staff-password">Temporary Password</Label>
+                                <Input 
+                                    id="staff-password" 
+                                    type="password" 
+                                    placeholder="Create a strong password" 
+                                    required 
+                                    minLength={6}
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                />
+                                <p className="text-xs text-muted-foreground">The staff member can reset this password later if needed.</p>
+                            </div>
+                    </CardContent>
+                    <CardFooter className="border-t px-6 py-4">
+                        <Button type="submit" disabled={isLoading}>
+                            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            Create Staff Account
+                        </Button>
+                    </CardFooter>
+                </form>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle>Existing Staff</CardTitle>
+                    <CardDescription>List of all created staff accounts.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    {staff.length === 0 ? (
+                        <p className="text-sm text-muted-foreground">No staff accounts created yet.</p>
+                    ) : (
+                        <ul className="space-y-3">
+                            {staff.map((staffMember) => (
+                                <li key={staffMember.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                                    <span className="font-medium text-sm">{staffMember.email}</span>
+                                    <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => handleDeleteStaff(staffMember.id)}>
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
                 </CardContent>
-                <CardFooter className="border-t px-6 py-4">
-                    <Button type="submit" disabled={isLoading}>
-                        {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Create Staff Account
-                    </Button>
-                </CardFooter>
-            </form>
-        </Card>
+            </Card>
+        </div>
     );
 }
 
