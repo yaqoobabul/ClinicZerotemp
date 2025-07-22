@@ -13,6 +13,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { Slider } from '@/components/ui/slider';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 
 type Doctor = {
@@ -73,6 +74,7 @@ export default function AppointmentsPage() {
   const [appointments, setAppointments] = useState<Appointment[]>(initialAppointments);
   const [patients, setPatients] = useState<Patient[]>(initialPatients);
   const [doctors] = useState<Doctor[]>(initialDoctors);
+  const [selectedDoctorId, setSelectedDoctorId] = useState<string>(initialDoctors[0]?.id || '');
   const [isNewAppointmentDialogOpen, setIsNewAppointmentDialogOpen] = useState(false);
   const [appointmentFlowStep, setAppointmentFlowStep] = useState<'choose' | 'new' | 'existing'>('choose');
   const [selectedPatientForAppointment, setSelectedPatientForAppointment] = useState<Patient | null>(null);
@@ -132,15 +134,15 @@ export default function AppointmentsPage() {
     closeAndResetDialog();
   };
 
-  const handleSlotClick = (doctorId: string, time: Date) => {
-    if (!selectedDate) return;
+  const handleSlotClick = (time: Date) => {
+    if (!selectedDate || !selectedDoctorId) return;
     const combinedDateTime = set(selectedDate, {
         hours: time.getHours(),
         minutes: time.getMinutes(),
         seconds: 0,
         milliseconds: 0,
     });
-    setSelectedSlotInfo({ doctorId, dateTime: combinedDateTime });
+    setSelectedSlotInfo({ doctorId: selectedDoctorId, dateTime: combinedDateTime });
     setAppointmentFlowStep('choose');
     setSelectedPatientForAppointment(null);
     setIsNewAppointmentDialogOpen(true);
@@ -194,10 +196,10 @@ export default function AppointmentsPage() {
     );
   };
 
-  const getAppointmentsForDoctorAndDate = (doctorId: string, date: Date | null) => {
-    if (!date) return [];
+  const getAppointmentsForSelectedDoctorAndDate = () => {
+    if (!selectedDate || !selectedDoctorId) return [];
     return appointments.filter(app => {
-      return app.doctorId === doctorId && format(app.dateTime, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd');
+      return app.doctorId === selectedDoctorId && format(app.dateTime, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd');
     });
   };
   
@@ -223,9 +225,12 @@ export default function AppointmentsPage() {
     );
   };
   
-  if (!selectedDate) {
+  const date = selectedDate;
+  if (!date) {
     return null; // Or a loading indicator
   }
+  
+  const selectedDoctor = doctors.find(d => d.id === selectedDoctorId);
 
   const getDialogInitialData = () => {
     if (selectedSlotInfo) {
@@ -236,26 +241,41 @@ export default function AppointmentsPage() {
       };
     }
     if (selectedPatientForAppointment) {
-      return { patientName: selectedPatientForAppointment.name };
+      return { 
+        patientName: selectedPatientForAppointment.name,
+        doctorId: selectedDoctorId
+      };
     }
-    return {};
+    return { doctorId: selectedDoctorId };
   };
 
   return (
     <div className="flex flex-col h-[calc(100vh-8rem)]">
-        <header className="flex items-center justify-between pb-4">
+        <header className="flex items-center justify-between pb-4 gap-4 flex-wrap">
             <div className="flex items-center gap-4">
                 <Popover>
                     <PopoverTrigger asChild>
                         <Button variant="outline">
                             <CalendarIcon className="mr-2 h-4 w-4" />
-                            <span>{format(selectedDate, 'PPP')}</span>
+                            <span>{format(date, 'PPP')}</span>
                         </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0">
-                        <Calendar mode="single" selected={selectedDate} onSelect={(date) => date && setSelectedDate(date)} initialFocus />
+                        <Calendar mode="single" selected={date} onSelect={(d) => d && setSelectedDate(d)} initialFocus />
                     </PopoverContent>
                 </Popover>
+
+                <Select value={selectedDoctorId} onValueChange={setSelectedDoctorId}>
+                    <SelectTrigger className="w-[200px]">
+                        <SelectValue placeholder="Select a doctor" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {doctors.map(doctor => (
+                            <SelectItem key={doctor.id} value={doctor.id}>{doctor.name}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+
                  <div className="flex items-center gap-2">
                     <Button variant="outline" size="icon" onClick={() => setZoomLevel(prev => Math.max(1, prev - 1))}><ZoomOut/></Button>
                     <Slider
@@ -340,30 +360,30 @@ export default function AppointmentsPage() {
                 </div>
                 
                 <div className="overflow-x-auto">
-                    <div className="grid h-full" style={{ gridTemplateColumns: `repeat(${doctors.length}, minmax(200px, 1fr))` }}>
-                        {/* Doctor Headers */}
-                        {doctors.map(doctor => (
-                            <div key={doctor.id} className="sticky top-0 z-10 h-12 flex items-center justify-center p-2 text-center font-semibold border-b border-l bg-muted first:border-l-0">
-                                <h3>{doctor.name}</h3>
+                    <div className="grid h-full" style={{ gridTemplateColumns: `minmax(200px, 1fr)` }}>
+                        {/* Doctor Header */}
+                        {selectedDoctor && (
+                            <div key={selectedDoctor.id} className="sticky top-0 z-10 h-12 flex items-center justify-center p-2 text-center font-semibold border-b border-l bg-muted first:border-l-0">
+                                <h3>{selectedDoctor.name}</h3>
                             </div>
-                        ))}
+                        )}
                          {/* Grid and Appointments */}
-                        {doctors.map(doctor => (
-                            <div key={doctor.id} className="relative grid border-l first:border-l-0" style={{ gridTemplateRows: `repeat(${totalSlots}, minmax(0, 1fr))` }}>
+                        {selectedDoctor && (
+                            <div key={selectedDoctor.id} className="relative grid border-l first:border-l-0" style={{ gridTemplateRows: `repeat(${totalSlots}, minmax(0, 1fr))` }}>
                                 {/* Background grid */}
                                 {timeSlots.map((time, index) => (
                                     <div key={index} style={{ height: slotHeight }} className={cn("border-t border-dotted border-border", time.getMinutes() === 0 && "border-dashed")}>
                                         <button
-                                            aria-label={`Book with ${doctor.name} at ${format(time, 'p')}`}
-                                            onClick={() => handleSlotClick(doctor.id, time)}
+                                            aria-label={`Book with ${selectedDoctor.name} at ${format(time, 'p')}`}
+                                            onClick={() => handleSlotClick(time)}
                                             className="w-full h-full transition-colors hover:bg-accent/50"
                                         />
                                     </div>
                                 ))}
                                 {/* Appointments */}
-                                {getAppointmentsForDoctorAndDate(doctor.id, selectedDate).map(app => renderAppointmentCard(app))}
+                                {getAppointmentsForSelectedDoctorAndDate().map(app => renderAppointmentCard(app))}
                             </div>
-                        ))}
+                        )}
                     </div>
                 </div>
             </div>
@@ -371,5 +391,3 @@ export default function AppointmentsPage() {
     </div>
   );
 }
-
-    
