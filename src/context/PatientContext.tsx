@@ -53,6 +53,9 @@ export const PatientProvider = ({ children }: { children: ReactNode }) => {
   React.useEffect(() => {
     if (user?.email === 'j@gmail.com') {
       setDoctors(prevDoctors => {
+        const userExists = prevDoctors.some(d => d.uid === user.uid);
+        if (userExists) return prevDoctors; // Prevent re-assigning on every render
+        
         return prevDoctors.map(d => d.id === 'doc1' ? { ...d, uid: user.uid } : d);
       });
     }
