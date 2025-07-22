@@ -24,7 +24,7 @@ const doctorProfileSchema = z.object({
 
 function ProfileSettings() {
     const { user, sendPasswordReset } = useAuth();
-    const { doctors, updateDoctorProfile } = useClinic();
+    const { doctors, updateDoctorProfile, addDoctor } = useClinic();
     const { toast } = useToast();
     const [isLoading, setIsLoading] = useState(false);
 
@@ -33,19 +33,28 @@ function ProfileSettings() {
     const form = useForm<z.infer<typeof doctorProfileSchema>>({
         resolver: zodResolver(doctorProfileSchema),
         defaultValues: {
-            name: currentUserDoctorProfile?.name || '',
+            name: currentUserDoctorProfile?.name || user?.displayName || '',
             registrationId: currentUserDoctorProfile?.registrationId || '',
             qualification: currentUserDoctorProfile?.qualification || '',
         }
     });
-
+    
     const handleProfileUpdate = (values: z.infer<typeof doctorProfileSchema>) => {
-        if (!currentUserDoctorProfile) return;
-        updateDoctorProfile(currentUserDoctorProfile.id, values);
-        toast({
-            title: "Profile Updated",
-            description: "Your professional details have been saved.",
-        });
+        if (!user) return;
+
+        if (currentUserDoctorProfile) {
+            updateDoctorProfile(currentUserDoctorProfile.id, values);
+            toast({
+                title: "Profile Updated",
+                description: "Your professional details have been saved.",
+            });
+        } else {
+            addDoctor({ uid: user.uid, ...values });
+            toast({
+                title: "Profile Created",
+                description: "Your professional details have been saved.",
+            });
+        }
     };
 
     const handlePasswordReset = async () => {

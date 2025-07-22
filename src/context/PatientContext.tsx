@@ -12,6 +12,7 @@ interface AppContextType {
   setAppointments: React.Dispatch<React.SetStateAction<Appointment[]>>;
   doctors: Doctor[];
   setDoctors: React.Dispatch<React.SetStateAction<Doctor[]>>;
+  addDoctor: (newDoctor: Omit<Doctor, 'id'>) => void;
   updateDoctorProfile: (doctorId: string, profileData: Partial<Doctor>) => void;
   clinicName: string;
   setClinicName: React.Dispatch<React.SetStateAction<string>>;
@@ -107,6 +108,16 @@ export const PatientProvider = ({ children }: { children: ReactNode }) => {
         }
     }
   }, [user, doctors]);
+  
+  const addDoctor = (newDoctorData: Omit<Doctor, 'id'>) => {
+    setDoctors(prevDoctors => {
+      const newDoctor: Doctor = {
+        id: `doc-${Date.now().toString().slice(-6)}`,
+        ...newDoctorData
+      };
+      return [...prevDoctors, newDoctor];
+    });
+  };
 
   const updateDoctorProfile = (doctorId: string, profileData: Partial<Omit<Doctor, 'id' | 'uid'>>) => {
     setDoctors(prevDoctors =>
@@ -117,7 +128,7 @@ export const PatientProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AppContext.Provider value={{ patients, setPatients, appointments, setAppointments, doctors, setDoctors, updateDoctorProfile, clinicName, setClinicName }}>
+    <AppContext.Provider value={{ patients, setPatients, appointments, setAppointments, doctors, setDoctors, addDoctor, updateDoctorProfile, clinicName, setClinicName }}>
       {children}
     </AppContext.Provider>
   );
