@@ -157,7 +157,7 @@ function ClinicSettings() {
 }
 
 function StaffManagement() {
-    const { createUser, staff, deleteStaff } = useAuth();
+    const { createUser, staff, deleteStaff, user, signInWithEmail } = useAuth();
     const { toast } = useToast();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -166,6 +166,18 @@ function StaffManagement() {
     const handleCreateStaff = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
+
+        const adminEmail = user?.email;
+        // In a real app, you would not hardcode the admin password.
+        // This is a workaround for the demo environment.
+        const adminPassword = '123'; 
+
+        if (!adminEmail) {
+            toast({ variant: 'destructive', title: 'Error', description: 'Admin user not found.' });
+            setIsLoading(false);
+            return;
+        }
+
         try {
             await createUser(email, password);
             toast({
@@ -181,6 +193,16 @@ function StaffManagement() {
                 description: error.message || "Could not create staff account.",
             });
         } finally {
+            // Re-authenticate the admin user to restore their session
+            try {
+                await signInWithEmail(adminEmail, adminPassword);
+            } catch (reauthError) {
+                 toast({
+                    variant: "destructive",
+                    title: "Session Error",
+                    description: "Could not restore your session. Please log out and log back in.",
+                });
+            }
             setIsLoading(false);
         }
     };
