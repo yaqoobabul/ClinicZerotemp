@@ -342,15 +342,15 @@ export default function AppointmentsPage() {
         </header>
 
         <div className="flex-grow overflow-y-auto rounded-lg border bg-card">
-            <div className="relative grid" style={{ gridTemplateColumns: 'auto 1fr' }}>
+            <div className="relative grid grid-cols-[auto_1fr]">
                 {/* Time Gutter */}
-                <div className="grid sticky top-0 bg-card z-10" style={{ gridTemplateRows: `repeat(${totalSlots}, minmax(0, 1fr))` }}>
+                <div className="relative grid" style={{ gridTemplateRows: `repeat(${totalSlots}, minmax(0, 1fr))` }}>
                     {timeSlots.map((time, index) => {
                         const isHour = time.getMinutes() === 0;
                         return (
-                            <div key={index} className="relative border-r border-t border-border" style={{ height: slotHeight }}>
+                             <div key={index} className="relative border-r border-border" style={{ height: slotHeight }}>
                                 {isHour && (
-                                    <span className="text-xs text-muted-foreground absolute -top-2.5 right-2 bg-card px-1">
+                                    <span className="text-xs text-muted-foreground absolute -top-2.5 left-2 bg-card px-1">
                                         {format(time, 'h a')}
                                     </span>
                                 )}
@@ -389,3 +389,5 @@ export default function AppointmentsPage() {
     </div>
   );
 }
+
+    
