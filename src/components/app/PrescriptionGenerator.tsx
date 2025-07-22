@@ -277,15 +277,13 @@ function PrescriptionGeneratorInternal() {
                     control={form.control}
                     name="patientId"
                     render={({ field }) => (
-                      <FormItem>
+                      <FormItem className="md:col-span-2">
                         <FormLabel>Patient ID</FormLabel>
                         <div className="flex gap-2">
-                           <div className="relative flex-grow">
-                             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                             <FormControl>
-                                <Input {...field} className="pl-8"/>
-                             </FormControl>
-                           </div>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <Button type="button" variant="outline" onClick={handleFetchPatient}><Search className="mr-2 h-4 w-4" /> Fetch</Button>
                         </div>
                         <FormMessage />
                       </FormItem>
@@ -323,10 +321,8 @@ function PrescriptionGeneratorInternal() {
                     <FormField control={form.control} name="patientContact" render={({ field }) => (
                         <FormItem className="md:col-span-2"><FormLabel>Contact Number</FormLabel><FormControl><Input type="tel" {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
-                 </div>
-                 <div className="grid grid-cols-1">
                     <FormField control={form.control} name="patientAddress" render={({ field }) => (
-                        <FormItem><FormLabel>Address</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                        <FormItem className="md:col-span-2"><FormLabel>Address</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
                  </div>
               </CardContent>
@@ -737,5 +733,6 @@ export function PrescriptionGenerator() {
     
 
     
+
 
 
