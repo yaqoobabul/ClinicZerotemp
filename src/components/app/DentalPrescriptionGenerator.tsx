@@ -880,6 +880,7 @@ function DentalPrescriptionGeneratorInternal() {
                     </div>
                     <div className="text-center mt-16">
                         <p className="border-t-2 border-black pt-1 font-semibold">{opdSummary.doctorDetails.name}</p>
+                        <p className="text-xs">{opdSummary.doctorDetails.qualification}</p>
                         <p className="text-xs text-muted-foreground">Reg. No. {opdSummary.doctorDetails.registrationId}</p>
                         <p className="text-xs">{new Date().toLocaleString('en-IN')}</p>
                     </div>
