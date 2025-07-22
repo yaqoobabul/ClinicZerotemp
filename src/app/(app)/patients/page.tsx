@@ -23,8 +23,8 @@ import type { Patient, Visit } from '@/types';
 const patientFormSchema = z.object({
     id: z.string().optional(),
     name: z.string().min(1, 'Name is required'),
-    age: z.coerce.number().min(0, 'Age must be a positive number'),
-    sex: z.enum(['Male', 'Female', 'Other']),
+    age: z.coerce.number().min(0, 'Age must be a positive number').optional(),
+    sex: z.enum(['Male', 'Female', 'Other']).optional(),
     email: z.string().email('Invalid email address').optional().or(z.literal('')),
     phone: z.string().min(10, 'Invalid phone number'),
     address: z.string().min(1, 'Address is required'),
@@ -56,7 +56,7 @@ export default function PatientsPage() {
     resolver: zodResolver(patientFormSchema),
     defaultValues: {
       name: '',
-      age: '' as any,
+      age: undefined,
       sex: 'Male',
       email: '',
       phone: '',
@@ -90,7 +90,7 @@ export default function PatientsPage() {
     const newPatient: Patient = {
         id: `CZ-${Date.now().toString().slice(-6)}`,
         ...values,
-        sex: values.sex as 'Male' | 'Female' | 'Other',
+        sex: values.sex,
         age: values.age,
         email: values.email || '',
         govtId: values.govtId || '',
@@ -109,7 +109,7 @@ export default function PatientsPage() {
         ...selectedPatient, 
         ...values, 
         age: values.age,
-        sex: values.sex as 'Male' | 'Female' | 'Other',
+        sex: values.sex,
         email: values.email || '',
         govtId: values.govtId || '',
       };
@@ -122,7 +122,7 @@ export default function PatientsPage() {
       if(selectedPatient) {
           patientForm.reset({
               ...selectedPatient,
-              age: selectedPatient.age || undefined
+              age: selectedPatient.age ?? undefined
           });
           setIsEditPatientDialogOpen(true);
       }
@@ -242,6 +242,61 @@ export default function PatientsPage() {
             </div>
           </CardContent>
         </Card>
+        
+        <Dialog open={isEditPatientDialogOpen} onOpenChange={setIsEditPatientDialogOpen}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Edit Patient</DialogTitle>
+                    <DialogDescription>
+                       Update the patient's details.
+                    </DialogDescription>
+                </DialogHeader>
+                <Form {...patientForm}>
+                    <form onSubmit={patientForm.handleSubmit(handleUpdatePatient)} className="space-y-4">
+                        <FormField control={patientForm.control} name="name" render={({ field }) => (
+                            <FormItem><FormLabel>Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                        )} />
+                        <div className="grid grid-cols-2 gap-4">
+                            <FormField control={patientForm.control} name="age" render={({ field }) => (
+                                <FormItem><FormLabel>Age</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} onChange={e => field.onChange(e.target.value === '' ? undefined : Number(e.target.value))} /></FormControl><FormMessage /></FormItem>
+                            )} />
+                            <FormField control={patientForm.control} name="sex" render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Sex</FormLabel>
+                                    <Select onValueChange={field.onChange} value={field.value}>
+                                        <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                                        <SelectContent>
+                                            <SelectItem value="Male">Male</SelectItem>
+                                            <SelectItem value="Female">Female</SelectItem>
+                                            <SelectItem value="Other">Other</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                </FormItem>
+                            )} />
+                        </div>
+                         <FormField control={patientForm.control} name="phone" render={({ field }) => (
+                            <FormItem><FormLabel>Phone</FormLabel><FormControl><Input type="tel" {...field} /></FormControl><FormMessage /></FormItem>
+                        )} />
+                        <FormField control={patientForm.control} name="govtId" render={({ field }) => (
+                            <FormItem><FormLabel>Govt. ID</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                        )} />
+                         <FormField control={patientForm.control} name="address" render={({ field }) => (
+                            <FormItem><FormLabel>Address</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                        )} />
+                        <FormField control={patientForm.control} name="email" render={({ field }) => (
+                            <FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" {...field} /></FormControl><FormMessage /></FormItem>
+                        )} />
+                        <DialogFooter>
+                            <DialogClose asChild>
+                                <Button type="button" variant="secondary">Cancel</Button>
+                            </DialogClose>
+                            <Button type="submit">Save Changes</Button>
+                        </DialogFooter>
+                    </form>
+                </Form>
+            </DialogContent>
+        </Dialog>
         
         <Dialog open={!!viewingVisit} onOpenChange={(isOpen) => !isOpen && setViewingVisit(null)}>
           <DialogContent className="max-w-4xl p-0">
@@ -389,7 +444,7 @@ export default function PatientsPage() {
             <Button onClick={() => {
                 patientForm.reset({
                     name: '',
-                    age: '' as any,
+                    age: undefined,
                     sex: 'Male',
                     email: '',
                     phone: '',
@@ -462,7 +517,7 @@ export default function PatientsPage() {
                     )} />
                     <div className="grid grid-cols-2 gap-4">
                         <FormField control={patientForm.control} name="age" render={({ field }) => (
-                            <FormItem><FormLabel>Age</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+                            <FormItem><FormLabel>Age</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} onChange={e => field.onChange(e.target.value === '' ? undefined : Number(e.target.value))} /></FormControl><FormMessage /></FormItem>
                         )} />
                         <FormField control={patientForm.control} name="sex" render={({ field }) => (
                             <FormItem>
@@ -501,60 +556,7 @@ export default function PatientsPage() {
             </Form>
         </DialogContent>
     </Dialog>
-     <Dialog open={isEditPatientDialogOpen} onOpenChange={setIsEditPatientDialogOpen}>
-        <DialogContent>
-            <DialogHeader>
-                <DialogTitle>Edit Patient</DialogTitle>
-                <DialogDescription>
-                   Update the patient's details.
-                </DialogDescription>
-            </DialogHeader>
-            <Form {...patientForm}>
-                <form onSubmit={patientForm.handleSubmit(handleUpdatePatient)} className="space-y-4">
-                    <FormField control={patientForm.control} name="name" render={({ field }) => (
-                        <FormItem><FormLabel>Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                    )} />
-                    <div className="grid grid-cols-2 gap-4">
-                        <FormField control={patientForm.control} name="age" render={({ field }) => (
-                            <FormItem><FormLabel>Age</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
-                        )} />
-                        <FormField control={patientForm.control} name="sex" render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Sex</FormLabel>
-                                <Select onValueChange={field.onChange} value={field.value}>
-                                    <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
-                                    <SelectContent>
-                                        <SelectItem value="Male">Male</SelectItem>
-                                        <SelectItem value="Female">Female</SelectItem>
-                                        <SelectItem value="Other">Other</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                                <FormMessage />
-                            </FormItem>
-                        )} />
-                    </div>
-                     <FormField control={patientForm.control} name="phone" render={({ field }) => (
-                        <FormItem><FormLabel>Phone</FormLabel><FormControl><Input type="tel" {...field} /></FormControl><FormMessage /></FormItem>
-                    )} />
-                    <FormField control={patientForm.control} name="govtId" render={({ field }) => (
-                        <FormItem><FormLabel>Govt. ID</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                    )} />
-                     <FormField control={patientForm.control} name="address" render={({ field }) => (
-                        <FormItem><FormLabel>Address</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                    )} />
-                    <FormField control={patientForm.control} name="email" render={({ field }) => (
-                        <FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" {...field} /></FormControl><FormMessage /></FormItem>
-                    )} />
-                    <DialogFooter>
-                        <DialogClose asChild>
-                            <Button type="button" variant="secondary">Cancel</Button>
-                        </DialogClose>
-                        <Button type="submit">Save Changes</Button>
-                    </DialogFooter>
-                </form>
-            </Form>
-        </DialogContent>
-    </Dialog>
+    
     </>
   );
 }
