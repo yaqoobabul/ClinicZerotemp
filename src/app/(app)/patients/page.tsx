@@ -2,8 +2,8 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { useRouter } from 'next/navigation';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -17,29 +17,8 @@ import { z } from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-
-type Visit = {
-  date: string;
-  doctor: string;
-  complaint: string;
-  diagnosis: string;
-  prescription: string[];
-  testsAdvised?: string;
-  notes?: string;
-};
-
-type Patient = {
-  id: string;
-  name: string;
-  age: number;
-  sex: 'Male' | 'Female' | 'Other';
-  avatarUrl: string;
-  email: string;
-  phone: string;
-  address: string;
-  govtId: string;
-  visits: Visit[];
-};
+import { usePatients } from '@/context/PatientContext';
+import type { Patient, Visit } from '@/types';
 
 const patientFormSchema = z.object({
     id: z.string().optional(),
@@ -63,7 +42,7 @@ const newVisitSchema = z.object({
 
 export default function PatientsPage() {
   const router = useRouter();
-  const [patients, setPatients] = useState<Patient[]>([]);
+  const { patients, setPatients } = usePatients();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [viewingVisit, setViewingVisit] = useState<Visit | null>(null);
@@ -111,7 +90,7 @@ export default function PatientsPage() {
     const newPatient: Patient = {
         id: `CZ-${Date.now().toString().slice(-6)}`,
         ...values,
-        sex: values.sex,
+        sex: values.sex as 'Male' | 'Female' | 'Other',
         age: values.age,
         email: values.email || '',
         govtId: values.govtId || '',
@@ -126,7 +105,14 @@ export default function PatientsPage() {
 
   const handleUpdatePatient = (values: z.infer<typeof patientFormSchema>) => {
       if (!selectedPatient) return;
-      const updatedPatient = { ...selectedPatient, ...values };
+      const updatedPatient: Patient = { 
+        ...selectedPatient, 
+        ...values, 
+        age: values.age,
+        sex: values.sex as 'Male' | 'Female' | 'Other',
+        email: values.email || '',
+        govtId: values.govtId || '',
+      };
       setPatients(prev => prev.map(p => p.id === updatedPatient.id ? updatedPatient : p));
       setSelectedPatient(updatedPatient);
       setIsEditPatientDialogOpen(false);
@@ -134,7 +120,10 @@ export default function PatientsPage() {
 
   const openEditPatientDialog = () => {
       if(selectedPatient) {
-          patientForm.reset(selectedPatient);
+          patientForm.reset({
+              ...selectedPatient,
+              age: selectedPatient.age || undefined
+          });
           setIsEditPatientDialogOpen(true);
       }
   }
@@ -145,15 +134,15 @@ export default function PatientsPage() {
     const params = new URLSearchParams();
     params.set('patientId', selectedPatient.id);
     params.set('patientName', selectedPatient.name);
-    params.set('patientAge', selectedPatient.age.toString());
-    params.set('patientSex', selectedPatient.sex);
-    params.set('patientContact', selectedPatient.phone);
-    params.set('patientAddress', selectedPatient.address);
-    params.set('govtId', selectedPatient.govtId);
+    if(selectedPatient.age) params.set('patientAge', selectedPatient.age.toString());
+    if(selectedPatient.sex) params.set('patientSex', selectedPatient.sex);
+    if(selectedPatient.phone) params.set('patientContact', selectedPatient.phone);
+    if(selectedPatient.address) params.set('patientAddress', selectedPatient.address);
+    if(selectedPatient.govtId) params.set('govtId', selectedPatient.govtId);
 
     const path = type === 'medical' ? '/prescriptions' : '/dental';
     router.push(`${path}?${params.toString()}`);
-    setIsNewVisitDialogOpen(false); // This is the crucial fix
+    setIsNewVisitDialogOpen(false);
   };
   
   const handleAddNewOldVisit = (values: z.infer<typeof newVisitSchema>) => {

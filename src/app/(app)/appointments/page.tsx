@@ -15,50 +15,13 @@ import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { usePatients } from '@/context/PatientContext';
+import type { Patient, Doctor, Appointment } from '@/types';
 
-
-type Doctor = {
-  id: string;
-  name: string;
-};
-
-type Appointment = {
-  id: string;
-  patientName: string;
-  patientId: string;
-  doctorId: string;
-  dateTime: Date;
-  reason: string;
-  notes?: string;
-  priority?: 'High' | 'Medium' | 'Low';
-  status: 'upcoming' | 'finished' | 'cancelled';
-  durationMinutes: number;
-};
-
-type Patient = {
-  id: string;
-  name: string;
-  age?: number;
-  sex?: 'Male' | 'Female' | 'Other';
-  phone?: string;
-  address?: string;
-};
-
-type SelectedSlotInfo = {
-    doctorId: string;
-    dateTime: Date;
-} | null;
 
 const initialDoctors: Doctor[] = [
   { id: 'doc1', name: 'Dr. Priya Sharma' },
   { id: 'doc2', name: 'Dr. Rohan Mehra' },
-];
-
-const initialPatients: Patient[] = [
-  { id: '1', name: 'Aarav Patel', phone: '9876543210' },
-  { id: '2', name: 'Priya Singh', phone: '9876543211' },
-  { id: '3', name: 'Rohan Gupta', phone: '9876543212' },
-  { id: '4', name: 'Saanvi Sharma', phone: '9876543213' },
 ];
 
 const initialAppointments: Appointment[] = [
@@ -75,13 +38,13 @@ const END_HOUR = 24;
 export default function AppointmentsPage() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [appointments, setAppointments] = useState<Appointment[]>(initialAppointments);
-  const [patients, setPatients] = useState<Patient[]>(initialPatients);
+  const { patients, setPatients } = usePatients();
   const [doctors] = useState<Doctor[]>(initialDoctors);
   const [selectedDoctorId, setSelectedDoctorId] = useState<string>(initialDoctors[0]?.id || '');
   const [isNewAppointmentDialogOpen, setIsNewAppointmentDialogOpen] = useState(false);
   const [appointmentFlowStep, setAppointmentFlowStep] = useState<'choose' | 'new' | 'existing'>('choose');
   const [selectedPatientForAppointment, setSelectedPatientForAppointment] = useState<Patient | null>(null);
-  const [selectedSlotInfo, setSelectedSlotInfo] = useState<SelectedSlotInfo>(null);
+  const [selectedSlotInfo, setSelectedSlotInfo] = useState<{ doctorId: string; dateTime: Date; } | null>(null);
   const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null);
   const { toast } = useToast();
 
@@ -95,7 +58,6 @@ export default function AppointmentsPage() {
 
   const handleAddOrUpdateAppointment = (values: AppointmentFormValues) => {
     if (editingAppointment) {
-      // Update existing appointment
       const updatedAppointment: Appointment = {
         ...editingAppointment,
         ...values,
@@ -103,17 +65,20 @@ export default function AppointmentsPage() {
       setAppointments(prev => prev.map(app => app.id === editingAppointment.id ? updatedAppointment : app).sort((a,b) => a.dateTime.getTime() - b.dateTime.getTime()));
       toast({ title: 'Appointment Updated', description: `Appointment for ${values.patientName} has been updated.` });
     } else {
-      // Add new appointment
       let patientId = selectedPatientForAppointment?.id;
 
       if (appointmentFlowStep === 'new') {
         const newPatient: Patient = {
-          id: `P-${Date.now().toString().slice(-6)}`,
+          id: `CZ-${Date.now().toString().slice(-6)}`,
           name: values.patientName,
-          phone: values.patientPhone,
+          phone: values.patientPhone || '',
           age: values.age,
           sex: values.sex,
-          address: values.address,
+          address: values.address || '',
+          email: '',
+          govtId: '',
+          visits: [],
+          avatarUrl: `https://placehold.co/40x40.png?text=${values.patientName[0]}`,
         };
         setPatients(prev => [...prev, newPatient]);
         patientId = newPatient.id;
@@ -383,13 +348,12 @@ export default function AppointmentsPage() {
             <TableBody>
               {hourlySlots.map(hour => {
                 const appointmentsInHour = appointmentsByHour[hour] || [];
-                const rowCount = Math.max(1, appointmentsInHour.length); // Ensure at least one row per hour
+                const rowCount = Math.max(1, appointmentsInHour.length);
 
                 return Array.from({ length: rowCount }).map((_, index) => {
                   const app = appointmentsInHour[index];
 
                   if (app) {
-                    // Row for an existing appointment
                     return (
                       <TableRow key={app.id}>
                         {index === 0 && (
@@ -424,7 +388,6 @@ export default function AppointmentsPage() {
                     );
                   }
 
-                  // Row for an empty hour slot
                   return (
                     <TableRow key={`empty-${hour}`} className="h-14 hover:bg-muted/50 transition-colors">
                       <TableCell className="font-semibold align-top text-center border-r">
