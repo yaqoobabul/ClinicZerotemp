@@ -77,10 +77,16 @@ export default function PatientsPage() {
     }
   });
 
-  const filteredPatients = patients.filter(patient =>
-    patient.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    patient.id.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredPatients = patients.filter(patient => {
+    const query = searchQuery.toLowerCase();
+    return (
+      patient.name.toLowerCase().includes(query) ||
+      patient.id.toLowerCase().includes(query) ||
+      (patient.govtId && patient.govtId.toLowerCase().includes(query)) ||
+      patient.phone.toLowerCase().includes(query) ||
+      patient.address.toLowerCase().includes(query)
+    );
+  });
   
   const handlePrint = () => {
     window.print();
@@ -466,7 +472,7 @@ export default function PatientsPage() {
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
                 type="search"
-                placeholder="Search patients by name or ID..."
+                placeholder="Search by name, ID, phone, address, or Govt ID..."
                 className="w-full pl-8"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
