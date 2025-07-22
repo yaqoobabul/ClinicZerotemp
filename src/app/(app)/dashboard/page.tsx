@@ -40,7 +40,7 @@ const chartData = [
 ];
 
 export default function Dashboard() {
-  const { appointments } = useClinic();
+  const { appointments, doctors } = useClinic();
   const todaysAppointments = appointments.filter(app => isToday(app.dateTime));
 
   return (
@@ -112,7 +112,9 @@ export default function Dashboard() {
               {todaysAppointments.length > 0 ? (
                 todaysAppointments
                   .sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime())
-                  .map(app => (
+                  .map(app => {
+                    const doctor = doctors.find(d => d.id === app.doctorId);
+                    return (
                     <div className="flex items-center gap-4" key={app.id}>
                       <Avatar className="hidden h-9 w-9 sm:flex">
                          <AvatarImage src={`https://placehold.co/40x40.png?text=${app.patientName[0]}`} alt="Avatar" data-ai-hint="person portrait"/>
@@ -121,13 +123,14 @@ export default function Dashboard() {
                       <div className="grid gap-1">
                         <p className="text-sm font-medium leading-none">{app.patientName}</p>
                         <p className="text-sm text-muted-foreground">{app.reason}</p>
+                        {doctor && <p className="text-xs text-muted-foreground">{doctor.name}</p>}
                       </div>
                       <div className="ml-auto font-medium text-sm text-right">
                         <div>{format(app.dateTime, 'p')}</div>
                         <Badge variant={app.status === 'finished' ? 'default' : app.status === 'cancelled' ? 'destructive' : 'secondary'} className="mt-1">{app.status}</Badge>
                       </div>
                     </div>
-                  ))
+                  )})
                 ) : (
                   <div className="text-center text-muted-foreground py-8">
                     <p>No appointments scheduled for today.</p>
