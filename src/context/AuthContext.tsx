@@ -130,14 +130,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const deleteStaff = (staffId: string) => {
-    // This is also a mock. In a real app, this would be a secure backend call
-    // to delete the user from Firebase Auth and your database.
-    // The client SDK cannot delete other users.
+    // Client-side can't truly delete a Firebase Auth user.
+    // Instead, we remove them from the local staff list and add them
+    // to a "denylist" to prevent future logins.
     setStaff(prevStaff => prevStaff.filter(s => s.id !== staffId));
     setDeletedStaffIds(prevIds => [...new Set([...prevIds, staffId])]);
     toast({
-        title: "Staff Account Deleted",
-        description: `The account has been removed and disabled.`,
+        title: "Staff Account Removed",
+        description: `The user has been removed from the list and their access has been revoked.`,
     });
   }
 
