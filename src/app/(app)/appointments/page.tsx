@@ -344,7 +344,7 @@ export default function AppointmentsPage() {
         <div className="flex-grow overflow-y-auto rounded-lg border bg-card">
             <div className="relative grid" style={{ gridTemplateColumns: 'auto 1fr' }}>
                 {/* Time Gutter */}
-                <div className="grid bg-card" style={{ gridTemplateRows: `repeat(${totalSlots}, minmax(0, 1fr))` }}>
+                <div className="grid sticky top-0 bg-card z-10" style={{ gridTemplateRows: `repeat(${totalSlots}, minmax(0, 1fr))` }}>
                     {timeSlots.map((time, index) => {
                         const isHour = time.getMinutes() === 0;
                         return (
