@@ -109,7 +109,7 @@ export function AppointmentForm({ onSubmit, onCancel, doctors, initialData, show
           <>
             <div className="grid grid-cols-2 gap-4">
                 <FormField control={form.control} name="age" render={({ field }) => (
-                    <FormItem><FormLabel>Age</FormLabel><FormControl><Input type="number" {...field} onChange={e => field.onChange(e.target.value === '' ? undefined : Number(e.target.value))} /></FormControl><FormMessage /></FormItem>
+                    <FormItem><FormLabel>Age</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} onChange={e => field.onChange(e.target.value === '' ? undefined : Number(e.target.value))} /></FormControl><FormMessage /></FormItem>
                 )} />
                 <FormField control={form.control} name="sex" render={({ field }) => (
                     <FormItem>
@@ -195,7 +195,6 @@ export function AppointmentForm({ onSubmit, onCancel, doctors, initialData, show
                       mode="single"
                       selected={field.value}
                       onSelect={field.onChange}
-                      disabled={(date) => date < new Date(new Date().setDate(new Date().getDate() - 1))}
                       initialFocus
                     />
                   </PopoverContent>
