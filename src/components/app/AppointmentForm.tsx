@@ -86,7 +86,6 @@ export function AppointmentForm({ onSubmit, onCancel, doctors, initialData, show
     }
   };
   
-  const isSlotSelected = !!initialData?.dateTime && !!initialData?.patientName;
   const isEditing = !!initialData?.reason;
 
   return (
@@ -152,7 +151,7 @@ export function AppointmentForm({ onSubmit, onCancel, doctors, initialData, show
             render={({ field }) => (
                 <FormItem>
                     <FormLabel>Doctor</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isSlotSelected && !isEditing}>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl><SelectTrigger><SelectValue placeholder="Assign a doctor" /></SelectTrigger></FormControl>
                         <SelectContent>
                             {doctors.map(doc => (
