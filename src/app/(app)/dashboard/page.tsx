@@ -1,10 +1,10 @@
+
 'use client';
 import Link from 'next/link';
 import {
   Activity,
   ArrowUpRight,
-  CreditCard,
-  DollarSign,
+  CalendarCheck,
   Users,
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -18,14 +18,6 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import {
   BarChart,
   Bar,
   XAxis,
@@ -34,6 +26,18 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
+import { format, isToday } from 'date-fns';
+import type { Appointment } from '@/types';
+
+
+const initialAppointments: Appointment[] = [
+  { id: '1', patientName: 'Aarav Patel', patientId: '1', doctorId: 'doc1', dateTime: new Date(new Date().setHours(10, 0, 0, 0)), reason: 'Routine Checkup', status: 'upcoming', durationMinutes: 30, priority: 'Medium' },
+  { id: '5', patientName: 'Ishaan Verma', patientId: '1', doctorId: 'doc1', dateTime: new Date(new Date().setHours(10, 30, 0, 0)), reason: 'Consultation', status: 'upcoming', durationMinutes: 30, priority: 'Medium' },
+  { id: '2', patientName: 'Priya Singh', patientId: '2', doctorId: 'doc1', dateTime: new Date(new Date().setHours(11, 30, 0, 0)), reason: 'Follow-up', status: 'upcoming', durationMinutes: 45, priority: 'High' },
+  { id: '3', patientName: 'Rohan Gupta', patientId: '3', doctorId: 'doc2', dateTime: new Date(new Date().setHours(14, 0, 0, 0)), reason: 'Dental Cleaning', status: 'upcoming', durationMinutes: 60, priority: 'Low' },
+  { id: '4', patientName: 'Saanvi Sharma', patientId: '4', doctorId: 'doc1', dateTime: new Date(new Date().setDate(new Date().getDate() - 1)), reason: 'Root Canal', status: 'finished', durationMinutes: 90, priority: 'High' },
+];
+
 
 const chartData = [
   { month: 'Jan', patients: 186 },
@@ -45,37 +49,29 @@ const chartData = [
 ];
 
 export default function Dashboard() {
+  const todaysAppointments = initialAppointments.filter(app => isToday(app.dateTime));
+
   return (
     <div className="flex flex-col gap-4">
-        <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">₹45,231.89</div>
-              <p className="text-xs text-muted-foreground">+20.1% from last month</p>
-            </CardContent>
-          </Card>
+        <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-3">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Patients Today</CardTitle>
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">+23</div>
-              <p className="text-xs text-muted-foreground">+180.1% from last month</p>
+              <div className="text-2xl font-bold">+{todaysAppointments.length}</div>
+              <p className="text-xs text-muted-foreground">Total appointments scheduled</p>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Pending Appointments</CardTitle>
-              <CreditCard className="h-4 w-4 text-muted-foreground" />
+              <CalendarCheck className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">+12</div>
-              <p className="text-xs text-muted-foreground">+19% from last month</p>
+              <div className="text-2xl font-bold">+{todaysAppointments.filter(a => a.status === 'upcoming').length}</div>
+              <p className="text-xs text-muted-foreground">Remaining for today</p>
             </CardContent>
           </Card>
           <Card>
@@ -102,7 +98,7 @@ export default function Dashboard() {
                   <XAxis dataKey="month" />
                   <YAxis />
                   <Tooltip />
-                  <Bar dataKey="patients" fill="var(--color-primary)" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="patients" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
@@ -110,72 +106,42 @@ export default function Dashboard() {
           <Card>
             <CardHeader className="flex flex-row items-center">
                 <div className="grid gap-2">
-                    <CardTitle>Recent Patients</CardTitle>
-                    <CardDescription>Recently attended patients.</CardDescription>
+                    <CardTitle>Upcoming Appointments</CardTitle>
+                    <CardDescription>Appointments scheduled for today.</CardDescription>
                 </div>
                 <Button asChild size="sm" className="ml-auto gap-1">
-                    <Link href="/patients">
+                    <Link href="/appointments">
                     View All
                     <ArrowUpRight className="h-4 w-4" />
                     </Link>
                 </Button>
             </CardHeader>
-            <CardContent className="grid gap-8">
-            <div className="flex items-center gap-4">
-              <Avatar className="hidden h-9 w-9 sm:flex">
-                <AvatarImage src="https://placehold.co/40x40.png" alt="Avatar" data-ai-hint="woman portrait"/>
-                <AvatarFallback>SN</AvatarFallback>
-              </Avatar>
-              <div className="grid gap-1">
-                <p className="text-sm font-medium leading-none">Sneha Sharma</p>
-                <p className="text-sm text-muted-foreground">sneha.sharma@example.com</p>
-              </div>
-              <div className="ml-auto font-medium">+₹1,999.00</div>
-            </div>
-            <div className="flex items-center gap-4">
-              <Avatar className="hidden h-9 w-9 sm:flex">
-                <AvatarImage src="https://placehold.co/40x40.png" alt="Avatar" data-ai-hint="man portrait"/>
-                <AvatarFallback>RR</AvatarFallback>
-              </Avatar>
-              <div className="grid gap-1">
-                <p className="text-sm font-medium leading-none">Rohan Roy</p>
-                <p className="text-sm text-muted-foreground">rohan.roy@example.com</p>
-              </div>
-              <div className="ml-auto font-medium">+₹390.00</div>
-            </div>
-            <div className="flex items-center gap-4">
-              <Avatar className="hidden h-9 w-9 sm:flex">
-                <AvatarImage src="https://placehold.co/40x40.png" alt="Avatar" data-ai-hint="woman face"/>
-                <AvatarFallback>AK</AvatarFallback>
-              </Avatar>
-              <div className="grid gap-1">
-                <p className="text-sm font-medium leading-none">Anjali Kumari</p>
-                <p className="text-sm text-muted-foreground">anjali.kumari@example.com</p>
-              </div>
-              <div className="ml-auto font-medium">+₹2,999.00</div>
-            </div>
-            <div className="flex items-center gap-4">
-              <Avatar className="hidden h-9 w-9 sm:flex">
-                <AvatarImage src="https://placehold.co/40x40.png" alt="Avatar" data-ai-hint="man face"/>
-                <AvatarFallback>VM</AvatarFallback>
-              </Avatar>
-              <div className="grid gap-1">
-                <p className="text-sm font-medium leading-none">Vikram Mehra</p>
-                <p className="text-sm text-muted-foreground">vikram.mehra@example.com</p>
-              </div>
-              <div className="ml-auto font-medium">+₹990.00</div>
-            </div>
-            <div className="flex items-center gap-4">
-              <Avatar className="hidden h-9 w-9 sm:flex">
-                <AvatarImage src="https://placehold.co/40x40.png" alt="Avatar" data-ai-hint="woman smiling"/>
-                <AvatarFallback>PG</AvatarFallback>
-              </Avatar>
-              <div className="grid gap-1">
-                <p className="text-sm font-medium leading-none">Priya Gupta</p>
-                <p className="text-sm text-muted-foreground">priya.gupta@example.com</p>
-              </div>
-              <div className="ml-auto font-medium">+₹2,199.00</div>
-            </div>
+            <CardContent className="grid gap-4">
+              {todaysAppointments.length > 0 ? (
+                todaysAppointments
+                  .sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime())
+                  .map(app => (
+                    <div className="flex items-center gap-4" key={app.id}>
+                      <Avatar className="hidden h-9 w-9 sm:flex">
+                         <AvatarImage src={`https://placehold.co/40x40.png?text=${app.patientName[0]}`} alt="Avatar" data-ai-hint="person portrait"/>
+                         <AvatarFallback>{app.patientName.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                      </Avatar>
+                      <div className="grid gap-1">
+                        <p className="text-sm font-medium leading-none">{app.patientName}</p>
+                        <p className="text-sm text-muted-foreground">{app.reason}</p>
+                      </div>
+                      <div className="ml-auto font-medium text-sm text-right">
+                        <div>{format(app.dateTime, 'p')}</div>
+                        <Badge variant={app.status === 'finished' ? 'default' : app.status === 'cancelled' ? 'destructive' : 'secondary'} className="mt-1">{app.status}</Badge>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center text-muted-foreground py-8">
+                    <p>No appointments scheduled for today.</p>
+                  </div>
+                )
+              }
             </CardContent>
           </Card>
         </div>
