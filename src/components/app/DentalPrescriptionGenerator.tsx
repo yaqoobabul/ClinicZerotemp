@@ -330,6 +330,31 @@ function DentalPrescriptionGeneratorInternal() {
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <Card>
               <CardHeader>
+                <CardTitle>Consulting Doctor</CardTitle>
+              </CardHeader>
+               <CardContent>
+                    <FormField
+                        control={form.control}
+                        name="doctorId"
+                        render={({ field }) => (
+                            <FormItem>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <FormControl><SelectTrigger><SelectValue placeholder="Select a doctor" /></SelectTrigger></FormControl>
+                                    <SelectContent>
+                                        {doctors.map(doc => (
+                                            <SelectItem key={doc.id} value={doc.id}>{doc.name}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
                 <CardTitle>Patient Details</CardTitle>
                 <CardDescription>Enter patient information or fetch existing records by ID.</CardDescription>
               </CardHeader>
@@ -692,28 +717,6 @@ function DentalPrescriptionGeneratorInternal() {
               </CardContent>
             </Card>
             
-            <Card>
-                <CardHeader><CardTitle>Consulting Doctor</CardTitle></CardHeader>
-                <CardContent>
-                    <FormField
-                        control={form.control}
-                        name="doctorId"
-                        render={({ field }) => (
-                            <FormItem>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                    <FormControl><SelectTrigger><SelectValue placeholder="Select a doctor" /></SelectTrigger></FormControl>
-                                    <SelectContent>
-                                        {doctors.map(doc => (
-                                            <SelectItem key={doc.id} value={doc.id}>{doc.name}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                </CardContent>
-            </Card>
 
             <Button type="submit" disabled={isLoading} size="lg" className="w-full md:w-auto">
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -859,6 +862,10 @@ function DentalPrescriptionGeneratorInternal() {
                         <p>{opdSummary.additionalNotes}</p>
                     </div>
                     )}
+                </div>
+                
+                <div className="mt-8 text-xs text-muted-foreground">
+                    <p>⚠️ Note: This document is not valid without the doctor’s signature and official seal. It is intended for use only after physical verification and authorization by the consulting doctor.</p>
                 </div>
 
                 <div className="flex justify-between pt-1">
